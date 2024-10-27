@@ -13,6 +13,8 @@ const geistMono = localFont({
   weight: "100 900",
 });
 
+var dateobj = new Date(); 
+
 export const metadata = {
   title: "WinterJam - Hosted by IPMAIA",
   description: "Gamejam hosted by IPMAIA from game dev students, for game dev students",
@@ -34,22 +36,31 @@ export default function RootLayout({ children }) {
     </html>
   );  
 }
+
+export const Year = () => {
+
+  return(dateobj.getFullYear());
+
+};
+
+
 export const Footer = () => {
   return (
     <div className="bg-white-900">
       <div className="px-4 pt-16 mx-auto sm:max-w-xl md:max-w-full lg:max-w-screen-xl md:px-24 lg:px-8">
         <div className="flex flex-col justify-between pt-5 pb-10 border-t border-gray-800 sm:flex-row">
           <p className="text-sm text-gray-500">
-            © Copyright 2020 Lorem Inc. All rights reserved.
+            © Copyright <Year/> IPMAIA. Todos direitos reservados.
           </p>
           <div className="flex items-center mt-4 space-x-4 sm:mt-0">
             <a
               href="https://ipmaia.pt"
               className="text-gray-500 transition-colors duration-300 hover:text-teal-accent-400"
             >
-              <svg viewBox="0 0 24 24" fill="currentColor" className="h-5">
-              
+              <svg width="32" height="32" viewBox="0 0 268 273" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M4 195.857L55.2 151.971V251.933M4 195.857V269H55.2M4 195.857L55.2 251.933M217.835 269H260L217.835 210.486V269ZM217.835 269H196.753M196.753 269V169.038M196.753 269H148.565M148.565 110.524L196.753 69.0762V169.038M148.565 110.524L196.753 169.038M148.565 110.524V269M148.565 269H124.471M124.471 269V76.3905M124.471 269H79.2941M124.471 76.3905L79.2941 110.524M124.471 76.3905L79.2941 13V110.524M79.2941 110.524V269M79.2941 269H55.2M55.2 269V251.933" stroke="black" strokeWidth="8"/>
               </svg>
+
             </a>
             <a
               href="https://www.instagram.com/ipmaiaoficial/"
