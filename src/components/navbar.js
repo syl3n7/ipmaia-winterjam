@@ -1,49 +1,30 @@
 "use client";
 import Link from "next/link";
-import logo from "../../public/images/WinterJam_Logo_BlackV02.png";
-import Image from "next/image";
-import { Button } from "flowbite-react";
-import { useState } from "react";
-const Navbar = () => {
-  const [hover1, setHover1] = useState(false);
-  const [hover2, setHover2] = useState(false);
+import { Navbar, NavbarBrand, NavbarCollapse, NavbarLink, NavbarToggle } from "flowbite-react";
+
+const MainNavbar = () => {
+ 
   return (
-    <nav className="bg-gradient-to-r from-[#81C9F0] to-[#1E3A8A] bg-opacity-80 p-4 sticky top-0 z-50 shadow-md">
-      <div className="container mx-auto flex justify-between items-center pl-20">
-        <div className="text-white text-lg font-bold">
-          <Link typeof="" href="/">
-            <Image src={logo} alt="Logo" width={50} height={50} />
-          </Link>
-        </div>
-        <div className="space-x-12 flex pr-20">
-          <Button
-            outline={!hover1}
-            className={`button-transparent transition duration-1000 ${
-              !hover1 ? "bg-black" : ""
-            }`}
-            onMouseEnter={() => setHover1(true)}
-            onMouseLeave={() => setHover1(false)}
-            gradientDuoTone="greenToBlue"
-            href="/enlist-now"
-          >
-            Enlist Now
-          </Button>
-          <Button
-            outline={!hover2}
-            className={`button-transparent transition duration-1000 ${
-              !hover2 ? "bg-black" : ""
-            }`}
-            onMouseEnter={() => setHover2(true)}
-            onMouseLeave={() => setHover2(false)}
-            gradientDuoTone="greenToBlue"
-            href="/rules"
-          >
-            Rules
-          </Button>
-        </div>
-      </div>
-    </nav>
+    <Navbar fluid 
+    className="bg-[#d86f3a] sticky top-0 z-50 shadow-lg">
+      <NavbarBrand as={Link} href="/">
+        <img src="/favicon.svg" className="mr-3 h-6 sm:h-9" alt="Flowbite React Logo" />
+        <span className="self-center whitespace-nowrap text-xl font-semibold dark:text-white">Flowbite React</span>
+      </NavbarBrand>
+      <NavbarToggle />
+      <NavbarCollapse>
+        <NavbarLink href="#" active>
+          Home
+        </NavbarLink>
+        <NavbarLink as={Link} href="#">
+          About
+        </NavbarLink>
+        <NavbarLink href="#">Services</NavbarLink>
+        <NavbarLink href="#">Pricing</NavbarLink>
+        <NavbarLink href="#">Contact</NavbarLink>
+      </NavbarCollapse>
+    </Navbar>
   );
 };
 
-export default Navbar;
+export default MainNavbar;

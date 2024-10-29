@@ -2,7 +2,7 @@ import localFont from "next/font/local";
 import "./globals.css";
 import Image from "next/image";
 import  Footer  from "@/components/footer";
-import Navbar from "@/components/navbar";  
+import MainNavbar from "@/components/navbar";  
 import React from "react";
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -37,7 +37,7 @@ export default function RootLayout({ children }) {
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <Navbar />
+        <MainNavbar/>
         {children}
         <Footer />
         <script src="../path/to/flowbite/dist/flowbite.min.js"></script>
