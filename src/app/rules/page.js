@@ -65,7 +65,6 @@ export default function Page() {
                   </p>
                   <ul role="list" className="mt-8 space-y-8 text-gray-600">
                     <li className="flex gap-x-3">
-                      <CloudArrowUpIcon aria-hidden="true" className="mt-1 h-5 w-5 flex-none text-indigo-600" />
                       <span>
                         <strong className="font-semibold text-gray-900">Push to deploy.</strong> Lorem ipsum, dolor sit amet
                         consectetur adipisicing elit. Maiores impedit perferendis suscipit eaque, iste dolor cupiditate
@@ -73,14 +72,12 @@ export default function Page() {
                       </span>
                     </li>
                     <li className="flex gap-x-3">
-                      <LockClosedIcon aria-hidden="true" className="mt-1 h-5 w-5 flex-none text-indigo-600" />
                       <span>
                         <strong className="font-semibold text-gray-900">SSL certificates.</strong> Anim aute id magna aliqua
                         ad ad non deserunt sunt. Qui irure qui lorem cupidatat commodo.
                       </span>
                     </li>
                     <li className="flex gap-x-3">
-                      <ServerIcon aria-hidden="true" className="mt-1 h-5 w-5 flex-none text-indigo-600" />
                       <span>
                         <strong className="font-semibold text-gray-900">Database backups.</strong> Ac tincidunt sapien
                         vehicula erat auctor pellentesque rhoncus. Et magna sit morbi lobortis.
