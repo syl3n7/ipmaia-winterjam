@@ -19,7 +19,9 @@ export default function Home() {
       }}
     >
       <main className="flex flex-col gap-8 row-start-2 items-center">
-        <div></div>
+        <div>
+          
+        </div>
       </main>
     </div>
   );
