@@ -1,7 +1,5 @@
 import Image from "next/image";
 import Headers from "next/headers";
-import { CloudArrowUpIcon, LockClosedIcon, ServerIcon } from '@heroicons/react/20/solid'
-
 
 export default function Page() {
     return (
