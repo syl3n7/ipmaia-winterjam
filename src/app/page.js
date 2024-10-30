@@ -1,26 +1,26 @@
 import Image from "next/image";
-import Link from 'next/link'
+import Link from "next/link";
 import backgroundImage from "../../public/images/IPMAIA_SiteBanner.png";
+import { Navbar } from "@/components/navbar";
 
 export default function Home() {
   return (
-    <div className="grid grid-rows-[20px_1fr_20px]items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]"
-          style={{
-            backgroundImage: `url(${backgroundImage.src})`,
-            backgroundPosition: "center",
-            backgroundSize: "cover",
-            backgroundRepeat: "no-repeat",
-            width: "100vw",
-            height: "100vh",
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}
-          >
-      
+    <div
+      className="grid grid-rows-[20px_1fr_20px]items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]"
+      style={{
+        backgroundImage: `url(${backgroundImage.src})`,
+        backgroundPosition: "center",
+        backgroundSize: "cover",
+        backgroundRepeat: "no-repeat",
+        height: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
       <main className="flex flex-col gap-8 row-start-2 items-center">
         <div>
-
+          
         </div>
       </main>
     </div>
