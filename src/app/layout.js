@@ -15,8 +15,6 @@ const geistMono = localFont({
   weight: "100 900",
 });
 
-var dateobj = new Date();
-
 export const metadata = {
   title: "WinterJam - Hosted by IPMAIA",
   description:
@@ -45,7 +43,3 @@ export default function RootLayout({ children }) {
     </html>
   );
 }
-
-export const Year = () => {
-  return dateobj.getFullYear();
-};
