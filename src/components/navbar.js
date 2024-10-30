@@ -8,8 +8,8 @@ const MainNavbar = () => {
     <Navbar fluid 
     className="bg-[#d86f3a] sticky top-0 z-50 shadow-lg">
       <NavbarBrand as={Link} href="/">
-        <img src="../../favicon.ico" className="mr-3 h-6 sm:h-9" alt="IPMAIA WinterJam" />
-        <span className="self-center whitespace-nowrap text-xl font-semibold dark:text-white">Flowbite React</span>
+        <img src="../../favicon.ico" className="mr-3 h-6 sm:h-9" alt="IPMAIA WinterJam favicon" />
+        <span className="self-center whitespace-nowrap text-xl font-semibold dark:text-white">IPMAIA WinterJam</span>
       </NavbarBrand>
       <NavbarToggle />
       <NavbarCollapse>
