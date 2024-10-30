@@ -8,7 +8,7 @@ const MainNavbar = () => {
     <Navbar fluid 
     className="bg-[#d86f3a] sticky top-0 z-50 shadow-lg">
       <NavbarBrand as={Link} href="/">
-        <img src="../../favicon.svg" className="mr-3 h-6 sm:h-9" alt="IPMAIA WinterJam" />
+        <img src="../../favicon.ico" className="mr-3 h-6 sm:h-9" alt="IPMAIA WinterJam" />
         <span className="self-center whitespace-nowrap text-xl font-semibold dark:text-white">Flowbite React</span>
       </NavbarBrand>
       <NavbarToggle />
