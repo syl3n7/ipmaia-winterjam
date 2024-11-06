@@ -6,17 +6,17 @@ const MainNavbar = () => {
  
   return (
     <Navbar fluid 
-    className="bg-[#d86f3a] sticky top-0 z-50 shadow-lg">
+    className="bg-transparent !bg-gradient-to-b !from-[#d86f3a] !to-transparent sticky top-0 z-50 position-">
       <NavbarBrand as={Link} href="/">
         <img src="../../favicon.ico" className="mr-3 h-6 sm:h-9" alt="IPMAIA WinterJam favicon" />
-        <span className="self-center whitespace-nowrap text-xl font-semibold dark:text-white">IPMAIA WinterJam</span>
+        <span className="text-gray-700 self-center whitespace-nowrap text-xl font-semibold dark:text-white">IPMAIA WinterJam</span>
       </NavbarBrand>
       <NavbarToggle />
       <NavbarCollapse>
-        <NavbarLink href="#" active>Home</NavbarLink>
-        <NavbarLink as={Link} href="#">Quem Somos?</NavbarLink>
+        {/* <NavbarLink href="#" active>Home</NavbarLink> */}
+        {/* <NavbarLink as={Link} href="#">Quem Somos?</NavbarLink> */}
         <NavbarLink href="/rules">Regras</NavbarLink>
-        <NavbarLink href="mailto:gamejam.at.ipmaia@gmail.com">Contact</NavbarLink>
+        <NavbarLink href="mailto:gamejam.at.ipmaia@gmail.com">Contacto</NavbarLink>
       </NavbarCollapse>
     </Navbar>
   );
