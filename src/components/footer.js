@@ -9,9 +9,7 @@ const Footer = () => {
           <p className="text-sm text-gray-500">
             © Copyright <Year/> IPMAIA  Todos direitos reservados.
           </p>
-          <p>
-            <realtimeUsers/>
-          </p>
+
           <div className="flex items-center mt-4 space-x-4 sm:mt-0">
             <a
               href="https://ipmaia.pt"
