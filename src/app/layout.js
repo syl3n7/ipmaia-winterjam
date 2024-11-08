@@ -21,6 +21,14 @@ export const metadata = {
     "Gamejam hosted by IPMAIA from game dev students, for game dev students",
 };
 
+const io = require('@pm2/io')
+
+const realtimeUser = io.metric({
+  name: 'Realtime user',
+})
+
+realtimeUser.set(42)
+
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
