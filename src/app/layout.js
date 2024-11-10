@@ -4,6 +4,8 @@ import Image from "next/image";
 import  Footer  from "@/components/footer";
 import MainNavbar from "@/components/navbar";  
 import React from "react";
+import { incrementUserCount, markRequest, decrementUserCount } from "@/components/metrics";
+
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
   variable: "--font-geist-sans",
@@ -25,6 +27,8 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <head>
+        <incrementUserCount/>
+        <markRequest/>
         <link rel="stylesheet" href="https://rsms.me/inter/inter.css"></link>
         <script
           defer
@@ -40,6 +44,7 @@ export default function RootLayout({ children }) {
         <Footer />
         <script src="../path/to/flowbite/dist/flowbite.min.js"></script>
       </body>
+      <decrementUserCount/>
     </html>
   );
 }
