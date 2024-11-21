@@ -4,7 +4,6 @@ import Image from "next/image";
 import  Footer  from "@/components/footer";
 import MainNavbar from "@/components/navbar";  
 import React from "react";
-import { incrementUserCount, markRequest, decrementUserCount } from "@/components/metrics";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
