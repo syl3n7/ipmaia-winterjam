@@ -27,9 +27,8 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <head>
-        <incrementUserCount/>
-        <markRequest/>
         <link rel="stylesheet" href="https://rsms.me/inter/inter.css"></link>
+        <script defer src="https://medama.steelchunk.eu/script.js"></script>
         <script
           defer
           src="https://static.cloudflareinsights.com/beacon.min.js"
@@ -44,7 +43,6 @@ export default function RootLayout({ children }) {
         <Footer />
         <script src="../path/to/flowbite/dist/flowbite.min.js"></script>
       </body>
-      <decrementUserCount/>
     </html>
   );
 }
