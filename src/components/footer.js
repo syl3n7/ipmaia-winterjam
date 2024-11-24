@@ -1,5 +1,4 @@
 import year, { Year } from "./date";
-import metrics, {realtimeUsers } from "./metrics";
 
 const Footer = () => {
   return (

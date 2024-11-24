@@ -4,6 +4,7 @@ import Image from "next/image";
 import  Footer  from "@/components/footer";
 import MainNavbar from "@/components/navbar";  
 import React from "react";
+
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
   variable: "--font-geist-sans",
@@ -26,6 +27,7 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <head>
         <link rel="stylesheet" href="https://rsms.me/inter/inter.css"></link>
+        <script defer src="https://medama.steelchunk.eu/script.js"></script>
         <script
           defer
           src="https://static.cloudflareinsights.com/beacon.min.js"
