@@ -13,7 +13,7 @@ export default function Page() {
         />
       </div>
       <h2 className="mt-6 text-xl sm:text-2xl text-center">
-        Escaneie o QR Code para se inscrever
+        Lê o QR Code para te inscreveres nesta aventura !
       </h2>
     </div>
   );
