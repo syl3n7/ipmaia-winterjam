@@ -8,10 +8,9 @@ export default function BannerCenter() {
     const [isClicked, setIsClicked] = useState(false);
 
     const handleEnlist = () => {
-        setIsClicked(true);
-        // Reset the clicked state after animation
-        setTimeout(() => setIsClicked(false), 500);
-        window.open("https://steelchunk.eu/enlist-now", "_blank", "noopener,noreferrer");
+      setIsClicked(true);
+      setTimeout(() => setIsClicked(false), 500);
+      window.location.href = "https://ipmaia-winterjam.pt/enlist-now";
     };
 
     return (
@@ -54,7 +53,7 @@ export default function BannerCenter() {
                 ${isHovered ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'}
               `}>
                 <p className="text-sm text-white/90 italic">
-                  Click to join the adventure!
+                  Clica-me para te inscreveres!
                 </p>
               </div>
             </div>

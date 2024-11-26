@@ -1,6 +1,5 @@
+'use client'
 import { useState, useEffect } from 'react';
-import { AlertCircle } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const PDFViewer = () => {
   const [isMobile, setIsMobile] = useState(false);
@@ -18,17 +17,6 @@ const PDFViewer = () => {
   }, []);
 
   return (
-    <div className="flex flex-col w-full min-h-screen p-4">
-      {isMobile && (
-        <Alert className="mb-4">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Aviso para Visualização Móvel</AlertTitle>
-          <AlertDescription>
-            Para uma melhor experiência em dispositivos móveis, recomendamos baixar o PDF.
-          </AlertDescription>
-        </Alert>
-      )}
-
       <div className="w-full flex-grow">
         {isMobile ? (
           <div className="flex flex-col gap-4">
@@ -63,7 +51,6 @@ const PDFViewer = () => {
           </object>
         )}
       </div>
-    </div>
   );
 };
 
