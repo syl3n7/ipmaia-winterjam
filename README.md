@@ -1,36 +1,45 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+[![Azure Deployment](https://github.com/syl3n7/ipmaia-winterjam/actions/workflows/main.yml/badge.svg)](https://github.com/syl3n7/ipmaia-winterjam/actions/workflows/main.yml)
+
+# IPMAIA WinterJam 2024
+
+![IPMAIA WinterJam Banner](path-to-banner-image.png)
+
+A winter-themed game development and technology jam hosted by IPMAIA (Instituto Politécnico da Maia).
+
+## About the Event
+
+IPMAIA WinterJam is an exciting event that brings together students, developers, and technology enthusiasts for a winter-themed creative jam. This event provides an opportunity for participants to showcase their skills, collaborate with others, and create innovative projects in a limited timeframe.
+
+## Key Features
+
+- **Winter Theme**: Seasonal-inspired creative projects
+- **Bilingual Support**: Interface available in Portuguese ("Inscreve-te já!") and English ("Enlist Now!")
+- **Community Focus**: Designed for students and tech enthusiasts
+- **Gaming Elements**: Strong focus on game development and interactive media
 
 ## Getting Started
 
-First, run the development server:
+1. Visit the official website
+2. Click on "Enlist Now!" to register
+3. Review the rules and guidelines
+4. Start preparing your development environment
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Rules and Guidelines
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+To maintain fairness and ensure a great experience for all participants, please refer to the "Regras" (Rules) section on our website.
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+## Contact
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+For more information or support, use the "Contacto" section on our website.
 
-## Learn More
+## Contributing
 
-To learn more about Next.js, take a look at the following resources:
+If you'd like to contribute to the organization or development of IPMAIA WinterJam, please reach out to our team through the official channels.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## License
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+[Include appropriate license information]
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+© 2024 IPMAIA WinterJam. All rights reserved.
