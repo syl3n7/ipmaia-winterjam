@@ -33,4 +33,4 @@ jobs:
             git pull
             npm install
             npm run build
-            pm2 restart jam # Replace with your PM2 service name
+            pm2 restart ecosystem.config.js # Replace with your PM2 service name
