@@ -26,7 +26,7 @@ export default function Page() {
           </div>
           <div className="p-4 bg-gray-50 rounded">
             <h3 className="font-bold">Assédio</h3>
-            <p>Não serão aceitos comportamentos intimidatórios, perseguição, insultos, ou qualquer tipo de assédio, seja pessoalmente, online ou através de outros meios.</p>
+            <p>Não serão aceites comportamentos intimidatórios, perseguição, insultos, ou qualquer tipo de assédio, seja pessoalmente, online ou através de outros meios.</p>
           </div>
           <div className="p-4 bg-gray-50 rounded">
             <h3 className="font-bold">Colaboração</h3>
@@ -45,7 +45,7 @@ export default function Page() {
           <div className="p-4 bg-blue-50 rounded">
             <h3 className="font-bold mb-2">Regras da Jam</h3>
             <ul className="list-disc pl-5 space-y-2">
-              <li>Duração: O jogo deve ser criado em 48 horas (de sexta-feira às 15h até domingo às 15h)</li>
+              <li>Duração: O jogo deve ser criado em 45 horas (de sexta-feira às 17h até domingo às 15h)</li>
               <li>Participação em Equipa: Pode trabalhar sozinho ou em equipa (máximo de 4 pessoas)</li>
             </ul>
           </div>
@@ -113,7 +113,7 @@ export default function Page() {
         <div className="space-y-4">
           <div className="p-4 bg-gray-50 rounded">
             <h3 className="font-bold">Submissão</h3>
-            <p>Os projetos devem ser submetidos ao Itch.io após o término das 48 horas e o link partilhado no canal de discord devido.</p>
+            <p>Os projetos devem ser submetidos ao Itch.io após o término das 45 horas e o link partilhado no canal de discord devido.</p>
           </div>
           <div className="p-4 bg-gray-50 rounded">
             <h3 className="font-bold">Entrada livre</h3>
@@ -130,14 +130,14 @@ export default function Page() {
         <h2 className="text-2xl font-bold mb-4">6. Horário do Evento (10 a 12 de janeiro)</h2>
         <div className="space-y-2">
           <div className="p-3 bg-gray-50 rounded">
-            <span className="font-bold">Dia 10 - Início:</span>
+            <span className="font-bold">Dia 11 - Início:</span>
             <ul className="list-disc pl-5 mt-2">
-              <li>13:00 - Início do Jam</li>
-              <li>14:00 - Divulgação do tema</li>
+              <li>17:00 - Início do Jam</li>
+              <li>17:15 - Divulgação do tema</li>
             </ul>
           </div>
           <div className="p-3 bg-gray-50 rounded">
-            <span className="font-bold">Dia 12 - Fim:</span>
+            <span className="font-bold">Dia 13 - Fim:</span>
             <ul className="list-disc pl-5 mt-2">
               <li>14:00 - Fim do Jam</li>
               <li>Avaliação a cargo do júri após as 14:00</li>
