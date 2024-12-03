@@ -1,15 +1,13 @@
 import React from 'react';
 import { Download } from 'lucide-react';
-import Image from 'next/image';
 
 export default function Page() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
-
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Livro de Regras da WinterJam</h1>
         <a 
-          href="/Regulamento_Game_Jam.pdf" 
+          href="/WinterJam_Rulebook.pdf" 
           download 
           className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
         >
@@ -47,7 +45,7 @@ export default function Page() {
           <div className="p-4 bg-blue-50 rounded">
             <h3 className="font-bold mb-2">Regras da Jam</h3>
             <ul className="list-disc pl-5 space-y-2">
-              <li>Duração: O jogo deve ser criado em 45 horas (de quinta-feira às 17h até sábado às 14h)</li>
+              <li>Duração: O jogo deve ser criado em 48 horas (de sexta-feira às 15h até domingo às 15h)</li>
               <li>Participação em Equipa: Pode trabalhar sozinho ou em equipa (máximo de 4 pessoas)</li>
             </ul>
           </div>
@@ -69,7 +67,7 @@ export default function Page() {
           <div className="p-4 bg-yellow-50 rounded">
             <h3 className="font-bold">1º Lugar</h3>
             <ul className="list-disc pl-5">
-              <li>Gift card InstantGaming de 20€ (para cada elemento)</li>
+              <li>Gift card InstantGaming de 10€ (por cada elemento)</li>
               <li>Certificado</li>
             </ul>
           </div>
@@ -115,7 +113,7 @@ export default function Page() {
         <div className="space-y-4">
           <div className="p-4 bg-gray-50 rounded">
             <h3 className="font-bold">Submissão</h3>
-            <p>Após o término das 45 horas, a submissão de projetos irá ser fechada. Os projetos deverão ser uploaded para o Itch.io e o link partilhado no canal de discord devido.</p>
+            <p>Os projetos devem ser submetidos ao Itch.io após o término das 48 horas e o link partilhado no canal de discord devido.</p>
           </div>
           <div className="p-4 bg-gray-50 rounded">
             <h3 className="font-bold">Entrada livre</h3>
@@ -124,6 +122,26 @@ export default function Page() {
           <div className="p-4 bg-gray-50 rounded">
             <h3 className="font-bold">Direitos</h3>
             <p>O jogo é propriedade sua. A organização da Game Jam não reivindica direitos sobre o seu jogo, mas pode utilizá-lo para fins de divulgação do evento.</p>
+          </div>
+        </div>
+      </section>
+
+      <section className="mb-8">
+        <h2 className="text-2xl font-bold mb-4">6. Horário do Evento (10 a 12 de janeiro)</h2>
+        <div className="space-y-2">
+          <div className="p-3 bg-gray-50 rounded">
+            <span className="font-bold">Dia 10 - Início:</span>
+            <ul className="list-disc pl-5 mt-2">
+              <li>13:00 - Início do Jam</li>
+              <li>14:00 - Divulgação do tema</li>
+            </ul>
+          </div>
+          <div className="p-3 bg-gray-50 rounded">
+            <span className="font-bold">Dia 12 - Fim:</span>
+            <ul className="list-disc pl-5 mt-2">
+              <li>14:00 - Fim do Jam</li>
+              <li>Avaliação a cargo do júri após as 14:00</li>
+            </ul>
           </div>
         </div>
       </section>
