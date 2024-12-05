@@ -1,6 +1,6 @@
 import Image from "next/image";
-import msforms from "components/msforms";
+import ResponsiveForm from "../../components/ResponsiveForms";
 
 export default function Page() {
-  return <msforms />;
+  return <ResponsiveForm />;
 }
