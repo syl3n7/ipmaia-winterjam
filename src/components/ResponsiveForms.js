@@ -18,11 +18,8 @@ const useIsMobile = () => {
       });
     };
 
-    // Initial check
     handleResize();
-
-    // Debounced resize handler using requestAnimationFrame for better performance
-    const debouncedResize = () => {
+    const optimizedResize = () => {
       let timeoutId;
       return () => {
         cancelAnimationFrame(timeoutId);
@@ -30,11 +27,11 @@ const useIsMobile = () => {
       };
     };
 
-    const optimizedResize = debouncedResize();
-    window.addEventListener('resize', optimizedResize);
+    const resizeHandler = optimizedResize();
+    window.addEventListener('resize', resizeHandler);
     
     return () => {
-      window.removeEventListener('resize', optimizedResize);
+      window.removeEventListener('resize', resizeHandler);
       cancelAnimationFrame(handleResize);
     };
   }, []);
@@ -42,7 +39,7 @@ const useIsMobile = () => {
   return isMobile;
 };
 
-const MobileForm = () => (
+const FormSection = () => (
   <div className="w-full h-screen bg-white">
     <iframe
       src={MICROSOFT_FORM_URL}
@@ -50,17 +47,15 @@ const MobileForm = () => (
       frameBorder="0"
       allowFullScreen
       title="Microsoft Form"
-      loading="lazy"
+      loading="eager"
       aria-label="Microsoft Form for registration"
     />
   </div>
 );
 
-const DesktopQRCode = () => (
+const QRCodeSection = () => (
   <div className="flex flex-col items-center justify-center min-h-screen p-8 pb-20 sm:p-20 font-[family-name:var(--font-geist-sans)] bg-white">
-    <div 
-      className="relative w-[300px] h-[300px] sm:w-[400px] sm:h-[400px] transition-all duration-300 ease-in-out hover:scale-105"
-    >
+    <div className="relative w-[300px] h-[300px] sm:w-[400px] sm:h-[400px] transition-all duration-300 ease-in-out hover:scale-105">
       <Image
         src="/images/QRCodeWinterJam.png"
         alt="QR code para inscrição"
@@ -80,7 +75,7 @@ const DesktopQRCode = () => (
 const ResponsiveForm = () => {
   const isMobile = useIsMobile();
   
-  return isMobile ? <MobileForm /> : <DesktopQRCode />;
+  return isMobile ? <QRCodeSection /> : <FormSection />;
 };
 
 export default ResponsiveForm;
