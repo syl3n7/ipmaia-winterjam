@@ -4,7 +4,7 @@ import Link from "next/link";
 
 export default function Home() {
   return (
-    <main className="relative min-h-screen">
+    <main className="relative h-[calc(100vh-theme(spacing.16))]">
       <Background
         imageUrl="/images/IPMAIA_SiteBanner.png"
         fallbackContent={
@@ -13,9 +13,8 @@ export default function Home() {
           </div>
         }
       />
-      <div className="relative z-10 flex flex-col min-h-screen">
-        <div className="flex-grow flex flex-col items-center justify-center px-4">
-          <div className="bg-black/50 backdrop-blur-sm rounded-xl p-8 mt-8 text-center">
+      <div className="relative z-10 h-full flex items-center justify-center px-4">
+          <div className="bg-black/50 backdrop-blur-sm rounded-xl p-8 text-center">
             <div className="flex items-center justify-center gap-3 text-3xl text-white mb-4">
               <span className="drop-shadow-md">11 Janeiro às 17H</span>
             </div>
@@ -38,7 +37,6 @@ export default function Home() {
             </div>
           </div>
         </div>
-      </div>
     </main>
   );
 }

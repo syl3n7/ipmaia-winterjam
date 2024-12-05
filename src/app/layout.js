@@ -33,12 +33,12 @@ export default function RootLayout({ children }) {
           data-cf-beacon='{"token": "288377c903af4e4187b8b239e29790e9"}'
         />
       </head>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased h-screen flex flex-col`}>
         <MainNavbar />
-        <main>
+        <main className="flex-1 flex flex-col overflow-auto">
           {children}
-          <Footer />
         </main>
+        <Footer />
       </body>
     </html>
   );
