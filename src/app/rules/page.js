@@ -45,7 +45,7 @@ export default function Page() {
           <div className="p-4 bg-blue-50 rounded">
             <h3 className="font-bold mb-2">Regras da Jam</h3>
             <ul className="list-disc pl-5 space-y-2">
-              <li>Duração: O jogo deve ser criado em 45 horas (de sexta-feira às 17h até domingo às 15h)</li>
+              <li>Duração: O jogo deve ser criado em 45 horas (de sexta-feira às 17h até domingo às 14h)</li>
               <li>Participação em Equipa: Pode trabalhar sozinho ou em equipa (máximo de 4 pessoas)</li>
             </ul>
           </div>
@@ -76,7 +76,6 @@ export default function Page() {
             <ul className="list-disc pl-5">
               <li>Fita ou porta-chaves do evento</li>
               <li>Certificado</li>
-              <li>Garrafas de água reutilizáveis</li>
             </ul>
           </div>
         </div>
