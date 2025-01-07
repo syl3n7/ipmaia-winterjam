@@ -117,7 +117,7 @@ export default function Page() {
           <div className="p-4 bg-gray-50 rounded">
             <h3 className="font-bold">Entrada livre</h3>
             <p>Para alunos e alumni do IPMAIA/UMAIA. A game jam será no formato online/presencial e será dirigido através do servidor de discord da gamejam.
-da game jam. Caso o grupo queira estar a desenvolver presencialmente, devem manifestar o interesse aos organizadores da game jam.
+            Caso o grupo queira estar a desenvolver presencialmente, devem manifestar o interesse aos organizadores da game jam.
 </p>
           </div>
           <div className="p-4 bg-gray-50 rounded">
