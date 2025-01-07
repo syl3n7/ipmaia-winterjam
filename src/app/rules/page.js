@@ -116,7 +116,9 @@ export default function Page() {
           </div>
           <div className="p-4 bg-gray-50 rounded">
             <h3 className="font-bold">Entrada livre</h3>
-            <p>Apenas para alunos do IPMAIA / ISMAI. Participantes externos devem ter pelo menos 1 aluno do IPMAIA / ISMAI presente no grupo. Pelo menos 2 membros do grupo deverão participar de forma presencial, sendo que os restantes membros do grupo poderão trabalhar remotamente.</p>
+            <p>Para alunos e alumni do IPMAIA/UMAIA. A game jam será no formato online/presencial e será dirigido através do servidor de discord da gamejam.
+da game jam. Caso o grupo queira estar a desenvolver presencialmente, devem manifestar o interesse aos organizadores da game jam.
+</p>
           </div>
           <div className="p-4 bg-gray-50 rounded">
             <h3 className="font-bold">Direitos</h3>
@@ -129,14 +131,14 @@ export default function Page() {
         <h2 className="text-2xl font-bold mb-4">6. Horário do Evento (10 a 12 de janeiro)</h2>
         <div className="space-y-2">
           <div className="p-3 bg-gray-50 rounded">
-            <span className="font-bold">Dia 11 - Início:</span>
+            <span className="font-bold">Dia 10 - Início:</span>
             <ul className="list-disc pl-5 mt-2">
               <li>17:00 - Início do Jam</li>
               <li>17:15 - Divulgação do tema</li>
             </ul>
           </div>
           <div className="p-3 bg-gray-50 rounded">
-            <span className="font-bold">Dia 13 - Fim:</span>
+            <span className="font-bold">Dia 12 - Fim:</span>
             <ul className="list-disc pl-5 mt-2">
               <li>14:00 - Fim do Jam</li>
               <li>Avaliação a cargo do júri após as 14:00</li>
