@@ -128,17 +128,17 @@ export default function Page() {
       </section>
 
       <section className="mb-8">
-        <h2 className="text-2xl font-bold mb-4">6. Horário do Evento (10 a 12 de janeiro)</h2>
+        <h2 className="text-2xl font-bold mb-4">6. Horário do Evento (14 a 16 de fevereiro)</h2>
         <div className="space-y-2">
           <div className="p-3 bg-gray-50 rounded">
-            <span className="font-bold">Dia 10 - Início:</span>
+            <span className="font-bold">Dia 14 - Início:</span>
             <ul className="list-disc pl-5 mt-2">
               <li>17:00 - Início do Jam</li>
               <li>17:15 - Divulgação do tema</li>
             </ul>
           </div>
           <div className="p-3 bg-gray-50 rounded">
-            <span className="font-bold">Dia 12 - Fim:</span>
+            <span className="font-bold">Dia 16 - Fim:</span>
             <ul className="list-disc pl-5 mt-2">
               <li>14:00 - Fim do Jam</li>
               <li>Avaliação a cargo do júri após as 14:00</li>
