@@ -16,7 +16,7 @@ export default function Home() {
       <div className="relative z-10 h-full flex items-center justify-center px-4">
           <div className="bg-black/50 backdrop-blur-sm rounded-xl p-8 text-center">
             <div className="flex items-center justify-center gap-3 text-3xl text-white mb-4">
-              <span className="drop-shadow-md">11 Janeiro às 17H</span>
+              <span className="drop-shadow-md">14 Janeiro às 17H</span>
             </div>
             <p className="text-4xl font-bold text-white drop-shadow-md">
               45 HORAS DE GAME JAM
