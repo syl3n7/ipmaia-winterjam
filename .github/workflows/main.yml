@@ -1,36 +1,38 @@
-name: Azure Deployment
+name: HomeLab Deployment
 
-# Trigger this workflow on pushes to the specified branch
 on:
+  workflow_dispatch:
   push:
     branches:
       - master
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     environment: deployment
-
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18' # or your preferred version
+
       - name: Install dependencies
-        run: npm install
+        run: npm ci # using ci instead of install for more reliable builds
 
       - name: Build Next.js app
         run: npm run build
-
-      - name: SSH Deploy
-        # Use the 'appleboy/ssh-action' action for SSH deployment
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.HOST }} # Your server's IP address
-          username: ${{ secrets.USERNAME }} # Your server's username
-          key: ${{ secrets.SSH_PRIVATE_KEY }} # Your server's SSH private key
-          script: |
-            cd ipmaia-winterjam # Specify the path to your app directory on the server
-            git pull
-            npm install
-            npm run build
-            pm2 restart ecosystem.config.js # Replace with your PM2 service name
+        
+      - name: Deploy with PM2
+        run: |
+          git pull
+          if ! command -v pm2 &> /dev/null; then
+            echo "PM2 is not installed"
+            exit 1
+          fi
+          npm ci
+          npm run build
+          pm2 restart ecosystem.config.js
