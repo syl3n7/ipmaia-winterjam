@@ -91,4 +91,6 @@ This website serves as the official platform for IPMAIA's WinterJam event, provi
 
 ---
 
+Disclaimer: the copyright tag is because of the art used being produced by the students, so the art itself its not open-source. the rest is opensource.
+
 © Copyright IPMAIA - All rights reserved
