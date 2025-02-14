@@ -1,36 +1,44 @@
-name: Azure Deployment
+name: HomeLab Deployment
 
-# Trigger this workflow on pushes to the specified branch
+# Add permissions to the workflow
+permissions:
+  contents: read  # Allow read access to the repository contents
+  deployments: write  # Allow writing to deployments (if needed)
+  actions: write  # Allow writing to GitHub Actions (if needed)
+
 on:
+  workflow_dispatch:  # Allow manual triggering of the workflow
   push:
     branches:
-      - master
+      - main  # Trigger on push to the main branch
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
-    environment: deployment
+    runs-on: self-hosted  # Use a self-hosted runner
+    environment: deployment  # Specify the deployment environment
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v2  # Check out the repository code
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'  # Set the Node.js version
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci  # Install dependencies using `npm ci`
 
       - name: Build Next.js app
-        run: npm run build
+        run: npm run build  # Build the Next.js application
 
-      - name: SSH Deploy
-        # Use the 'appleboy/ssh-action' action for SSH deployment
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.HOST }} # Your server's IP address
-          username: ${{ secrets.USERNAME }} # Your server's username
-          key: ${{ secrets.SSH_PRIVATE_KEY }} # Your server's SSH private key
-          script: |
-            cd ipmaia-winterjam # Specify the path to your app directory on the server
-            git pull
-            npm install
-            npm run build
-            pm2 restart jam # Replace with your PM2 service name
+      - name: Deploy with PM2
+        run: |
+          git pull  # Pull the latest changes
+          if ! command -v pm2 &> /dev/null; then
+            echo "PM2 is not installed"
+            exit 1
+          fi
+          npm ci  # Reinstall dependencies (optional, if needed)
+          npm run build  # Rebuild the application (optional, if needed)
+          pm2 restart ecosystem.config.js  # Restart the PM2 process
