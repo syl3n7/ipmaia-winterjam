@@ -6,7 +6,7 @@ const MainNavbar = () => {
  
   return (
     <Navbar fluid 
-    className="bg-transparent !bg-gradient-to-b !from-[#d86f3a] !to-transparent sticky top-0 z-50 position-">
+    className="bg-transparent bg-gradient-to-b from-[#d86f3a]/100 to-[#d86f3a]/0 sticky top-0 z-50">
       <NavbarBrand as={Link} href="/">
         <img src="../../favicon.ico" className="mr-3 h-6 sm:h-9" alt="IPMAIA WinterJam favicon" />
         <span className="text-gray-700 self-center whitespace-nowrap text-xl font-semibold dark:text-white">IPMAIA WinterJam</span>

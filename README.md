@@ -1,45 +1,96 @@
 [![Azure Deployment](https://github.com/syl3n7/ipmaia-winterjam/actions/workflows/main.yml/badge.svg)](https://github.com/syl3n7/ipmaia-winterjam/actions/workflows/main.yml)
 
-# IPMAIA WinterJam 2024
+# IPMAIA WinterJam Website
 
-![IPMAIA WinterJam Banner](path-to-banner-image.png)
+A web application for IPMAIA's WinterJam event, a 45-hour game development competition hosted by IPMAIA for game development students.
 
-A winter-themed game development and technology jam hosted by IPMAIA (Instituto Politécnico da Maia).
+## Project Overview
 
-## About the Event
+This website serves as the official platform for IPMAIA's WinterJam event, providing:
+- Event registration via QR code
+- Detailed rules and regulations
+- Event schedule and guidelines
+- Contact information
+- Responsive design for both mobile and desktop users
 
-IPMAIA WinterJam is an exciting event that brings together students, developers, and technology enthusiasts for a winter-themed creative jam. This event provides an opportunity for participants to showcase their skills, collaborate with others, and create innovative projects in a limited timeframe.
+## Event Details
 
-## Key Features
+### Duration
+- 45 hours (Friday 17:00 to Sunday 14:00)
+- January 10-12
 
-- **Winter Theme**: Seasonal-inspired creative projects
-- **Bilingual Support**: Interface available in Portuguese ("Inscreve-te já!") and English ("Enlist Now!")
-- **Community Focus**: Designed for students and tech enthusiasts
-- **Gaming Elements**: Strong focus on game development and interactive media
+### Participation Rules
+- Open to IPMAIA/ISMAI students
+- External participants must team up with at least one IPMAIA/ISMAI student
+- Teams of up to 4 people
+- Minimum 2 team members must participate in person
+- Remote participation allowed for remaining team members
 
-## Getting Started
+### Evaluation Criteria
+- Theme Compliance: 20 points
+- Creativity/USP: 20 points
+- Quality (Fun Factor): 20 points
+- Rules Compliance: 20 points
+- Visual/Aesthetic Presentation: 20 points
 
-1. Visit the official website
-2. Click on "Enlist Now!" to register
-3. Review the rules and guidelines
-4. Start preparing your development environment
+## Technical Stack
 
-## Rules and Guidelines
+### Core Technologies
+- Next.js
+- React
+- Tailwind CSS
+- Flowbite React Components
 
-To maintain fairness and ensure a great experience for all participants, please refer to the "Regras" (Rules) section on our website.
+### Fonts
+- Geist Sans (Variable Font)
+- Geist Mono (Variable Font)
+- Inter (Web Font)
+
+## Components
+
+### Pages
+- Home: Landing page with event banner and registration
+- Rules: Comprehensive rulebook with downloadable PDF
+- Registration: QR code-based registration system
+
+### Core Components
+- MainNavbar: Navigation component with event branding
+- BannerCenter: Registration call-to-action
+- Footer: Social links and copyright information
+- PDFViewer: Responsive rules document viewer
 
 ## Contact
 
-For more information or support, use the "Contacto" section on our website.
+- Email: gamejam.at.ipmaia@gmail.com
+- Social Media:
+  - Instagram: @ipmaiaoficial
+  - Facebook: djd.ipmaia
+  - Website: ipmaia.pt
 
-## Contributing
+## Development
 
-If you'd like to contribute to the organization or development of IPMAIA WinterJam, please reach out to our team through the official channels.
+### Prerequisites
+- Node.js
+- npm/yarn
 
-## License
-
-[Include appropriate license information]
+### Project Structure
+```
+├── components/
+│   ├── banner.js
+│   ├── footer.js
+│   ├── navbar.js
+│   └── PDFViewer.js
+├── public/
+│   └── images/
+│       ├── IPMAIA_SiteBanner.png
+│       └── QRCodeWinterJam.png
+└── app/
+    ├── layout.js
+    └── page.js
+```
 
 ---
 
-© 2024 IPMAIA WinterJam. All rights reserved.
+Disclaimer: the copyright tag is because of the art used being produced by the students, so the art itself its not open-source. the rest is opensource.
+
+© Copyright IPMAIA - All rights reserved

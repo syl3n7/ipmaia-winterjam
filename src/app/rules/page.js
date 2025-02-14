@@ -26,7 +26,7 @@ export default function Page() {
           </div>
           <div className="p-4 bg-gray-50 rounded">
             <h3 className="font-bold">Assédio</h3>
-            <p>Não serão aceitos comportamentos intimidatórios, perseguição, insultos, ou qualquer tipo de assédio, seja pessoalmente, online ou através de outros meios.</p>
+            <p>Não serão aceites comportamentos intimidatórios, perseguição, insultos, ou qualquer tipo de assédio, seja pessoalmente, online ou através de outros meios.</p>
           </div>
           <div className="p-4 bg-gray-50 rounded">
             <h3 className="font-bold">Colaboração</h3>
@@ -45,7 +45,7 @@ export default function Page() {
           <div className="p-4 bg-blue-50 rounded">
             <h3 className="font-bold mb-2">Regras da Jam</h3>
             <ul className="list-disc pl-5 space-y-2">
-              <li>Duração: O jogo deve ser criado em 48 horas (de sexta-feira às 15h até domingo às 15h)</li>
+              <li>Duração: O jogo deve ser criado em 45 horas (de sexta-feira às 17h até domingo às 14h)</li>
               <li>Participação em Equipa: Pode trabalhar sozinho ou em equipa (máximo de 4 pessoas)</li>
             </ul>
           </div>
@@ -76,7 +76,6 @@ export default function Page() {
             <ul className="list-disc pl-5">
               <li>Fita ou porta-chaves do evento</li>
               <li>Certificado</li>
-              <li>Garrafas de água reutilizáveis</li>
             </ul>
           </div>
         </div>
@@ -113,11 +112,13 @@ export default function Page() {
         <div className="space-y-4">
           <div className="p-4 bg-gray-50 rounded">
             <h3 className="font-bold">Submissão</h3>
-            <p>Os projetos devem ser submetidos ao Itch.io após o término das 48 horas e o link partilhado no canal de discord devido.</p>
+            <p>Os projetos devem ser submetidos ao Itch.io após o término das 45 horas e o link partilhado no canal de discord devido.</p>
           </div>
           <div className="p-4 bg-gray-50 rounded">
             <h3 className="font-bold">Entrada livre</h3>
-            <p>Apenas para alunos do IPMAIA / ISMAI. Participantes externos devem ter pelo menos 1 aluno do IPMAIA / ISMAI presente no grupo. Pelo menos 2 membros do grupo deverão participar de forma presencial, sendo que os restantes membros do grupo poderão trabalhar remotamente.</p>
+            <p>Para alunos e alumni do IPMAIA/UMAIA. A game jam será no formato online/presencial e será dirigido através do servidor de discord da gamejam.
+            Caso o grupo queira estar a desenvolver presencialmente, devem manifestar o interesse aos organizadores da game jam.
+</p>
           </div>
           <div className="p-4 bg-gray-50 rounded">
             <h3 className="font-bold">Direitos</h3>
@@ -127,17 +128,17 @@ export default function Page() {
       </section>
 
       <section className="mb-8">
-        <h2 className="text-2xl font-bold mb-4">6. Horário do Evento (10 a 12 de janeiro)</h2>
+        <h2 className="text-2xl font-bold mb-4">6. Horário do Evento (14 a 16 de fevereiro)</h2>
         <div className="space-y-2">
           <div className="p-3 bg-gray-50 rounded">
-            <span className="font-bold">Dia 10 - Início:</span>
+            <span className="font-bold">Dia 14 - Início:</span>
             <ul className="list-disc pl-5 mt-2">
-              <li>13:00 - Início do Jam</li>
-              <li>14:00 - Divulgação do tema</li>
+              <li>17:00 - Início do Jam</li>
+              <li>17:15 - Divulgação do tema</li>
             </ul>
           </div>
           <div className="p-3 bg-gray-50 rounded">
-            <span className="font-bold">Dia 12 - Fim:</span>
+            <span className="font-bold">Dia 16 - Fim:</span>
             <ul className="list-disc pl-5 mt-2">
               <li>14:00 - Fim do Jam</li>
               <li>Avaliação a cargo do júri após as 14:00</li>
