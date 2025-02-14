@@ -37,11 +37,11 @@ export default function Home() {
           <div className="bg-black/50 backdrop-blur-sm rounded-xl p-8 text-center">
             <div className="flex items-center justify-center gap-3 text-3xl text-white mb-4">
               <span className="drop-shadow-md">
-                {hasEventStarted ? 'A decorrer!' : '14 fevereiro às 17H'}
+                Termina 16 fevereiro às 14h
               </span>
             </div>
             <p className="text-4xl font-bold text-white drop-shadow-md">
-              {hasEventStarted ? 'Se tiveres dúvidas consulta as regras' : '45 HORAS DE GAME JAM'}
+              {hasEventStarted ? 'Evento a decorrer, se tiveres dúvidas consulta as regras' : '45 HORAS DE GAME JAM'}
             </p>
             <div className="flex flex-col sm:flex-row gap-6 justify-center mt-8">
               <Link
@@ -49,6 +49,14 @@ export default function Home() {
                 className="bg-orange-500 mt-8 px-8 py-3 hover:bg-orange-600 text-white rounded-lg font-medium text-lg transition-colors duration-200 transform hover:scale-105"
               >
                 Ver Regras
+              </Link>
+              <Link
+                href="https://discord.gg/X97GAg7F6E"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-[#5865F2] mt-8 px-8 py-3 hover:bg-[#4752C4] text-white rounded-lg font-medium text-lg transition-colors duration-200 transform hover:scale-105"
+              >
+                Junta-te ao Discord
               </Link>
               <Link
                 href="/enlist-now"
