@@ -4,32 +4,23 @@ import Background from "../components/Background";
 import Link from "next/link";
 
 export default function Home() {
-  const [hasEventStarted, setHasEventStarted] = useState(() => {
+  const [hasEventStarted, setHasEventStarted] = useState(false);
+  const [hasEventEnded, setHasEventEnded] = useState(false);
+  const [currentTime, setCurrentTime] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
     // Initialize from localStorage if available
     const cached = localStorage.getItem('eventStatus');
     if (cached) {
       const { hasStarted, hasEnded, timestamp } = JSON.parse(cached);
       // Only use cache if it's less than 5 minutes old
       if (Date.now() - timestamp < 300000) {
-        return hasStarted;
+        setHasEventStarted(hasStarted);
+        setHasEventEnded(hasEnded);
       }
     }
-    return false;
-  });
-  
-  const [hasEventEnded, setHasEventEnded] = useState(() => {
-    const cached = localStorage.getItem('eventStatus');
-    if (cached) {
-      const { hasEnded, timestamp } = JSON.parse(cached);
-      if (Date.now() - timestamp < 300000) {
-        return hasEnded;
-      }
-    }
-    return false;
-  });
-
-  const [currentTime, setCurrentTime] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+  }, []);
 
   const fetchCurrentTime = async () => {
     // Try multiple time APIs in order
@@ -76,43 +67,33 @@ export default function Home() {
     return new Date();
   };
 
-  const checkEventStatus = async () => {
-    setIsLoading(true);
-    try {
-      const now = await fetchCurrentTime();
-      const eventStart = new Date('2025-02-14T17:00:00Z');
-      const eventEnd = new Date('2025-02-16T14:00:00Z');
-      
-      const hasStarted = now >= eventStart;
-      const hasEnded = now >= eventEnd;
-
-      localStorage.setItem('eventStatus', JSON.stringify({
-        hasStarted,
-        hasEnded,
-        timestamp: Date.now()
-      }));
-      
-      setCurrentTime(now);
-      setHasEventStarted(hasStarted);
-      setHasEventEnded(hasEnded);
-
-      // Debug log
-      console.log('Time check:', {
-        now: now.toISOString(),
-        start: eventStart.toISOString(),
-        end: eventEnd.toISOString(),
-        hasStarted,
-        hasEnded
-      });
-
-    } catch (error) {
-      console.error('Failed to check event status:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   useEffect(() => {
+    const checkEventStatus = async () => {
+      setIsLoading(true);
+      try {
+        const now = await fetchCurrentTime();
+        const eventStart = new Date('2025-02-14T17:00:00Z');
+        const eventEnd = new Date('2025-02-16T14:00:00Z');
+        
+        const hasStarted = now >= eventStart;
+        const hasEnded = now >= eventEnd;
+
+        localStorage.setItem('eventStatus', JSON.stringify({
+          hasStarted,
+          hasEnded,
+          timestamp: Date.now()
+        }));
+        
+        setCurrentTime(now);
+        setHasEventStarted(hasStarted);
+        setHasEventEnded(hasEnded);
+      } catch (error) {
+        console.error('Failed to check event status:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
     // Initial check
     checkEventStatus();
     
