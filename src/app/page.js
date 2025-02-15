@@ -5,22 +5,56 @@ import Link from "next/link";
 
 export default function Home() {
   const [hasEventStarted, setHasEventStarted] = useState(false);
+  const [timeLeft, setTimeLeft] = useState('');
 
   useEffect(() => {
-    const eventDate = new Date('2024-02-14T17:00:00');
+    const eventStart = new Date('2024-02-14T17:00:00');
+    const eventEnd = new Date('2024-02-16T14:00:00');
     
-    const checkEventStatus = () => {
+    const calculateTimeLeft = () => {
       const now = new Date();
-      setHasEventStarted(now >= eventDate);
+      const targetDate = now < eventStart ? eventStart : eventEnd;
+      const difference = targetDate - now;
+
+      // Add console log to debug
+      console.log('Current time:', now);
+      console.log('Target date:', targetDate);
+      console.log('Difference:', difference);
+
+      // Check if the difference is negative
+      if (difference <= 0) {
+        console.log('Timer finished');
+        return '';
+      }
+
+      const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((difference % (1000 * 60)) / 1000);
+
+      const timeString = `${days}d ${hours}h ${minutes}m ${seconds}s`;
+      console.log('Time string:', timeString);
+      return timeString;
     };
 
-    // Check initially
+    const checkEventStatus = () => {
+      const now = new Date();
+      setHasEventStarted(now >= new Date('2024-02-14T17:00:00'));
+    };
+
+    // Initial calculation
+    setTimeLeft(calculateTimeLeft());
     checkEventStatus();
-    
-    // Check every minute
-    const interval = setInterval(checkEventStatus, 60000);
-    
-    return () => clearInterval(interval);
+
+    // Update countdown every second
+    const timer = setInterval(() => {
+      const newTimeLeft = calculateTimeLeft();
+      console.log('New time left:', newTimeLeft); // Debug log
+      setTimeLeft(newTimeLeft);
+      checkEventStatus();
+    }, 1000);
+
+    return () => clearInterval(timer);
   }, []);
 
   return (
@@ -35,13 +69,20 @@ export default function Home() {
       />
       <div className="relative z-10 h-full flex items-center justify-center px-4">
           <div className="bg-black/50 backdrop-blur-sm rounded-xl p-8 text-center">
-            <div className="flex items-center justify-center gap-3 text-3xl text-white mb-4">
+            <div className="flex flex-col items-center justify-center gap-2 text-3xl text-white mb-4">
               <span className="drop-shadow-md">
-                Termina 16 fevereiro às 14h
+                {hasEventStarted ? 'Termina' : 'Começa'} 16 fevereiro às 14h
               </span>
+              {timeLeft && (
+                <div className="bg-black/30 px-6 py-2 rounded-lg">
+                  <span className="text-3xl font-mono text-orange-400 font-bold">
+                    {timeLeft}
+                  </span>
+                </div>
+              )}
             </div>
             <p className="text-4xl font-bold text-white drop-shadow-md">
-              {hasEventStarted ? 'Evento a decorrer, se tiveres dúvidas consulta as regras' : '45 HORAS DE GAME JAM'}
+              {hasEventStarted ? 'Se tiveres dúvidas consulta as regras ou aborda o staff no discord' : '45 HORAS DE GAME JAM'}
             </p>
             <div className="flex flex-col sm:flex-row gap-6 justify-center mt-8">
               <Link
