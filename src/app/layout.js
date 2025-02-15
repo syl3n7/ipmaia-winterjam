@@ -26,7 +26,6 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <head>
         <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
-        <script defer src="https://medama.steelchunk.eu/script.js"></script>
         <script
           defer
           src="https://static.cloudflareinsights.com/beacon.min.js"
