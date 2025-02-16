@@ -3,7 +3,6 @@ import Link from "next/link";
 import { Navbar, NavbarBrand, NavbarCollapse, NavbarLink, NavbarToggle } from "flowbite-react";
 
 const MainNavbar = () => {
- 
   return (
     <Navbar fluid 
     className="bg-transparent bg-gradient-to-b from-[#d86f3a]/100 to-[#d86f3a]/0 sticky top-0 z-50">
@@ -16,6 +15,7 @@ const MainNavbar = () => {
         {/* <NavbarLink href="#" active>Home</NavbarLink> */}
         {/* <NavbarLink as={Link} href="#">Quem Somos?</NavbarLink> */}
         <NavbarLink href="/rules">Regras</NavbarLink>
+        <NavbarLink href="/games">Jogos</NavbarLink>
         <NavbarLink href="mailto:gamejam.at.ipmaia@gmail.com">Contacto</NavbarLink>
       </NavbarCollapse>
     </Navbar>
