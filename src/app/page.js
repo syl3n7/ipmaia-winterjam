@@ -125,22 +125,50 @@ export default function Home() {
           <div className="bg-black/50 backdrop-blur-sm rounded-xl p-8 text-center">
             <div className="flex flex-col items-center justify-center gap-2 text-3xl text-white mb-4">
               <span className="drop-shadow-md">
-                {hasEventEnded 
-                  ? 'Esta Jam terminou, fica atento para uma próxima!'
-                  : hasEventStarted 
-                    ? 'Termina 16 fevereiro às 14h'
-                    : '14 fevereiro às 17H'
-                }
+                Esta Jam terminou, fica atento para uma próxima!
               </span>
             </div>
-            <p className="text-4xl font-bold text-white drop-shadow-md">
-              {hasEventEnded
-                ? 'Em avaliação, resultados brevemente na sala do discord'
-                : hasEventStarted 
-                  ? 'Evento a decorrer, se tiveres dúvidas consulta as regras'
-                  : '45 HORAS DE GAME JAM'
-              }
-            </p>
+
+            {/* Results Section */}
+            <div className="mt-8 mb-6 space-y-6 text-white">
+              <h2 className="text-3xl font-bold mb-6 text-orange-400">Resultados</h2>
+              
+              <div className="space-y-4">
+                <div className="bg-black/30 backdrop-blur-sm rounded-lg p-4 transform hover:scale-105 transition-transform">
+                  <h3 className="text-2xl font-bold flex items-center justify-center gap-2">
+                    <span className="text-yellow-400">🥇</span>
+                    <span>1º LUGAR</span>
+                  </h3>
+                  <p className="text-xl font-semibold text-orange-400 mt-2">Interdimensional Cat</p>
+                  <p className="text-gray-300">Parabéns à equipa Team MALU</p>
+                </div>
+
+                <div className="bg-black/30 backdrop-blur-sm rounded-lg p-4 transform hover:scale-105 transition-transform">
+                  <h3 className="text-2xl font-bold flex items-center justify-center gap-2">
+                    <span className="text-gray-300">🥈</span>
+                    <span>2º LUGAR</span>
+                  </h3>
+                  <p className="text-xl font-semibold text-orange-400 mt-2">Ever Sleep</p>
+                  <p className="text-gray-300">Parabéns à equipa Lata D'Atum</p>
+                </div>
+
+                <div className="bg-black/30 backdrop-blur-sm rounded-lg p-4 transform hover:scale-105 transition-transform">
+                  <h3 className="text-2xl font-bold flex items-center justify-center gap-2">
+                    <span className="text-amber-700">🥉</span>
+                    <span>3º LUGAR</span>
+                  </h3>
+                  <p className="text-xl font-semibold text-orange-400 mt-2">Deep Anomaly</p>
+                  <p className="text-gray-300">Parabéns à equipa Vatanupe</p>
+                </div>
+              </div>
+
+              <p className="text-sm text-gray-300 mt-4">
+                Podes consultar os critérios de avaliação foram os disponibilizados nas regras.
+                <br />
+                Em breve entraremos em contacto por email para entregar os prémios e certificados.
+              </p>
+            </div>
+
             <div className="flex flex-col sm:flex-row gap-6 justify-center mt-8">
               <Link
                 href="/rules"
@@ -157,15 +185,10 @@ export default function Home() {
                 Junta-te ao Discord
               </Link>
               <Link
-                href="/enlist-now"
-                className={`mt-8 px-8 py-3 text-white rounded-lg font-medium text-lg transition-colors duration-200 transform 
-                  ${hasEventStarted 
-                    ? 'bg-gray-500 cursor-not-allowed' 
-                    : 'bg-green-500 hover:bg-green-600 hover:scale-105'
-                  }`}
-                onClick={(e) => hasEventStarted && e.preventDefault()}
+                href="/games"
+                className="bg-green-500 mt-8 px-8 py-3 hover:bg-green-600 text-white rounded-lg font-medium text-lg transition-colors duration-200 transform hover:scale-105"
               >
-                Inscrever já!
+                Ver Jogos
               </Link>
             </div>
           </div>
