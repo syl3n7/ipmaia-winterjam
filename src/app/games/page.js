@@ -35,7 +35,7 @@ const games = [
     description: "2º LUGAR 🥈 - Lata D'Atum",
     instructions: "CONTROLOS:\nMovimento - WASD ou Setas\nInteragir - E\nCorrer - Shift",
     lore: "EverSleep é um jogo onde exploramos o quão estranhos e reais os nossos sonhos podem ser.\n\nEntra na mente de uma criança que fica presa num ciclo de sonhos cheio de anomalias.\n\nNuma cidade onde todos dormem eternamente, descobre a anomalia que causou este fenómeno e tenta acordar os habitantes.\n\nAVISO: Como os vídeos não são suportados ao exportar para WebGL, foi necessário criar este post com o build disponível para download.",
-    path: "https://phoost.itch.io/eversleep",
+    path: "https://phoost.itch.io/eversleep-build",
     ranking: 2,
     team: {
       name: "Lata D'Atum",
