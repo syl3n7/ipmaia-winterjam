@@ -118,87 +118,93 @@ export default function GameJamGamesPage({ params }) {
       />
       
       <div className="relative z-10 max-w-7xl mx-auto px-4 py-16">
-        {/* Header */}
-        <div className="mb-12 text-center">
-          <Link 
-            href={`/archive/${year}/${season}`}
-            className="inline-block mb-4 text-orange-300 hover:text-orange-400"
-          >
-            &larr; Voltar ao Resumo do Evento
-          </Link>
-          <h1 className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-300 to-orange-500 mb-4">
-            {jamData.name} - Jogos
-          </h1>
-          <p className="text-xl text-orange-100/80">
-            Todos os jogos submetidos durante o {jamData.name}
-          </p>
-        </div>
-
-        {/* Filters & Search - Could be added later */}
-        
-        {/* Winners Section */}
-        <div className="mb-16">
-          <h2 className="text-2xl font-bold mb-6 text-orange-400 border-b border-orange-900/50 pb-2">Vencedores</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {games
-              .filter(game => game.ranking)
-              .sort((a, b) => a.ranking - b.ranking)
-              .map((game) => (
-                <div 
-                  key={game.id}
-                  className={`bg-black/50 backdrop-blur-sm rounded-xl overflow-hidden hover:transform hover:scale-105 transition-transform cursor-pointer relative
-                    ${game.ranking === 1 ? 'ring-4 ring-yellow-400 shadow-yellow-400/20 shadow-lg' : 
-                      game.ranking === 2 ? 'ring-4 ring-gray-300 shadow-gray-300/20 shadow-lg' : 
-                      'ring-4 ring-amber-700 shadow-amber-700/20 shadow-lg'}`}
-                  onClick={() => setSelectedGame(game)}
-                >
-                  <RankingBadge ranking={game.ranking} />
-                  <div className="absolute top-4 right-4 z-10">
-                    <Trophy 
-                      size={24} 
-                      className={game.ranking === 1 ? 'text-yellow-400' : 
-                        game.ranking === 2 ? 'text-gray-300' : 'text-amber-700'} 
-                    />
-                  </div>
-                  <img 
-                    src={game.thumbnail} 
-                    alt={game.title}
-                    className="w-full h-48 object-cover"
-                  />
-                  <div className="p-4">
-                    <h2 className="text-xl font-bold text-white mb-2">{game.title}</h2>
-                    <p className="text-gray-300 line-clamp-2">{game.description}</p>
-                  </div>
-                </div>
-            ))}
+        {/* Add a blurred container around all the content */}
+        <div className="bg-black/40 backdrop-blur-md rounded-2xl p-8 shadow-xl">
+          {/* Header */}
+          <div className="mb-12 text-center">
+            <Link 
+              href={`/archive/${year}/${season}`}
+              className="inline-block mb-4 text-orange-300 hover:text-orange-400"
+            >
+              &larr; Voltar ao Resumo do Evento
+            </Link>
+            <h1 className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-300 to-orange-500 mb-4">
+              {jamData.name} - Jogos
+            </h1>
+            <p className="text-xl text-orange-100/80">
+              Todos os jogos submetidos durante o {jamData.name}
+            </p>
           </div>
-        </div>
 
-        {/* All Games */}
-        <div>
-          <h2 className="text-2xl font-bold mb-6 text-white border-b border-gray-700/50 pb-2">Todas as Submissões</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {games.map((game) => (
-              <div 
-                key={game.id}
-                className="bg-black/50 backdrop-blur-sm rounded-xl overflow-hidden hover:transform hover:scale-105 transition-transform cursor-pointer relative hover:ring-2 hover:ring-orange-400"
-                onClick={() => setSelectedGame(game)}
-              >
-                {game.ranking && <RankingBadge ranking={game.ranking} />}
-                <img 
-                  src={game.thumbnail} 
-                  alt={game.title}
-                  className="w-full h-48 object-cover"
-                />
-                <div className="p-4">
-                  <h2 className="text-xl font-bold text-white mb-2">{game.title}</h2>
-                  <p className="text-gray-300 line-clamp-2">{game.description}</p>
-                  <p className="text-sm text-orange-300 mt-2">
-                    {game.team?.name || "Equipa não especificada"}
-                  </p>
-                </div>
-              </div>
-            ))}
+          {/* Winners Section */}
+          <div className="mb-16">
+            <h2 className="text-2xl font-bold mb-6 text-orange-400 border-b border-orange-900/50 pb-2">
+              Vencedores
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {games
+                .filter(game => game.ranking)
+                .sort((a, b) => a.ranking - b.ranking)
+                .map((game) => (
+                  <div 
+                    key={game.id}
+                    className={`bg-black/60 backdrop-blur-sm rounded-xl overflow-hidden hover:transform hover:scale-105 transition-transform cursor-pointer relative
+                      ${game.ranking === 1 ? 'ring-4 ring-yellow-400 shadow-yellow-400/20 shadow-lg' : 
+                        game.ranking === 2 ? 'ring-4 ring-gray-300 shadow-gray-300/20 shadow-lg' : 
+                        'ring-4 ring-amber-700 shadow-amber-700/20 shadow-lg'}`}
+                    onClick={() => setSelectedGame(game)}
+                  >
+                    <RankingBadge ranking={game.ranking} />
+                    <div className="absolute top-4 right-4 z-10">
+                      <Trophy 
+                        size={24} 
+                        className={game.ranking === 1 ? 'text-yellow-400' : 
+                          game.ranking === 2 ? 'text-gray-300' : 'text-amber-700'} 
+                      />
+                    </div>
+                    <img 
+                      src={game.thumbnail} 
+                      alt={game.title}
+                      className="w-full h-48 object-cover"
+                    />
+                    <div className="p-4">
+                      <h2 className="text-xl font-bold text-white mb-2">{game.title}</h2>
+                      <p className="text-gray-300 line-clamp-2">{game.description}</p>
+                    </div>
+                  </div>
+              ))}
+            </div>
+          </div>
+
+          {/* All Games (excluding winners) */}
+          <div>
+            <h2 className="text-2xl font-bold mb-6 text-white border-b border-gray-700/50 pb-2">
+              Restantes Submissões
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {games
+                .filter(game => !game.ranking) // Only show games without rankings
+                .map((game) => (
+                  <div 
+                    key={game.id}
+                    className="bg-black/60 backdrop-blur-sm rounded-xl overflow-hidden hover:transform hover:scale-105 transition-transform cursor-pointer relative hover:ring-2 hover:ring-orange-400"
+                    onClick={() => setSelectedGame(game)}
+                  >
+                    <img 
+                      src={game.thumbnail} 
+                      alt={game.title}
+                      className="w-full h-48 object-cover"
+                    />
+                    <div className="p-4">
+                      <h2 className="text-xl font-bold text-white mb-2">{game.title}</h2>
+                      <p className="text-gray-300 line-clamp-2">{game.description}</p>
+                      <p className="text-sm text-orange-300 mt-2">
+                        {game.team?.name || "Equipa não especificada"}
+                      </p>
+                    </div>
+                  </div>
+              ))}
+            </div>
           </div>
         </div>
 
