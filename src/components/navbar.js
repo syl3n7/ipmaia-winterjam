@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { Navbar, NavbarBrand, NavbarCollapse, NavbarLink, NavbarToggle } from "flowbite-react";
 import { ChevronDown } from "lucide-react";
 import { useState } from "react";
+import { getAllGameJams } from "../data/gameJamData";
 
 const MainNavbar = () => {
   const pathname = usePathname();
@@ -30,18 +31,8 @@ const MainNavbar = () => {
     ? "bg-orange-950/80 backdrop-blur-sm border-orange-900"
     : "bg-gray-800/90 backdrop-blur-sm border-gray-700";
 
-  // Game jam entries for the dropdown
-  const archiveItems = [
-    { 
-      id: "winter-2025",
-      name: "WinterJam 2025", 
-      path: "/archive/2025/winter",
-      isCurrent: true
-    }
-    // add more jams here later
-    // { id: "summer-2025", name: "SummerJam 2025", path: "/archive/2025/summer" }
-    // { id: "winter-2024", name: "WinterJam 2024", path: "/archive/2024/winter" }
-  ];
+  // Get game jam entries from the centralized data
+  const archiveItems = getAllGameJams();
 
   return (
     <Navbar fluid className={navbarClassName}>
