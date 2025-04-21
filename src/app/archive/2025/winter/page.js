@@ -28,7 +28,6 @@ export default function WinterJam2025() {
       path: "https://kofkof.itch.io/deep-anomaly",
       ranking: 3,
     },
-    // Include other games if needed...
   ];
 
   const eventInfo = {
@@ -143,7 +142,7 @@ export default function WinterJam2025() {
 
           <div className="text-center mt-12">
             <Link 
-              href="/games" 
+              href="/archive/2025/winter/games" 
               className="inline-block bg-orange-500 px-8 py-3 text-white rounded-lg hover:bg-orange-600 transition-colors transform hover:scale-105"
             >
               Ver Todos os Jogos
