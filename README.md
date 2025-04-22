@@ -1,4 +1,4 @@
-[![Azure Deployment](https://github.com/syl3n7/ipmaia-winterjam/actions/workflows/main.yml/badge.svg)](https://github.com/syl3n7/ipmaia-winterjam/actions/workflows/main.yml)
+[![HomeLab Deployment](https://github.com/syl3n7/ipmaia-winterjam/actions/workflows/main.yml/badge.svg)](https://github.com/syl3n7/ipmaia-winterjam/actions/workflows/main.yml)
 
 # IPMAIA WinterJam Website
 
@@ -7,7 +7,8 @@ A web application for IPMAIA's WinterJam event, a 45-hour game development compe
 ## Project Overview
 
 This website serves as the official platform for IPMAIA's WinterJam event, providing:
-- Event registration via QR code
+- Event registration via Microsoft Forms
+- Game archive with all submitted games
 - Detailed rules and regulations
 - Event schedule and guidelines
 - Contact information
@@ -17,14 +18,13 @@ This website serves as the official platform for IPMAIA's WinterJam event, provi
 
 ### Duration
 - 45 hours (Friday 17:00 to Sunday 14:00)
-- January 10-12
+- February 14-16, 2025
 
 ### Participation Rules
-- Open to IPMAIA/ISMAI students
-- External participants must team up with at least one IPMAIA/ISMAI student
+- Open to IPMAIA/UMAIA students and alumni
 - Teams of up to 4 people
-- Minimum 2 team members must participate in person
-- Remote participation allowed for remaining team members
+- Online/in-person hybrid format coordinated through Discord
+- In-person participation available upon request
 
 ### Evaluation Criteria
 - Theme Compliance: 20 points
@@ -36,8 +36,8 @@ This website serves as the official platform for IPMAIA's WinterJam event, provi
 ## Technical Stack
 
 ### Core Technologies
-- Next.js
-- React
+- Next.js 15
+- React 18
 - Tailwind CSS
 - Flowbite React Components
 
@@ -46,51 +46,78 @@ This website serves as the official platform for IPMAIA's WinterJam event, provi
 - Geist Mono (Variable Font)
 - Inter (Web Font)
 
-## Components
+## Components and Pages
 
 ### Pages
-- Home: Landing page with event banner and registration
+- Home: Landing page with event banner and dynamic registration/status
+- Archive: Browse all past game jams and submitted games
 - Rules: Comprehensive rulebook with downloadable PDF
-- Registration: QR code-based registration system
+- Registration: Microsoft Forms integration
 
 ### Core Components
 - MainNavbar: Navigation component with event branding
-- BannerCenter: Registration call-to-action
+- Background: Dynamic background image with error handling
+- GameModal: Interactive game details viewer
 - Footer: Social links and copyright information
-- PDFViewer: Responsive rules document viewer
+
+## Game Archive Features
+
+- Browse all submitted games
+- Filter by winners and other submissions
+- View detailed game information including:
+  - Game descriptions and instructions
+  - Screenshots and gameplay details
+  - Team information and member roles
+  - Direct links to play the games
+
+## Event Status Features
+
+- Real-time event status detection
+- Offline-capable with cached status information 
+- Dynamic UI based on event phase (upcoming, ongoing, completed)
 
 ## Contact
 
 - Email: gamejam.at.ipmaia@gmail.com
 - Social Media:
   - Instagram: @ipmaiaoficial
-  - Facebook: djd.ipmaia
-  - Website: ipmaia.pt
+  - Facebook: @ipmaiaoficial
+  - Website: https://ipmaia.pt
 
 ## Development
 
 ### Prerequisites
-- Node.js
+- Node.js 18+
 - npm/yarn
 
 ### Project Structure
-```
-├── components/
-│   ├── banner.js
-│   ├── footer.js
-│   ├── navbar.js
-│   └── PDFViewer.js
-├── public/
-│   └── images/
-│       ├── IPMAIA_SiteBanner.png
-│       └── QRCodeWinterJam.png
-└── app/
-    ├── layout.js
-    └── page.js
-```
 
----
+The project follows a standard Next.js App Router structure:
 
-Disclaimer: the copyright tag is because of the art used being produced by the students, so the art itself its not open-source. the rest is opensource.
+- src/
+  - app/ - Next.js pages using the App Router
+  - components/ - Reusable UI components
+  - data/ - Data models and API
+  - fonts/ - Custom font files
 
-© Copyright IPMAIA - All rights reserved
+Main application routes:
+- / - Homepage with event status
+- /rules - Event rules and guidelines
+- /enlist-now - Registration page
+- /archive/[year]/[season] - Game jam archives by year and season
+- /archive/[year]/[season]/games - Full game lists for each jam
+
+### Building and Running
+
+```bash
+# Install dependencies
+npm install
+
+# Run development server
+npm run dev
+
+# Build for production
+npm run build
+
+# Start production server
+npm start
