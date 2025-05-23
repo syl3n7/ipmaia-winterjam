@@ -12,19 +12,26 @@ export default function Home() {
   const [fetchError, setFetchError] = useState(false);
 
   useEffect(() => {
-    // Initialize from localStorage if available
-    const cached = localStorage.getItem('eventStatus');
-    if (cached) {
+    // Only access localStorage in browser environment
+    if (typeof window !== 'undefined') {
       try {
-        const { hasStarted, hasEnded, timestamp } = JSON.parse(cached);
-        // Only use cache if it's less than 30 minutes old
-        if (Date.now() - timestamp < 1800000) {
-          setHasEventStarted(hasStarted);
-          setHasEventEnded(hasEnded);
-          setIsLoading(false); // Use cached status without waiting for API
+        // Initialize from localStorage if available
+        const cached = localStorage.getItem('eventStatus');
+        if (cached) {
+          try {
+            const { hasStarted, hasEnded, timestamp } = JSON.parse(cached);
+            // Only use cache if it's less than 30 minutes old
+            if (Date.now() - timestamp < 1800000) {
+              setHasEventStarted(hasStarted);
+              setHasEventEnded(hasEnded);
+              setIsLoading(false); // Use cached status without waiting for API
+            }
+          } catch (error) {
+            console.error('Error parsing cached event status:', error);
+          }
         }
       } catch (error) {
-        console.error('Error parsing cached event status:', error);
+        console.error('Error accessing localStorage:', error);
       }
     }
   }, []);
@@ -82,15 +89,17 @@ export default function Home() {
         }
         
         if (datetime) {
-          // Cache the successful time in localStorage
-          try {
-            localStorage.setItem('lastKnownTime', JSON.stringify({
-              time: datetime,
-              timestamp: Date.now()
-            }));
-            setFetchError(false);
-          } catch (error) {
-            console.warn('Could not store time in localStorage:', error);
+          // Cache the successful time in localStorage (browser only)
+          if (typeof window !== 'undefined') {
+            try {
+              localStorage.setItem('lastKnownTime', JSON.stringify({
+                time: datetime,
+                timestamp: Date.now()
+              }));
+              setFetchError(false);
+            } catch (error) {
+              console.warn('Could not store time in localStorage:', error);
+            }
           }
           return new Date(datetime);
         }
@@ -102,19 +111,21 @@ export default function Home() {
 
     // All API calls failed, try to use cached time
     setFetchError(true);
-    try {
-      const cachedTimeStr = localStorage.getItem('lastKnownTime');
-      if (cachedTimeStr) {
-        const cachedTime = JSON.parse(cachedTimeStr);
-        const { time, timestamp } = cachedTime;
-        console.log('Using cached time from localStorage');
-        const cachedDate = new Date(time);
-        // Add the elapsed time since the cache was stored
-        cachedDate.setMilliseconds(cachedDate.getMilliseconds() + (Date.now() - timestamp));
-        return cachedDate;
+    if (typeof window !== 'undefined') {
+      try {
+        const cachedTimeStr = localStorage.getItem('lastKnownTime');
+        if (cachedTimeStr) {
+          const cachedTime = JSON.parse(cachedTimeStr);
+          const { time, timestamp } = cachedTime;
+          console.log('Using cached time from localStorage');
+          const cachedDate = new Date(time);
+          // Add the elapsed time since the cache was stored
+          cachedDate.setMilliseconds(cachedDate.getMilliseconds() + (Date.now() - timestamp));
+          return cachedDate;
+        }
+      } catch (error) {
+        console.error('Error retrieving cached time:', error);
       }
-    } catch (error) {
-      console.error('Error retrieving cached time:', error);
     }
 
     // Last resort: use local system time
@@ -136,15 +147,17 @@ export default function Home() {
         const hasStarted = now >= eventStart;
         const hasEnded = now >= eventEnd;
 
-        // Save to localStorage
-        try {
-          localStorage.setItem('eventStatus', JSON.stringify({
-            hasStarted,
-            hasEnded,
-            timestamp: Date.now()
-          }));
-        } catch (error) {
-          console.warn('Could not store event status in localStorage:', error);
+        // Save to localStorage (browser only)
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.setItem('eventStatus', JSON.stringify({
+              hasStarted,
+              hasEnded,
+              timestamp: Date.now()
+            }));
+          } catch (error) {
+            console.warn('Could not store event status in localStorage:', error);
+          }
         }
         
         setCurrentTime(now);

@@ -3,6 +3,7 @@ import "./globals.css";
 import React from "react";
 import Footer from "../components/footer";
 import MainNavbar from "../components/navbar";
+import Script from "next/script";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -26,13 +27,14 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <head>
         <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
-        <script
+      </head>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased h-screen flex flex-col`}>
+        <Script
           defer
           src="https://static.cloudflareinsights.com/beacon.min.js"
           data-cf-beacon='{"token": "288377c903af4e4187b8b239e29790e9"}'
+          strategy="afterInteractive"
         />
-      </head>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased h-screen flex flex-col`}>
         <MainNavbar />
         <main className="flex-1 flex flex-col overflow-auto">
           {children}

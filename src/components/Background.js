@@ -4,8 +4,15 @@ import { useState, useEffect } from 'react';
 const Background = ({ imageUrl, fallbackColor = '#f0f0f0', fallbackContent }) => {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    // Set isMounted to true on client-side
+    setIsMounted(true);
+    
+    // Skip image loading process if not in browser
+    if (typeof window === 'undefined') return;
+    
     if (!imageUrl) {
       setHasError(true);
       return;
@@ -27,6 +34,13 @@ const Background = ({ imageUrl, fallbackColor = '#f0f0f0', fallbackContent }) =>
       img.onerror = null;
     };
   }, [imageUrl]);
+
+  // Avoid rendering content that relies on client-side effects until mounted
+  if (!isMounted) {
+    return (
+      <div className="absolute inset-0 z-[-50]" style={{ backgroundColor: fallbackColor }} />
+    );
+  }
 
   return (
     <div className="absolute inset-0 z-[-50] flex items-center justify-center">
