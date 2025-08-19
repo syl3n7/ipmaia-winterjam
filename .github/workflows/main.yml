@@ -32,6 +32,12 @@ jobs:
       - name: Build Next.js app
         run: npm run build  # Build the Next.js application
 
+      - name: Update PM2 to latest version
+        run: |
+          echo "Updating PM2 to latest version to fix security vulnerability"
+          npm install -g pm2@latest
+          pm2 --version
+
       - name: Deploy with PM2
         run: |
           git pull  # Pull the latest changes
