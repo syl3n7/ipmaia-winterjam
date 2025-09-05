@@ -7,12 +7,9 @@
   "build": "next build",
   "start": "next start",
   "lint": "next lint",
-  "export": "next build",
-  "deploy": "npm run export && wrangler deploy --minify",
-  "cf-deploy": "wrangler deploy --minify"
+  "export": "next build"
  },
  "dependencies": {
-  "@cloudflare/kv-asset-handler": "^0.3.4",
   "critters": "^0.0.23",
   "flowbite-react": "^0.10.2",
   "lucide-react": "^0.321.0",
@@ -24,7 +21,6 @@
   "eslint": "^8",
   "eslint-config-next": "15.0.0",
   "postcss": "^8",
-  "tailwindcss": "^3.4.1",
-  "wrangler": "^4.0.0"
+  "tailwindcss": "^3.4.1"
  }
 }
