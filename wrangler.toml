@@ -1,0 +1,9 @@
+name = "ipmaia-winterjam"
+main = "worker.js"
+compatibility_date = "2025-09-05"
+
+[site]
+bucket = "./out"
+
+[env.production]
+name = "ipmaia-winterjam"
