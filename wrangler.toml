@@ -1,8 +1,0 @@
-name = "ipmaia-winterjam"
-compatibility_date = "2023-12-01"
-
-[env.production]
-compatibility_date = "2023-12-01"
-
-# Cloudflare Pages configuration
-pages_build_output_dir = "out"
