@@ -1,91 +1,79 @@
 # Deployment Instructions for IPMAIA WinterJam Website
 
-## Key Changes Made to Fix First-Start Crashes
+## Cloudflare Pages Deployment
 
-The following changes were made to address the issue where the application crashed on first start in the GitHub runner environment:
+This project is configured to deploy to Cloudflare Pages, providing fast global distribution and automatic deployments from GitHub.
 
-1. **Browser-side localStorage Access**: All localStorage calls are now wrapped in `typeof window !== 'undefined'` checks to ensure they only run in browser environments.
+### Setup Instructions
 
-2. **Enhanced Component Hydration**: Added improved hydration with isMounted state in components that use client-side effects.
+#### 1. Cloudflare Account Setup
+1. Create a Cloudflare account at [cloudflare.com](https://cloudflare.com)
+2. Get your Account ID from the Cloudflare dashboard (right sidebar)
+3. Create an API token with the following permissions:
+   - `Cloudflare Pages:Edit`
+   - `Account:Read`
 
-3. **PM2 Configuration Improvements**: Updated the ecosystem.config.js with better restart and memory management settings.
+#### 2. GitHub Repository Setup
+Add the following secrets to your GitHub repository settings:
+- `CLOUDFLARE_API_TOKEN`: Your Cloudflare API token
+- `CLOUDFLARE_ACCOUNT_ID`: Your Cloudflare Account ID
 
-4. **Next.js Configuration**: Simplified Next.js configuration to be more robust.
-
-5. **Dependencies**: Added critters as a dependency for better CSS optimization.
-
-## Deployment Instructions
-
-### Option 1: Direct Start with PM2
-
+#### 3. Local Development
 ```bash
-# Build and start with PM2 in one step
-npm run prod:pm2
+# Install dependencies
+npm install
 
-# Or manually
-npm run build
-npx pm2 start ecosystem.config.js
+# Run development server
+npm run dev
+
+# Build for production
+npm run export
 ```
 
-### Option 2: Standard Production Start
-
+#### 4. Manual Deployment
+If you have Wrangler CLI installed locally:
 ```bash
-# Build and start in one step
-npm run prod
+# Install Wrangler globally
+npm install -g wrangler
 
-# Or manually
-npm run build
-npm start
+# Login to Cloudflare
+wrangler login
+
+# Deploy manually
+npm run export
+npm run deploy
 ```
 
-### Monitoring and Management
+### Automatic Deployment
 
-```bash
-# View logs
-npx pm2 logs
+The project automatically deploys to Cloudflare Pages when:
+- Code is pushed to the `main` branch
+- Manual workflow trigger is used
 
-# Restart the application
-npx pm2 restart jam
+### Project Configuration
 
-# Stop the application
-npx pm2 stop jam
+The project uses:
+- **Next.js Static Export**: Generates static files for optimal performance
+- **Cloudflare Pages**: Global CDN distribution
+- **GitHub Actions**: Automated CI/CD pipeline
 
-# Remove the application from PM2
-npx pm2 delete jam
+### Build Configuration
 
-# Save the PM2 process list to persist across reboots
-npx pm2 save
-```
+- Output directory: `out/`
+- Build command: `npm run export`
+- Node.js version: 18
+- Static site generation with image optimization disabled for compatibility
 
-## Troubleshooting
+### Troubleshooting
 
-If you encounter issues:
+1. **Build Failures**: Check that all dependencies are properly installed and the build runs locally
+2. **Deployment Issues**: Verify that Cloudflare secrets are correctly set in GitHub
+3. **Image Issues**: Images are set to `unoptimized: true` for static export compatibility
 
-1. Check the PM2 logs:
-   ```bash
-   npx pm2 logs
-   ```
+### Migration from GitHub Runner
 
-2. Ensure all dependencies are installed:
-   ```bash
-   npm install
-   ```
-
-3. Try rebuilding the application:
-   ```bash
-   npm run build
-   ```
-
-4. For persistent issues, try a clean start:
-   ```bash
-   npx pm2 delete jam
-   npm run prod:pm2
-   ```
-
-## GitHub Runner Auto-start
-
-For GitHub runners using the auto-start feature, ensure that:
-
-1. All dependencies are correctly installed
-2. The PM2 configuration is being used
-3. The build step completes successfully before PM2 tries to start the application
+This deployment has been migrated from a self-hosted GitHub runner with PM2 to Cloudflare Pages for:
+- Better reliability and uptime
+- Global CDN distribution
+- Automatic scaling
+- Simplified maintenance
