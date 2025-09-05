@@ -1,10 +1,26 @@
 'use client';
 import { useState } from 'react';
 import { X, Trophy } from 'lucide-react';
-import { getGameJam } from "../../../../../data/gameJamData";
+import { getGameJam, gameJams } from "../../../../../data/gameJamData";
 import { notFound } from 'next/navigation';
 import Background from "../../../../../components/Background";
 import Link from "next/link";
+
+// Generate static params for all available year/season combinations
+export function generateStaticParams() {
+  const params = [];
+  
+  Object.keys(gameJams).forEach(year => {
+    Object.keys(gameJams[year]).forEach(season => {
+      params.push({
+        year: year,
+        season: season,
+      });
+    });
+  });
+  
+  return params;
+}
 
 export default function GameJamGamesPage({ params }) {
   const { year, season } = params;

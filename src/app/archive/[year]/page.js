@@ -4,6 +4,13 @@ import { useRouter } from 'next/navigation';
 import { gameJams } from '../../../data/gameJamData';
 import { notFound } from 'next/navigation';
 
+// Generate static params for all available years
+export function generateStaticParams() {
+  return Object.keys(gameJams).map((year) => ({
+    year: year,
+  }));
+}
+
 export default function YearIndexPage({ params }) {
   const router = useRouter();
   const { year } = params;
