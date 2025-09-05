@@ -1,5 +1,6 @@
 {
   "name": "gamejams-ipmaia",
+  "main": "worker.js",
   "compatibility_date": "2025-09-05",
   "assets": {
     "directory": "./out"
