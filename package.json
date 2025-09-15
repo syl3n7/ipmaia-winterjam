@@ -13,7 +13,7 @@
   "critters": "^0.0.23",
   "flowbite-react": "^0.10.2",
   "lucide-react": "^0.321.0",
-  "next": "^15.2.4",
+  "next": "^15.4.7",
   "react": "18.2.0",
   "react-dom": "18.2.0"
  },
@@ -22,6 +22,6 @@
   "eslint-config-next": "15.0.0",
   "postcss": "^8",
   "tailwindcss": "^3.4.1",
-  "wrangler": "^3.0.0"
+  "wrangler": "^4.37.0"
  }
 }
