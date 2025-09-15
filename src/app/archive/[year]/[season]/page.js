@@ -18,8 +18,8 @@ export function generateStaticParams() {
   return params;
 }
 
-export default function GameJamPage({ params }) {
-  const { year, season } = params;
+export default async function GameJamPage({ params }) {
+  const { year, season } = await params;
   const jamData = getGameJam(year, season);
   
   // If jam data doesn't exist, show 404
@@ -28,5 +28,5 @@ export default function GameJamPage({ params }) {
   }
 
   // Pass data to client component
-  return <GameJamClientPage jamData={jamData} params={params} />;
+  return <GameJamClientPage jamData={jamData} params={{ year, season }} />;
 }

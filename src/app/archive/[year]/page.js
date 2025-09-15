@@ -8,8 +8,8 @@ export function generateStaticParams() {
   }));
 }
 
-export default function YearIndexPage({ params }) {
-  const { year } = params;
+export default async function YearIndexPage({ params }) {
+  const { year } = await params;
   
   // Check if the year exists
   if (!gameJams[year]) {

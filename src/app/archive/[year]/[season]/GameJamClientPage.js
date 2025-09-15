@@ -101,7 +101,14 @@ export default function GameJamClientPage({ jamData, params }) {
 
   return (
     <main className="min-h-screen relative overflow-hidden">
-      <Background />
+      <Background 
+        imageUrl={jamData.banner}
+        fallbackContent={
+          <div className="text-gray-500 flex items-center justify-center h-full">
+            <p>A carregar imagem...</p>
+          </div>
+        }
+      />
       
       <div className="relative z-10 pt-32 pb-16">
         <div className="container mx-auto px-4">
