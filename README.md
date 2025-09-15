@@ -84,6 +84,81 @@ This website serves as the official platform for IPMAIA's WinterJam event, provi
   - Facebook: @ipmaiaoficial
   - Website: https://ipmaia.pt
 
+## Security
+
+This application enforces modern security standards and only accepts HTTP/2 or HTTP/3 connections for enhanced security.
+
+### Security Features
+
+- **HTTP/2+ Only**: Rejects HTTP/1.0 and HTTP/1.1 connections
+- **HTTPS Enforcement**: Automatic redirection to HTTPS
+- **Security Headers**: Comprehensive security headers including:
+  - Strict Transport Security (HSTS)
+  - Content Security Policy (CSP)
+  - X-Frame-Options
+  - X-Content-Type-Options
+  - X-XSS-Protection
+  - Referrer Policy
+  - Permissions Policy
+
+### Server Configuration
+
+#### For Nginx
+Add to your server block:
+```nginx
+# Only allow HTTP/2 and HTTP/3
+if ($http2 = "") {
+    return 426 "HTTP/2 or HTTP/3 required";
+}
+
+# Enable HTTP/2
+listen 443 ssl http2;
+
+# Enable HTTP/3 (if supported)
+listen 443 quic reuseport;
+add_header Alt-Svc 'h3=":443"; ma=86400, h2=":443"; ma=86400';
+
+# Security headers
+add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
+add_header X-Content-Type-Options "nosniff" always;
+add_header X-Frame-Options "DENY" always;
+add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+```
+
+#### For Apache (.htaccess)
+```apache
+RewriteEngine On
+RewriteCond %{HTTP:HTTP2-Settings} ^$
+RewriteCond %{HTTPS} on
+RewriteRule .* - [R=426,L]
+
+Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+Header always set Alt-Svc 'h3=":443"; ma=86400, h2=":443"; ma=86400'
+```
+
+#### For Cloudflare
+1. Enable HTTP/2 and HTTP/3 in the Network tab
+2. Create a Worker or Page Rule to block HTTP/1.x requests
+3. Enable HSTS in the Edge Certificates section
+4. The included Cloudflare Worker automatically enforces these security measures
+
+### Environment Variables for Production
+```bash
+FORCE_HTTP2=true
+DISABLE_HTTP1=true
+SECURITY_HEADERS=true
+```
+
+### Security Testing
+To verify HTTP/2+ enforcement:
+```bash
+# Should work (HTTP/2)
+curl -I --http2 https://your-domain.com
+
+# Should return 426 Upgrade Required (HTTP/1.1)
+curl -I --http1.1 https://your-domain.com
+```
+
 ## Development
 
 ### Prerequisites
@@ -121,3 +196,23 @@ npm run build
 
 # Start production server
 npm start
+```
+
+### Deployment Notes
+
+This application includes:
+- **Next.js Middleware**: Automatically enforces HTTP/2+ and adds security headers
+- **Cloudflare Worker**: Pre-configured for Cloudflare Pages deployment with security enforcement
+- **Static Export**: Compatible with any static hosting service that supports HTTP/2+
+
+**Important**: Ensure your hosting provider or CDN supports HTTP/2 and HTTP/3 for optimal security and performance.
+
+### Security Middleware
+
+The application includes built-in middleware that:
+- Blocks HTTP/1.x requests with 426 Upgrade Required response
+- Adds comprehensive security headers to all responses
+- Provides detailed error messages for unsupported protocols
+- Includes Alternative Service headers for HTTP/3 discovery
+
+```

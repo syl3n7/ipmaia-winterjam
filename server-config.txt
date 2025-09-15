@@ -1,0 +1,44 @@
+# HTTP/2+ Only Server Configuration
+# 
+# This configuration ensures that only HTTP/2 and HTTP/3 connections are accepted
+# Add this to your web server configuration (Nginx, Apache, Cloudflare, etc.)
+
+# For Nginx:
+# Add to your server block:
+# 
+# # Only allow HTTP/2 and HTTP/3
+# if ($http2 = "") {
+#     return 426 "HTTP/2 or HTTP/3 required";
+# }
+# 
+# # Enable HTTP/2
+# listen 443 ssl http2;
+# 
+# # Enable HTTP/3 (if supported)
+# listen 443 quic reuseport;
+# add_header Alt-Svc 'h3=":443"; ma=86400, h2=":443"; ma=86400';
+# 
+# # Security headers
+# add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
+# add_header X-Content-Type-Options "nosniff" always;
+# add_header X-Frame-Options "DENY" always;
+# add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+
+# For Apache (.htaccess):
+# RewriteEngine On
+# RewriteCond %{HTTP:HTTP2-Settings} ^$
+# RewriteCond %{HTTPS} on
+# RewriteRule .* - [R=426,L]
+# 
+# Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+# Header always set Alt-Svc 'h3=":443"; ma=86400, h2=":443"; ma=86400'
+
+# For Cloudflare:
+# - Enable HTTP/2 and HTTP/3 in the Network tab
+# - Create a Worker or Page Rule to block HTTP/1.x requests
+# - Enable HSTS in the Edge Certificates section
+
+# Environment Variables for Production:
+# FORCE_HTTP2=true
+# DISABLE_HTTP1=true
+# SECURITY_HEADERS=true
