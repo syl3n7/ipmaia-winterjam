@@ -7,15 +7,13 @@
   "build": "next build",
   "start": "next start",
   "lint": "next lint",
-  "prod": "npm run build && npm start",
-  "prod:pm2": "npm run build && pm2 start ecosystem.config.js"
+  "export": "next build"
  },
  "dependencies": {
   "critters": "^0.0.23",
   "flowbite-react": "^0.10.2",
   "lucide-react": "^0.321.0",
   "next": "^15.2.4",
-  "pm2": "^5.4.3",
   "react": "18.2.0",
   "react-dom": "18.2.0"
  },
