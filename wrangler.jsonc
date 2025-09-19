@@ -2,8 +2,8 @@
   "name": "ipmaia-gamejam",  
   "main": "worker.js",
   "compatibility_date": "2025-09-05",
-  "assets": [
-    { "directory": "./public", "binding": "PUBLIC_ASSETS" },
-    { "directory": "./.next/static", "binding": "STATIC_ASSETS" }
-  ]
+  "assets": {
+    "directory": "./.next",
+    "binding": "ASSETS"
+  }
 }
