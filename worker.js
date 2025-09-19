@@ -47,35 +47,35 @@ export default {
     // Handle dynamic routes by mapping to generated HTML files
     let assetPath = url.pathname;
     
-    // Map routes to the actual HTML files in .next/server/app/
+    // Map routes to the actual HTML files in server/app/
     if (url.pathname === '/') {
-      assetPath = '/.next/server/app/index.html';
+      assetPath = '/server/app/index.html';
     }
     else if (url.pathname === '/archive') {
-      assetPath = '/.next/server/app/archive.html';
+      assetPath = '/server/app/archive.html';
     }
     else if (url.pathname === '/games') {
-      assetPath = '/.next/server/app/games.html';
+      assetPath = '/server/app/games.html';
     }
     else if (url.pathname === '/rules') {
-      assetPath = '/.next/server/app/rules.html';
+      assetPath = '/server/app/rules.html';
     }
     else if (url.pathname === '/enlist-now') {
-      assetPath = '/.next/server/app/enlist-now.html';
+      assetPath = '/server/app/enlist-now.html';
     }
     // For dynamic archive routes, map to the correct static files
     else if (url.pathname.startsWith('/archive/')) {
       // Handle /archive/[year]
       if (url.pathname.match(/^\/archive\/\d{4}$/)) {
-        assetPath = '/.next/server/app/archive/[year].html';
+        assetPath = '/server/app/archive/[year].html';
       }
       // Handle /archive/[year]/[season]
       else if (url.pathname.match(/^\/archive\/\d{4}\/\w+$/)) {
-        assetPath = '/.next/server/app/archive/[year]/[season].html';
+        assetPath = '/server/app/archive/[year]/[season].html';
       }
       // Handle /archive/[year]/[season]/games
       else if (url.pathname.match(/^\/archive\/\d{4}\/\w+\/games$/)) {
-        assetPath = '/.next/server/app/archive/[year]/[season]/games.html';
+        assetPath = '/server/app/archive/[year]/[season]/games.html';
       }
     }
     
@@ -85,7 +85,7 @@ export default {
     
     if (response.status === 404) {
       // If not found, try index.html for SPA routing
-      const indexRequest = new Request(new URL('/.next/server/app/index.html', request.url), request);
+      const indexRequest = new Request(new URL('/server/app/index.html', request.url), request);
       const indexResponse = await env.ASSETS.fetch(indexRequest);
       if (indexResponse.status === 200) {
         return addSecurityHeaders(new Response(indexResponse.body, {
