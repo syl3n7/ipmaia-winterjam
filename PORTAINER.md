@@ -91,3 +91,10 @@ The container includes health checks that Portainer will display:
 - Images are stored in GitHub Container Registry (ghcr.io)
 - Watchtower will only update containers with the appropriate labels
 - All containers have restart policies set to `unless-stopped`
+
+## ⏳ First Deployment
+
+**IMPORTANT**: If this is your first deployment, wait 3-5 minutes for the Docker image to build on GitHub Actions before deploying the stack. You can check the build status at:
+https://github.com/syl3n7/ipmaia-winterjam/actions
+
+Once the build is complete (green checkmark), the image will be available at `ghcr.io/syl3n7/ipmaia-winterjam:latest`
