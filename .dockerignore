@@ -53,7 +53,7 @@ Dockerfile*
 docker-compose*
 .dockerignore
 
-# Cloudflare
+# Cloudflare (removed)
 .wrangler*
 wrangler.jsonc
 worker.js
