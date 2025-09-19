@@ -1,0 +1,45 @@
+# IPMAIA WinterJam - Frontend Only (Quick Deploy)
+# 🚀 Use this for immediate deployment while backend builds
+# 
+# This gives you the working website right now with static data
+# Later switch to portainer-stack.yml for full dynamic backend
+
+version: '3.8'
+
+services:
+  # Frontend Website Only
+  frontend:
+    image: ghcr.io/syl3n7/ipmaia-winterjam:latest
+    container_name: winterjam-frontend-only
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      NEXT_TELEMETRY_DISABLED: 1
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  # Auto-updater
+  watchtower:
+    image: containrrr/watchtower:latest
+    container_name: watchtower-simple
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      WATCHTOWER_CLEANUP: true
+      WATCHTOWER_POLL_INTERVAL: 300
+      WATCHTOWER_LABEL_ENABLE: true
+    restart: unless-stopped
+    depends_on:
+      - frontend
+
+networks:
+  default:
+    driver: bridge
