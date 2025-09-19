@@ -1,8 +1,55 @@
-[![HomeLab Deployment](https://github.com/syl3n7/ipmaia-winterjam/actions/workflows/main.yml/badge.svg)](https://github.com/syl3n7/ipmaia-winterjam/actions/workflows/main.yml)
+[![Docker Build](https://github.com/syl3n7/ipmaia-winterjam/actions/workflows/docker.yml/badge.svg)](https://github.com/syl3n7/ipmaia-winterjam/actions/workflows/docker.yml)
 
-# IPMAIA WinterJam Website
+# IPMAIA WinterJam Website 🏔️
 
 A web application for IPMAIA's WinterJam event, a 45-hour game development competition hosted by IPMAIA for game development students.
+
+## 🚀 Quick Deploy with Docker
+
+### Method 1: Portainer Stack (Recommended for your setup)
+1. Go to **https://portainer.steelchunk.eu/**
+2. Navigate to **Stacks** → **Add Stack**
+3. Name it `ipmaia-winterjam`
+4. Copy the contents of `portainer-stack.yml` into the editor
+5. Deploy the stack
+6. Access at **http://192.168.1.69:3000**
+
+📖 **[Detailed Portainer Guide](PORTAINER.md)**
+
+### Method 2: Using the deployment script
+```bash
+./deploy.sh
+```
+
+### Method 3: Manual Docker commands
+```bash
+# Pull the latest image
+docker pull ghcr.io/syl3n7/ipmaia-winterjam:latest
+
+# Run the container
+docker run -d \
+  --name ipmaia-winterjam \
+  -p 3000:3000 \
+  --restart unless-stopped \
+  ghcr.io/syl3n7/ipmaia-winterjam:latest
+```
+
+### Method 4: Using Docker Compose
+```bash
+docker-compose up -d
+```
+
+### 🔄 Auto-updates with Watchtower
+To automatically update your container when new versions are pushed:
+```bash
+docker run -d \
+  --name watchtower \
+  --restart unless-stopped \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -e WATCHTOWER_CLEANUP=true \
+  -e WATCHTOWER_POLL_INTERVAL=300 \
+  containrrr/watchtower
+```
 
 ## Project Overview
 

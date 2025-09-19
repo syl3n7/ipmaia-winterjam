@@ -1,0 +1,47 @@
+# IPMAIA WinterJam - Portainer Stack Configuration
+# Deploy this stack in Portainer at https://portainer.steelchunk.eu/
+
+version: '3.8'
+
+services:
+  winterjam:
+    image: ghcr.io/syl3n7/ipmaia-winterjam:latest
+    container_name: ipmaia-winterjam
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_TELEMETRY_DISABLED=1
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    labels:
+      # Watchtower labels for auto-update
+      - "com.centurylinklabs.watchtower.enable=true"
+      # Optional: Add a custom update schedule (every 5 minutes)
+      - "com.centurylinklabs.watchtower.poll-interval=300"
+
+  # Watchtower for auto-updates
+  watchtower:
+    image: containrrr/watchtower:latest
+    container_name: watchtower-winterjam
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - WATCHTOWER_CLEANUP=true
+      - WATCHTOWER_POLL_INTERVAL=300  # Check every 5 minutes
+      - WATCHTOWER_INCLUDE_STOPPED=true
+      - WATCHTOWER_REVIVE_STOPPED=false
+      - WATCHTOWER_LABEL_ENABLE=true  # Only update containers with watchtower labels
+      - WATCHTOWER_DEBUG=true
+    restart: unless-stopped
+    depends_on:
+      - winterjam
+
+networks:
+  default:
+    driver: bridge

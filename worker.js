@@ -40,7 +40,14 @@ export default {
     
     // Handle static assets (JS, CSS, images, etc.)
     if (url.pathname.match(/\.(js|css|png|jpg|jpeg|gif|svg|ico|pdf|woff|woff2|ttf|eot)$/)) {
-      const response = await env.ASSETS.fetch(request);
+      // Rewrite _next paths to remove the _next prefix for Cloudflare Workers
+      let assetPath = url.pathname;
+      if (assetPath.startsWith('/_next/')) {
+        assetPath = assetPath.replace('/_next/', '/');
+      }
+      
+      const assetRequest = new Request(new URL(assetPath, request.url), request);
+      const response = await env.ASSETS.fetch(assetRequest);
       return addSecurityHeaders(response);
     }
     
