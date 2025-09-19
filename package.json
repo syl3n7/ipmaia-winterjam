@@ -4,7 +4,7 @@
  "private": true,
  "scripts": {
   "dev": "next dev --turbo",
-  "build": "next build",
+  "build": "next build && rm -rf .next/cache && rm -rf .next/server && rm -rf .next/types && rm -f .next/*.js && rm -f .next/*.js.map && rm -f .next/BUILD_ID && rm -f .next/*-manifest.json && rm -f .next/webpack-stats.json",
   "start": "next start",
   "lint": "next lint",
   "export": "next build"
