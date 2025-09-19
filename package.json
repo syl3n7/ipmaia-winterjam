@@ -4,10 +4,12 @@
  "private": true,
  "scripts": {
   "dev": "next dev --turbo",
-  "build": "next build && rm -rf .next/cache && find .next/server -name '*.js' -delete && find .next/server -name '*.js.map' -delete && rm -rf .next/types && rm -f .next/*.js && rm -f .next/*.js.map && rm -f .next/BUILD_ID && rm -f .next/*-manifest.json && rm -f .next/webpack-stats.json",
+  "build": "next build",
   "start": "next start",
   "lint": "next lint",
-  "export": "next build"
+  "docker:build": "docker build -t ipmaia-winterjam .",
+  "docker:run": "docker run -d --name ipmaia-winterjam -p 3000:3000 ipmaia-winterjam",
+  "docker:stop": "docker stop ipmaia-winterjam && docker rm ipmaia-winterjam"
  },
  "dependencies": {
   "critters": "^0.0.23",
@@ -21,7 +23,6 @@
   "eslint": "^8",
   "eslint-config-next": "15.0.0",
   "postcss": "^8",
-  "tailwindcss": "^3.4.1",
-  "wrangler": "^4.37.0"
+  "tailwindcss": "^3.4.1"
  }
 }
