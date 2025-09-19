@@ -40,24 +40,7 @@ export default {
     
     // Handle static assets (JS, CSS, images, etc.)
     if (url.pathname.match(/\.(js|css|png|jpg|jpeg|gif|svg|ico|pdf|woff|woff2|ttf|eot)$/)) {
-      let response;
-      
-      // Try to serve from Next.js static assets first (for JS/CSS bundles)
-      if (url.pathname.startsWith('/_next/static/')) {
-        response = await env.STATIC_ASSETS.fetch(request.url.replace('/_next/static/', '/'));
-        if (response.status === 404) {
-          // Fallback to public assets
-          response = await env.PUBLIC_ASSETS.fetch(request);
-        }
-      } else {
-        // Serve from public assets (images, etc.)
-        response = await env.PUBLIC_ASSETS.fetch(request);
-        if (response.status === 404) {
-          // Fallback to static assets
-          response = await env.STATIC_ASSETS.fetch(request);
-        }
-      }
-      
+      const response = await env.ASSETS.fetch(request);
       return addSecurityHeaders(response);
     }
     

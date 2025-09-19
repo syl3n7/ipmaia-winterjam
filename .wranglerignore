@@ -1,2 +1,4 @@
 public/images/WinterJam_Logo_*.png
 public/noise.png
+.next/cache/
+.next/trace
