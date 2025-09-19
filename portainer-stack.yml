@@ -1,17 +1,79 @@
-# IPMAIA WinterJam - Portainer Stack Configuration
-# Deploy this stack in Portainer at https://portainer.steelchunk.eu/
+# IPMAIA WinterJam - Easy Setup Stack
+# 🚀 Deploy this stack in Portainer at https://portainer.steelchunk.eu/
+# 
+# STEP 1: Deploy this stack
+# STEP 2: Access admin at http://192.168.1.69:3001/admin (admin/admin123)
+# STEP 3: Enjoy your dynamic CMS!
 
 version: '3.8'
 
 services:
-  winterjam:
-    image: ghcr.io/syl3n7/ipmaia-winterjam:latest
-    container_name: ipmaia-winterjam
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: winterjam-postgres
+    environment:
+      POSTGRES_DB: winterjam_db
+      POSTGRES_USER: winterjam  
+      POSTGRES_PASSWORD: winterjam_secure_password_2025
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --lc-collate=C --lc-ctype=C"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U winterjam -d winterjam_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # Backend API & Admin Dashboard  
+  backend:
+    image: ghcr.io/syl3n7/ipmaia-winterjam-backend:latest
+    container_name: winterjam-backend
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: production
+      DB_HOST: postgres
+      DB_NAME: winterjam_db
+      DB_USER: winterjam
+      DB_PASSWORD: winterjam_secure_password_2025
+      DB_PORT: 5432
+      SESSION_SECRET: winterjam-super-secret-key-2025-change-me
+      FRONTEND_URL: http://192.168.1.69:3000
+      AUTO_MIGRATE: "true"
+      AUTO_SEED: "true"
+    volumes:
+      - backend_uploads:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3001/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  # Frontend (Next.js Website)
+  frontend:
+    image: ghcr.io/syl3n7/ipmaia-winterjam:latest  
+    container_name: winterjam-frontend
     ports:
       - "3000:3000"
     environment:
-      - NODE_ENV=production
-      - NEXT_TELEMETRY_DISABLED=1
+      NODE_ENV: production
+      NEXT_TELEMETRY_DISABLED: 1
+      NEXT_PUBLIC_API_URL: http://192.168.1.69:3001/api
+    depends_on:
+      backend:
+        condition: service_healthy
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000 || exit 1"]
@@ -20,28 +82,33 @@ services:
       retries: 3
       start_period: 40s
     labels:
-      # Watchtower labels for auto-update
       - "com.centurylinklabs.watchtower.enable=true"
-      # Optional: Add a custom update schedule (every 5 minutes)
-      - "com.centurylinklabs.watchtower.poll-interval=300"
 
-  # Watchtower for auto-updates
+  # Auto-updater for containers
   watchtower:
     image: containrrr/watchtower:latest
     container_name: watchtower-winterjam
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
-      - WATCHTOWER_CLEANUP=true
-      - WATCHTOWER_POLL_INTERVAL=300  # Check every 5 minutes
-      - WATCHTOWER_INCLUDE_STOPPED=true
-      - WATCHTOWER_REVIVE_STOPPED=false
-      - WATCHTOWER_LABEL_ENABLE=true  # Only update containers with watchtower labels
-      - WATCHTOWER_DEBUG=true
+      WATCHTOWER_CLEANUP: true
+      WATCHTOWER_POLL_INTERVAL: 300  # Check every 5 minutes
+      WATCHTOWER_INCLUDE_STOPPED: true
+      WATCHTOWER_REVIVE_STOPPED: false
+      WATCHTOWER_LABEL_ENABLE: true  # Only update labeled containers
+      WATCHTOWER_DEBUG: false
     restart: unless-stopped
     depends_on:
-      - winterjam
+      - frontend
+      - backend
+
+volumes:
+  postgres_data:
+    driver: local
+  backend_uploads:
+    driver: local
 
 networks:
   default:
     driver: bridge
+    name: winterjam-network
