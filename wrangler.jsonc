@@ -1,5 +1,9 @@
 {
-  "name": "gamejams-ipmaia",
+  "name": "ipmaia-gamejam",
+  "main": "worker.js",
   "compatibility_date": "2025-09-05",
-  "pages_build_output_dir": "./.next"
+  "assets": {
+    "directory": "./.next",
+    "binding": "ASSETS"
+  }
 }
