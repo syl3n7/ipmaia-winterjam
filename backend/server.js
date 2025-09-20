@@ -75,10 +75,7 @@ app.use(session({
 // Serve static files (uploaded images, etc.)
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Serve admin dashboard
-app.use('/admin', express.static(path.join(__dirname, 'admin/dist')));
-
-// API Routes
+// API Routes (before static file serving)
 app.use('/api/auth', authRoutes);
 app.use('/api/gamejams', gameJamRoutes);
 app.use('/api/games', gameRoutes);
@@ -94,8 +91,40 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Admin dashboard fallback
+// Debug endpoint to check file system
+app.get('/debug/files', (req, res) => {
+  const fs = require('fs');
+  const adminPath = path.join(__dirname, 'admin');
+  const adminDistPath = path.join(__dirname, 'admin/dist');
+  
+  try {
+    const adminExists = fs.existsSync(adminPath);
+    const adminDistExists = fs.existsSync(adminDistPath);
+    const indexExists = fs.existsSync(path.join(adminDistPath, 'index.html'));
+    
+    res.json({
+      adminPath,
+      adminDistPath,
+      adminExists,
+      adminDistExists,
+      indexExists,
+      files: adminDistExists ? fs.readdirSync(adminDistPath) : 'admin/dist not found'
+    });
+  } catch (error) {
+    res.json({ error: error.message });
+  }
+});
+
+// Serve admin dashboard static files
+app.use('/admin', express.static(path.join(__dirname, 'admin/dist')));
+
+// Admin dashboard fallback for SPA routing
 app.get('/admin/*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'admin/dist/index.html'));
+});
+
+// Specific route for /admin (without trailing slash)
+app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'admin/dist/index.html'));
 });
 
@@ -106,7 +135,9 @@ app.use((req, res) => {
 
 // Error handler
 app.use((err, req, res, next) => {
-  console.error(err.stack);
+  console.error('Server Error:', err.stack);
+  console.error('Request URL:', req.url);
+  console.error('Request Method:', req.method);
   res.status(500).json({ 
     error: process.env.NODE_ENV === 'production' 
       ? 'Something went wrong!' 
