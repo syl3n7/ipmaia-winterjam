@@ -1,37 +1,70 @@
-{{
+{{{
 
-  "name": "ipmaia-winterjam-backend",  "name": "ipmaia-winterjam-backend",
+  "name": "ipmaia-winterjam-backend",
 
-  "version": "1.0.0",  "version": "1.0.0",
+  "version": "1.0.0",  "name": "ipmaia-winterjam-backend",  "name": "ipmaia-winterjam-backend",
 
-  "description": "Backend API for IPMAIA WinterJam game jam website",  "description": "Backend API and admin dashboard for IPMAIA WinterJam",
+  "description": "Backend API and admin dashboard for IPMAIA WinterJam",
 
-  "main": "server.js",  "main": "server.js",
+  "main": "server.js",  "version": "1.0.0",  "version": "1.0.0",
 
-  "scripts": {  "scripts": {
+  "scripts": {
 
-    "start": "node server.js",    "dev": "nodemon server.js",
+    "start": "node server.js",  "description": "Backend API for IPMAIA WinterJam game jam website",  "description": "Backend API and admin dashboard for IPMAIA WinterJam",
 
-    "dev": "nodemon server.js",    "start": "node server.js",
+    "dev": "nodemon server.js",
 
-    "migrate": "node migrate_frontend_data.js"    "seed": "node scripts/seed.js",
+    "migrate": "node migrate_frontend_data.js"  "main": "server.js",  "main": "server.js",
 
-  },    "migrate": "node scripts/migrate.js"
+  },
 
-  "dependencies": {  },
+  "dependencies": {  "scripts": {  "scripts": {
 
-    "express": "^4.18.2",  "dependencies": {
+    "express": "^4.18.2",
 
-    "pg": "^8.11.3",    "express": "^4.18.2",
+    "pg": "^8.11.3",    "start": "node server.js",    "dev": "nodemon server.js",
 
-    "bcryptjs": "^2.4.3",    "cors": "^2.8.5",
+    "bcryptjs": "^2.4.3",
 
-    "jsonwebtoken": "^9.0.2",    "helmet": "^7.1.0",
+    "jsonwebtoken": "^9.0.2",    "dev": "nodemon server.js",    "start": "node server.js",
 
-    "express-session": "^1.17.3",    "morgan": "^1.10.0",
+    "express-session": "^1.17.3",
 
-    "cors": "^2.8.5",    "pg": "^8.11.3",
+    "cors": "^2.8.5",    "migrate": "node migrate_frontend_data.js"    "seed": "node scripts/seed.js",
 
+    "dotenv": "^16.3.1",
+
+    "multer": "^1.4.5-lts.1",  },    "migrate": "node scripts/migrate.js"
+
+    "helmet": "^7.1.0",
+
+    "express-rate-limit": "^7.1.5"  "dependencies": {  },
+
+  },
+
+  "devDependencies": {    "express": "^4.18.2",  "dependencies": {
+
+    "nodemon": "^3.0.2"
+
+  },    "pg": "^8.11.3",    "express": "^4.18.2",
+
+  "keywords": [
+
+    "express",    "bcryptjs": "^2.4.3",    "cors": "^2.8.5",
+
+    "api",
+
+    "gamejam",    "jsonwebtoken": "^9.0.2",    "helmet": "^7.1.0",
+
+    "ipmaia"
+
+  ],    "express-session": "^1.17.3",    "morgan": "^1.10.0",
+
+  "author": "IPMAIA",
+
+  "license": "MIT"    "cors": "^2.8.5",    "pg": "^8.11.3",
+
+}
     "dotenv": "^16.3.1",    "bcryptjs": "^2.4.3",
 
     "multer": "^1.4.5-lts.1",    "jsonwebtoken": "^9.0.2",
