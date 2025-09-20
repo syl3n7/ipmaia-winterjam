@@ -425,13 +425,131 @@
             align-items: center;
             gap: 8px;
         }
+        
+        /* Authentication Overlay */
+        .auth-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        
+        .auth-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8faff 100%);
+            border-radius: 20px;
+            padding: 40px;
+            width: 90%;
+            max-width: 450px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+        
+        .auth-header h1 {
+            font-size: 2rem;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+        
+        .auth-header p {
+            color: #6c757d;
+            margin-bottom: 30px;
+        }
+        
+        .auth-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .auth-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 16px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .auth-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+        
+        .auth-btn-secondary {
+            background: transparent;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+        
+        .auth-btn-secondary:hover {
+            background: #667eea;
+            color: white;
+        }
+        
+        .user-info {
+            background: rgba(102, 126, 234, 0.1);
+            padding: 10px 16px;
+            border-radius: 8px;
+            color: #667eea;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
+    <!-- Authentication Overlay -->
+    <div id="auth-overlay" class="auth-overlay" style="display: none;">
+        <div class="auth-card">
+            <div class="auth-header">
+                <h1>🔐 Admin Login</h1>
+                <p>Authenticate to access the admin dashboard</p>
+            </div>
+            
+            <div class="auth-buttons">
+                <button class="btn auth-btn" onclick="loginWithOIDC()">
+                    🔑 Login with OIDC
+                </button>
+                <button class="btn auth-btn-secondary" onclick="showLegacyLogin()">
+                    📧 Legacy Login
+                </button>
+            </div>
+            
+            <div id="legacy-login" style="display: none; margin-top: 20px;">
+                <form id="legacy-login-form">
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input type="text" id="username" name="username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password" required>
+                    </div>
+                    <button type="submit" class="btn">Login</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="container" id="admin-content">
         <div class="header">
             <h1>🎮 IPMAIA WinterJam Admin Dashboard</h1>
             <p>Complete Content Management System</p>
+            <div id="user-info" class="user-info"></div>
             <div id="status" class="status info" style="margin-top: 15px;">Loading system status...</div>
         </div>
 
@@ -646,6 +764,101 @@
         let currentEditingGameJam = null;
         let currentEditingGame = null;
         let gameJams = [];
+        let currentUser = null;
+
+        // Authentication Functions
+        async function checkAuthentication() {
+            try {
+                const response = await fetch('/api/auth/me', {
+                    credentials: 'same-origin'
+                });
+                
+                if (response.ok) {
+                    currentUser = await response.json();
+                    showAdminDashboard();
+                    updateUserInfo();
+                } else {
+                    showAuthOverlay();
+                }
+            } catch (error) {
+                console.error('Auth check failed:', error);
+                showAuthOverlay();
+            }
+        }
+
+        function showAuthOverlay() {
+            document.getElementById('auth-overlay').style.display = 'flex';
+            document.getElementById('admin-content').style.display = 'none';
+        }
+
+        function showAdminDashboard() {
+            document.getElementById('auth-overlay').style.display = 'none';
+            document.getElementById('admin-content').style.display = 'block';
+        }
+
+        function updateUserInfo() {
+            if (currentUser) {
+                document.getElementById('user-info').innerHTML = `
+                    👤 ${currentUser.username} (${currentUser.role}) 
+                    <button onclick="logout()" class="btn btn-sm" style="margin-left: 10px;">Logout</button>
+                `;
+            }
+        }
+
+        function loginWithOIDC() {
+            window.location.href = '/api/auth/oidc/login';
+        }
+
+        function showLegacyLogin() {
+            document.getElementById('legacy-login').style.display = 'block';
+        }
+
+        async function logout() {
+            try {
+                await fetch('/api/auth/logout', {
+                    method: 'POST',
+                    credentials: 'same-origin'
+                });
+                location.reload();
+            } catch (error) {
+                console.error('Logout failed:', error);
+            }
+        }
+
+        // Legacy login form handler
+        document.addEventListener('DOMContentLoaded', function() {
+            const legacyForm = document.getElementById('legacy-login-form');
+            if (legacyForm) {
+                legacyForm.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    
+                    const formData = new FormData(e.target);
+                    const credentials = {
+                        username: formData.get('username'),
+                        password: formData.get('password')
+                    };
+
+                    try {
+                        const response = await fetch('/api/auth/login', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(credentials),
+                            credentials: 'same-origin'
+                        });
+
+                        if (response.ok) {
+                            location.reload();
+                        } else {
+                            const error = await response.json();
+                            alert('Login failed: ' + error.error);
+                        }
+                    } catch (error) {
+                        console.error('Login error:', error);
+                        alert('Login failed');
+                    }
+                });
+            }
+        });
 
         // API Helper Functions
         async function apiCall(endpoint, method = 'GET', data = null) {
@@ -1268,6 +1481,7 @@
             });
             
             // Initial load
+            checkAuthentication();
             showStatus('🚀 System ready', 'success');
             loadGameJams();
         });
