@@ -56,7 +56,7 @@ services:
       - backend
     environment:
       NODE_ENV: production
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://192.168.1.69:3001/api}
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.ipmaia-winterjam.pt/api}
     ports:
       - "3000:3000"
 
