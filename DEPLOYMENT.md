@@ -31,7 +31,10 @@ nano .env.production
 - `DB_PASSWORD` - Password forte para PostgreSQL
 - `JWT_SECRET` - Chave secreta JWT (256+ bits)
 - `SESSION_SECRET` - Chave secreta da sessão (256+ bits)
-- `ADMIN_PASSWORD` - Password forte para admin
+- `OIDC_ISSUER_URL` - URL do teu OIDC provider
+- `OIDC_CLIENT_ID` - Client ID do OIDC
+- `OIDC_CLIENT_SECRET` - Client Secret do OIDC
+- `OIDC_ADMIN_EMAIL` - Email que terá privilégios de admin
 - `FRONTEND_URL` - URL do teu domínio
 - `NEXT_PUBLIC_API_URL` - URL da API (domínio/api)
 

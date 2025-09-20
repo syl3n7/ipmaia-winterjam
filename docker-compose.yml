@@ -39,14 +39,12 @@ services:
       JWT_SECRET: ${JWT_SECRET:-change-this-in-production}
       SESSION_SECRET: ${SESSION_SECRET:-change-this-in-production}
       FRONTEND_URL: ${FRONTEND_URL:-http://192.168.1.69:3000}
-      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@ipmaia.pt}
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin123}
       # OIDC Configuration
       OIDC_ISSUER_URL: ${OIDC_ISSUER_URL}
       OIDC_CLIENT_ID: ${OIDC_CLIENT_ID}
       OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET}
       OIDC_REDIRECT_URI: ${OIDC_REDIRECT_URI:-https://api.ipmaia-winterjam.pt/api/auth/oidc/callback}
-      OIDC_ADMIN_EMAIL: ${OIDC_ADMIN_EMAIL:-admin@ipmaia.pt}
+      OIDC_ADMIN_EMAIL: ${OIDC_ADMIN_EMAIL:-claudiosilva@steelchunk.eu}
     ports:
       - "3001:3001"
     volumes:
