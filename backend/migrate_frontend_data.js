@@ -1,5 +1,6 @@
 require('dotenv').config();
 const { pool } = require('./config/database');
+const { createTables } = require('./scripts/migrate');
 
 // Frontend data to import
 const frontendData = {
@@ -237,10 +238,14 @@ async function migrateFromFrontend() {
     try {
         console.log('🚀 Starting migration from frontend data...');
         
+        // First create tables if they don't exist
+        console.log('🗄️ Creating database tables...');
+        await createTables();
+        
         // Clear existing data first
         console.log('🗑️ Clearing existing data...');
-        await pool.query('DELETE FROM games');
-        await pool.query('DELETE FROM game_jams');
+        await pool.query('DELETE FROM games WHERE 1=1');
+        await pool.query('DELETE FROM game_jams WHERE 1=1');
         
         // Import each year and season
         for (const [year, seasons] of Object.entries(frontendData)) {
