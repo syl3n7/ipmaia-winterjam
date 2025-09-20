@@ -14,7 +14,7 @@ if ! docker-compose -f docker-compose.prod.yml ps | grep -q "Up"; then
 fi
 
 echo "🔄 Running data migration..."
-docker-compose -f docker-compose.prod.yml exec backend node migrate-data.js
+docker-compose -f docker-compose.prod.yml exec backend node migrate_frontend_data.js
 
 echo ""
 echo "✅ Data migration completed!"
