@@ -119,11 +119,16 @@ router.get('/oidc/login', (req, res, next) => {
     return res.status(500).json({ error: 'OIDC not configured' });
   }
   
+  // Generate a random state parameter and store it in session
+  const state = require('crypto').randomBytes(16).toString('hex');
+  req.session.oidcState = state;
+  
   const authorizationUrl = oidcClient.authorizationUrl({
     scope: 'openid email profile',
-    state: 'admin-login'
+    state: state
   });
   
+  console.log('🔄 Generated OIDC login URL with state:', state);
   res.redirect(authorizationUrl);
 });
 
@@ -147,9 +152,24 @@ router.get('/oidc/callback', async (req, res) => {
     const params = oidcClient.callbackParams(req);
     console.log('📋 Callback params:', params);
     
+    // Validate state parameter
+    console.log('🔄 Validating state parameter...');
+    const receivedState = params.state;
+    const expectedState = req.session.oidcState;
+    console.log('🔍 State validation:', { received: receivedState, expected: expectedState });
+    
+    if (!expectedState || receivedState !== expectedState) {
+      throw new Error(`State mismatch: expected ${expectedState}, received ${receivedState}`);
+    }
+    
     console.log('🔄 Exchanging code for tokens...');
-    const tokenSet = await oidcClient.callback(process.env.OIDC_REDIRECT_URI, params);
+    // Handle state check properly
+    const checks = { state: expectedState };
+    const tokenSet = await oidcClient.callback(process.env.OIDC_REDIRECT_URI, params, checks);
     console.log('✅ Token exchange successful');
+    
+    // Clear the state from session after successful validation
+    delete req.session.oidcState;
     
     console.log('🔄 Fetching user info...');
     const userinfo = await oidcClient.userinfo(tokenSet);
