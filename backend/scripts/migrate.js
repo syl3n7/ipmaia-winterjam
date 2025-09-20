@@ -1,3 +1,4 @@
+require('dotenv').config();
 const { pool } = require('../config/database');
 
 async function createTables() {

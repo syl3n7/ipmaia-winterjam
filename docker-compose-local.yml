@@ -1,9 +1,5 @@
-# IPMAIA WinterJam - Easy Setup Stack
-# 🚀 Deploy this stack in Portainer at https://portainer.steelchunk.eu/
-# 
-# STEP 1: Deploy this stack
-# STEP 2: Access admin at http://192.168.1.69:3001/admin (admin/admin123)
-# STEP 3: Enjoy your dynamic CMS!
+# IPMAIA WinterJam - Local Development Stack
+# Run with: docker compose -f docker-compose-local.yml up -d
 
 version: '3.8'
 
@@ -11,16 +7,16 @@ services:
   # PostgreSQL Database
   postgres:
     image: postgres:15-alpine
-    container_name: winterjam-postgres
+    container_name: winterjam-postgres-local
     environment:
       POSTGRES_DB: winterjam_db
       POSTGRES_USER: winterjam  
       POSTGRES_PASSWORD: winterjam_secure_password_2025
       POSTGRES_INITDB_ARGS: "--encoding=UTF8 --lc-collate=C --lc-ctype=C"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data_local:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "5433:5432"  # Different port to avoid conflicts
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U winterjam -d winterjam_db"]
@@ -32,7 +28,7 @@ services:
   # Backend API & Admin Dashboard  
   backend:
     image: ghcr.io/syl3n7/ipmaia-winterjam-backend:latest
-    container_name: winterjam-backend
+    container_name: winterjam-backend-local
     ports:
       - "3001:3001"
     environment:
@@ -43,11 +39,11 @@ services:
       DB_PASSWORD: winterjam_secure_password_2025
       DB_PORT: 5432
       SESSION_SECRET: winterjam-super-secret-key-2025-change-me
-      FRONTEND_URL: http://192.168.1.69:3000
+      FRONTEND_URL: http://localhost:3000
       AUTO_MIGRATE: "true"
       AUTO_SEED: "true"
     volumes:
-      - backend_uploads:/app/uploads
+      - backend_uploads_local:/app/uploads
     depends_on:
       postgres:
         condition: service_healthy
@@ -58,19 +54,17 @@ services:
       timeout: 10s
       retries: 3
       start_period: 60s
-    labels:
-      - "com.centurylinklabs.watchtower.enable=true"
 
   # Frontend (Next.js Website)
   frontend:
     image: ghcr.io/syl3n7/ipmaia-winterjam:latest  
-    container_name: winterjam-frontend
+    container_name: winterjam-frontend-local
     ports:
       - "3000:3000"
     environment:
       NODE_ENV: production
       NEXT_TELEMETRY_DISABLED: 1
-      NEXT_PUBLIC_API_URL: http://192.168.1.69:3001/api
+      NEXT_PUBLIC_API_URL: http://localhost:3001/api
     depends_on:
       backend:
         condition: service_healthy
@@ -81,33 +75,13 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
-    labels:
-      - "com.centurylinklabs.watchtower.enable=true"
-
-  # Auto-updater for containers
-  watchtower:
-    image: containrrr/watchtower:latest
-    container_name: watchtower-winterjam
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    environment:
-      WATCHTOWER_CLEANUP: true
-      WATCHTOWER_POLL_INTERVAL: 300  # Check every 5 minutes
-      WATCHTOWER_INCLUDE_STOPPED: true
-      WATCHTOWER_REVIVE_STOPPED: false
-      WATCHTOWER_LABEL_ENABLE: true  # Only update labeled containers
-      WATCHTOWER_DEBUG: false
-    restart: unless-stopped
-    depends_on:
-      - frontend
-      - backend
 
 volumes:
-  postgres_data:
+  postgres_data_local:
     driver: local
-  backend_uploads:
+  backend_uploads_local:
     driver: local
 
 networks:
   default:
-    name: winterjam-network
+    name: winterjam-network-local
