@@ -128,14 +128,32 @@ router.get('/oidc/login', (req, res, next) => {
 });
 
 router.get('/oidc/callback', async (req, res) => {
+  console.log('🔄 OIDC callback initiated');
+  console.log('📝 Query params:', req.query);
+  console.log('🔑 OIDC configuration:', {
+    issuer: process.env.OIDC_ISSUER_URL,
+    clientId: process.env.OIDC_CLIENT_ID,
+    redirectUri: process.env.OIDC_REDIRECT_URI,
+    adminEmail: process.env.OIDC_ADMIN_EMAIL
+  });
+
   if (!oidcClient) {
+    console.error('❌ OIDC client not initialized');
     return res.status(500).json({ error: 'OIDC not configured' });
   }
 
   try {
+    console.log('🔄 Processing callback params...');
     const params = oidcClient.callbackParams(req);
+    console.log('📋 Callback params:', params);
+    
+    console.log('🔄 Exchanging code for tokens...');
     const tokenSet = await oidcClient.callback(process.env.OIDC_REDIRECT_URI, params);
+    console.log('✅ Token exchange successful');
+    
+    console.log('🔄 Fetching user info...');
     const userinfo = await oidcClient.userinfo(tokenSet);
+    console.log('👤 User info received:', { email: userinfo.email, preferred_username: userinfo.preferred_username });
 
     // Check if user exists or create them
     let result = await pool.query(
@@ -185,7 +203,29 @@ router.get('/oidc/callback', async (req, res) => {
     res.redirect('/admin');
   } catch (error) {
     console.error('❌ OIDC callback error:', error);
-    res.status(500).json({ error: 'OIDC authentication failed' });
+    console.error('❌ Error details:', {
+      message: error.message,
+      stack: error.stack,
+      issuer: process.env.OIDC_ISSUER_URL,
+      clientId: process.env.OIDC_CLIENT_ID,
+      redirectUri: process.env.OIDC_REDIRECT_URI
+    });
+    
+    // Return HTML error page for better debugging
+    res.status(500).send(`
+      <html>
+        <head><title>OIDC Authentication Error</title></head>
+        <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+          <h1>🚫 OIDC Authentication Failed</h1>
+          <p><strong>Error:</strong> ${error.message}</p>
+          <p><strong>Issuer:</strong> ${process.env.OIDC_ISSUER_URL}</p>
+          <p><strong>Client ID:</strong> ${process.env.OIDC_CLIENT_ID}</p>
+          <p><strong>Redirect URI:</strong> ${process.env.OIDC_REDIRECT_URI}</p>
+          <hr>
+          <p><a href="/api/auth/oidc/login">Try Again</a></p>
+        </body>
+      </html>
+    `);
   }
 });
 
