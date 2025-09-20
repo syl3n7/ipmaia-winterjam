@@ -1,3 +1,4 @@
+require('dotenv').config();
 const bcrypt = require('bcryptjs');
 const { pool } = require('../config/database');
 const { createTables } = require('./migrate');

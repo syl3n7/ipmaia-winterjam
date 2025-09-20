@@ -10,6 +10,20 @@ export default function Home() {
   const [currentTime, setCurrentTime] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [fetchError, setFetchError] = useState(false);
+  const [currentGameJam, setCurrentGameJam] = useState(null);
+
+  // Fetch current game jam data from backend
+  const fetchCurrentGameJam = async () => {
+    try {
+      const { gameJamApi } = await import('../utils/api');
+      const gameJam = await gameJamApi.getCurrent();
+      setCurrentGameJam(gameJam);
+      return gameJam;
+    } catch (error) {
+      console.error('Error fetching current game jam:', error);
+      return null;
+    }
+  };
 
   useEffect(() => {
     // Only access localStorage in browser environment
@@ -140,9 +154,21 @@ export default function Home() {
       try {
         const now = await fetchCurrentTime();
         
-        // Define the event dates - hardcoded for now
-        const eventStart = new Date('2025-02-14T17:00:00Z');
-        const eventEnd = new Date('2025-02-16T14:00:00Z');
+        // Fetch current game jam data from backend
+        const gameJam = await fetchCurrentGameJam();
+        
+        let eventStart, eventEnd;
+        
+        if (gameJam) {
+          // Use dates from backend
+          eventStart = new Date(gameJam.start_date);
+          eventEnd = new Date(gameJam.end_date);
+        } else {
+          // Fallback to hardcoded dates if backend data unavailable
+          console.warn('Using fallback event dates');
+          eventStart = new Date('2025-02-14T17:00:00Z');
+          eventEnd = new Date('2025-02-16T14:00:00Z');
+        }
         
         const hasStarted = now >= eventStart;
         const hasEnded = now >= eventEnd;
@@ -195,22 +221,34 @@ export default function Home() {
           <div className="bg-black/40 backdrop-blur-md p-8 rounded-2xl shadow-xl">
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6">
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-300 to-orange-500">
-                IPMAIA WinterJam 2025
+                {currentGameJam ? currentGameJam.name : 'IPMAIA WinterJam 2025'}
               </span>
             </h1>
             
             <p className="text-xl md:text-2xl text-orange-100 mb-8">
-              Uma game jam onde estudantes de desenvolvimento de jogos criam experiências únicas em 45 horas.
+              {currentGameJam ? currentGameJam.description : 'Uma game jam onde estudantes de desenvolvimento de jogos criam experiências únicas em 45 horas.'}
             </p>
             
             <div className="flex flex-col md:flex-row items-center justify-center gap-4 mb-12">
               <div className="px-5 py-3 bg-orange-900/50 backdrop-blur-sm rounded-full text-orange-100 inline-flex items-center gap-2">
                 <Clock size={20} />
-                <span>14-16 Fevereiro 2025</span>
+                <span>
+                  {currentGameJam 
+                    ? `${new Date(currentGameJam.start_date).toLocaleDateString('pt-PT')} - ${new Date(currentGameJam.end_date).toLocaleDateString('pt-PT')}`
+                    : '14-16 Fevereiro 2025'
+                  }
+                </span>
               </div>
-              <div className="px-5 py-3 bg-orange-900/50 backdrop-blur-sm rounded-full text-orange-100">
-                <span>Tema: Anomalia</span>
-              </div>
+              {currentGameJam && currentGameJam.theme && (
+                <div className="px-5 py-3 bg-orange-900/50 backdrop-blur-sm rounded-full text-orange-100">
+                  <span>Tema: {currentGameJam.theme}</span>
+                </div>
+              )}
+              {currentGameJam && currentGameJam.required_object && (
+                <div className="px-5 py-3 bg-orange-900/50 backdrop-blur-sm rounded-full text-orange-100">
+                  <span>Objeto: {currentGameJam.required_object}</span>
+                </div>
+              )}
             </div>
             
             {isLoading ? (

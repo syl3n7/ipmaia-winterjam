@@ -3,13 +3,15 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Navbar, NavbarBrand, NavbarCollapse, NavbarLink, NavbarToggle } from "flowbite-react";
 import { ChevronDown } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { getAllGameJams } from "../data/gameJamData";
 
 const MainNavbar = () => {
   const pathname = usePathname();
   const isGamesPage = pathname === "/games" || pathname.includes("/archive");
   const [isArchiveOpen, setIsArchiveOpen] = useState(false);
+  const [archiveItems, setArchiveItems] = useState([]);
+  const [isLoadingArchive, setIsLoadingArchive] = useState(true);
 
   const navbarClassName = isGamesPage
     ? "bg-transparent bg-gradient-to-b from-orange-950/90 to-transparent sticky top-0 z-50 backdrop-blur-sm"
@@ -31,8 +33,45 @@ const MainNavbar = () => {
     ? "bg-orange-950/80 backdrop-blur-sm border-orange-900"
     : "bg-gray-800/90 backdrop-blur-sm border-gray-700";
 
-  // Get game jam entries from the centralized data
-  const archiveItems = getAllGameJams();
+  // Fetch game jams from backend API
+  useEffect(() => {
+    const fetchGameJams = async () => {
+      try {
+        const { gameJamApi } = await import('../utils/api');
+        const gameJams = await gameJamApi.getAll();
+        
+        // Convert to navbar format
+        const archiveItemsFromAPI = gameJams.map(jam => {
+          // Extract year from start_date
+          const year = new Date(jam.start_date).getFullYear();
+          
+          // Determine season from name (you might want to improve this logic)
+          let season = 'winter'; // default
+          if (jam.name.toLowerCase().includes('summer')) season = 'summer';
+          if (jam.name.toLowerCase().includes('spring')) season = 'spring';
+          if (jam.name.toLowerCase().includes('fall') || jam.name.toLowerCase().includes('autumn')) season = 'fall';
+          
+          return {
+            id: jam.id,
+            name: jam.name,
+            path: `/archive/${year}/${season}`,
+            isCurrent: jam.is_active // Use is_active to determine current
+          };
+        });
+        
+        setArchiveItems(archiveItemsFromAPI);
+      } catch (error) {
+        console.error('Error fetching game jams for navbar:', error);
+        // Fallback to hardcoded data
+        const fallbackItems = getAllGameJams();
+        setArchiveItems(fallbackItems);
+      } finally {
+        setIsLoadingArchive(false);
+      }
+    };
+
+    fetchGameJams();
+  }, []);
 
   return (
     <Navbar fluid className={navbarClassName}>
@@ -50,26 +89,32 @@ const MainNavbar = () => {
               className={`flex items-center gap-1 px-3 py-2 rounded ${linkClassName}`}
               onClick={() => setIsArchiveOpen(!isArchiveOpen)}
             >
-              Jogos
+              Arquivo
               <ChevronDown size={16} className={`transition-transform ${isArchiveOpen ? 'rotate-180' : ''}`} />
             </button>
             
             {isArchiveOpen && (
               <div className={`absolute top-full left-0 mt-1 w-48 rounded-md shadow-lg border ${dropdownClassName} z-50`}>
                 <div className="py-1">
-                  {archiveItems.map(item => (
-                    <Link 
-                      key={item.id}
-                      href={item.path}
-                      className={`block px-4 py-2 ${linkClassName} flex justify-between items-center`}
-                      onClick={() => setIsArchiveOpen(false)}
-                    >
-                      <span>{item.name}</span>
-                      {item.isCurrent && (
-                        <span className="bg-green-600 text-xs px-1.5 py-0.5 rounded text-white">Atual</span>
-                      )}
-                    </Link>
-                  ))}
+                  {isLoadingArchive ? (
+                    <div className="px-4 py-2 text-gray-400">A carregar...</div>
+                  ) : archiveItems.length > 0 ? (
+                    archiveItems.map(item => (
+                      <Link 
+                        key={item.id}
+                        href={item.path}
+                        className={`block px-4 py-2 ${linkClassName} flex justify-between items-center`}
+                        onClick={() => setIsArchiveOpen(false)}
+                      >
+                        <span>{item.name}</span>
+                        {item.isCurrent && (
+                          <span className="bg-green-600 text-xs px-1.5 py-0.5 rounded text-white">Atual</span>
+                        )}
+                      </Link>
+                    ))
+                  ) : (
+                    <div className="px-4 py-2 text-gray-400">Nenhum evento encontrado</div>
+                  )}
                 </div>
               </div>
             )}

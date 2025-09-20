@@ -1,36 +1,91 @@
+'use client';
+import { useState, useEffect } from 'react';
 import Link from "next/link";
 import Background from "../../../../components/Background";
 
 export default function WinterJam2025() {
-  // Reusing data from your games page
-  const games = [
-    {
-      id: 1,
-      title: "Interdimensional Cat",
-      thumbnail: "/images/interdimensional-cat.png",
-      description: "1º LUGAR 🥇 - Team MALU",
-      path: "https://makimakesgames.itch.io/interdimensional-cat",
-      ranking: 1,
-    },
-    {
-      id: 2,
-      title: "Ever Sleep",
-      thumbnail: "/images/eversleep.png",
-      description: "2º LUGAR 🥈 - Lata D'Atum",
-      path: "https://phoost.itch.io/eversleep-build",
-      ranking: 2,
-    },
-    {
-      id: 3,
-      title: "Deep Anomaly",
-      thumbnail: "/images/deep-anomaly.png",
-      description: "3º LUGAR 🥉 - Vatanupe",
-      path: "https://kofkof.itch.io/deep-anomaly",
-      ranking: 3,
-    },
-  ];
+  const [games, setGames] = useState([]);
+  const [gameJam, setGameJam] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const eventInfo = {
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const { gameJamApi, archiveApi, processGameData, sortGames } = await import('../../../../utils/api');
+        
+        // Fetch specific game jam for 2025 winter (not current)
+        const specificGameJam = await archiveApi.getGameJamByYearAndSeason(2025, 'winter');
+        setGameJam(specificGameJam);
+        
+        // Fetch games for this specific game jam
+        const gamesData = await gameJamApi.getGames(specificGameJam.id);
+        
+        // Process and sort games data
+        const processedGames = gamesData.map(processGameData);
+        const sortedGames = sortGames(processedGames);
+        
+        setGames(sortedGames);
+      } catch (err) {
+        console.error('Error fetching data:', err);
+        
+        // Fallback to hardcoded data if API fails
+        console.warn('Failed to fetch from API, using fallback data');
+        setGameJam({
+          name: "WinterJam 2025",
+          theme: "Anomalia",
+          required_object: "Ice Stalactite",
+          start_date: "2025-02-14",
+          end_date: "2025-02-16"
+        });
+        setGames([
+          {
+            id: 1,
+            title: "Interdimensional Cat",
+            thumbnail: "/images/interdimensional-cat.png",
+            description: "1º LUGAR 🥇 - Team MALU",
+            path: "https://makimakesgames.itch.io/interdimensional-cat",
+            ranking: 1,
+          },
+          {
+            id: 2,
+            title: "Ever Sleep",
+            thumbnail: "/images/eversleep.png",
+            description: "2º LUGAR 🥈 - Lata D'Atum",
+            path: "https://phoost.itch.io/eversleep-build",
+            ranking: 2,
+          },
+          {
+            id: 3,
+            title: "Deep Anomaly",
+            thumbnail: "/images/deep-anomaly.png",
+            description: "3º LUGAR 🥉 - Vatanupe",
+            path: "https://kofkof.itch.io/deep-anomaly",
+            ranking: 3,
+          },
+        ]);
+        
+        setError(err.message);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  // Fallback event info
+  const eventInfo = gameJam ? {
+    year: new Date(gameJam.start_date).getFullYear(),
+    season: "Winter",
+    title: gameJam.name,
+    theme: gameJam.theme,
+    requiredObject: gameJam.required_object,
+    date: `${new Date(gameJam.start_date).toLocaleDateString('pt-PT')} - ${new Date(gameJam.end_date).toLocaleDateString('pt-PT')}`,
+    participants: 32, // This could be calculated from games data
+    teams: games.length,
+    banner: "/images/IPMAIA_SiteBanner.png",
+  } : {
     year: 2025,
     season: "Winter",
     title: "WinterJam 2025",
@@ -41,6 +96,22 @@ export default function WinterJam2025() {
     teams: 8,
     banner: "/images/IPMAIA_SiteBanner.png",
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-white text-xl">A carregar jogos...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-red-500 text-xl">Erro ao carregar: {error}</div>
+      </div>
+    );
+  }
 
   return (
     <main className="min-h-screen">
