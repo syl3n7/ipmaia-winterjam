@@ -105,6 +105,7 @@ export default function AllGames2025() {
                     alt={game.title}
                     className="w-full h-full object-cover"
                     onError={(e) => {
+                      console.log('Image failed to load:', e.target.src, 'for game:', game);
                       e.target.src = '/images/placeholder-game.png'; // Fallback image
                     }}
                   />
