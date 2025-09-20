@@ -46,6 +46,7 @@ services:
       OIDC_CLIENT_ID: ${OIDC_CLIENT_ID}
       OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET}
       OIDC_REDIRECT_URI: ${OIDC_REDIRECT_URI:-https://api.ipmaia-winterjam.pt/api/auth/oidc/callback}
+      OIDC_ADMIN_EMAIL: ${OIDC_ADMIN_EMAIL:-admin@ipmaia.pt}
     ports:
       - "3001:3001"
     volumes:
