@@ -1,0 +1,87 @@
+# IPMAIA WinterJam - Local Development Stack
+# Run with: docker compose -f docker-compose-local.yml up -d
+
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: winterjam-postgres-local
+    environment:
+      POSTGRES_DB: winterjam_db
+      POSTGRES_USER: winterjam  
+      POSTGRES_PASSWORD: winterjam_secure_password_2025
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --lc-collate=C --lc-ctype=C"
+    volumes:
+      - postgres_data_local:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"  # Different port to avoid conflicts
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U winterjam -d winterjam_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # Backend API & Admin Dashboard  
+  backend:
+    image: ghcr.io/syl3n7/ipmaia-winterjam-backend:latest
+    container_name: winterjam-backend-local
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: production
+      DB_HOST: postgres
+      DB_NAME: winterjam_db
+      DB_USER: winterjam
+      DB_PASSWORD: winterjam_secure_password_2025
+      DB_PORT: 5432
+      SESSION_SECRET: winterjam-super-secret-key-2025-change-me
+      FRONTEND_URL: http://localhost:3000
+      AUTO_MIGRATE: "true"
+      AUTO_SEED: "true"
+    volumes:
+      - backend_uploads_local:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3001/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Frontend (Next.js Website)
+  frontend:
+    image: ghcr.io/syl3n7/ipmaia-winterjam:latest  
+    container_name: winterjam-frontend-local
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      NEXT_TELEMETRY_DISABLED: 1
+      NEXT_PUBLIC_API_URL: http://localhost:3001/api
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  postgres_data_local:
+    driver: local
+  backend_uploads_local:
+    driver: local
+
+networks:
+  default:
+    name: winterjam-network-local
