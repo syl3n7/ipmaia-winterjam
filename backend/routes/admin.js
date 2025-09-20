@@ -1,18 +1,11 @@
 const express = require('express');
 const GameJam = require('../models/GameJam');
 const Game = require('../models/Game');
+const { requireAdmin } = require('./auth');
 const router = express.Router();
 
-// Middleware to check authentication (disabled for now to test the UI)
-const requireAuth = (req, res, next) => {
-  // Temporarily disabled for testing
-  // if (!req.session.userId) {
-  //   return res.status(401).json({ error: 'Authentication required' });
-  // }
-  next();
-};
-
-router.use(requireAuth);
+// All admin routes require admin privileges
+router.use(requireAdmin);
 
 // Dashboard
 router.get('/dashboard', (req, res) => {

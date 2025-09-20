@@ -134,16 +134,26 @@ app.get('/debug/files', (req, res) => {
   }
 });
 
-// Serve admin dashboard static files
-app.use('/admin', express.static(path.join(__dirname, 'admin/dist')));
+// Admin middleware for dashboard access
+const requireAdminAccess = (req, res, next) => {
+  // Check if user is authenticated and has admin role
+  if (!req.session.userId || req.session.role !== 'admin') {
+    // Redirect to OIDC login for admin access
+    return res.redirect('/api/auth/oidc/login');
+  }
+  next();
+};
 
-// Admin dashboard fallback for SPA routing
-app.get('/admin/*', (req, res) => {
+// Serve admin dashboard static files (with admin protection)
+app.use('/admin', requireAdminAccess, express.static(path.join(__dirname, 'admin/dist')));
+
+// Admin dashboard fallback for SPA routing (with admin protection)
+app.get('/admin/*', requireAdminAccess, (req, res) => {
   res.sendFile(path.join(__dirname, 'admin/dist/index.html'));
 });
 
-// Specific route for /admin (without trailing slash)
-app.get('/admin', (req, res) => {
+// Specific route for /admin (without trailing slash, with admin protection)
+app.get('/admin', requireAdminAccess, (req, res) => {
   res.sendFile(path.join(__dirname, 'admin/dist/index.html'));
 });
 
