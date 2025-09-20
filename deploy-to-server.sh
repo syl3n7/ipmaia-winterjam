@@ -51,7 +51,7 @@ sleep 30
 
 # Migrate data to database
 echo "📊 Migrating game jam data to database..."
-docker-compose -f docker-compose.prod.yml exec -T backend node migrate-data.js
+docker-compose -f docker-compose.prod.yml exec -T backend node migrate_frontend_data.js
 
 # Check health
 echo "🏥 Checking service health..."
