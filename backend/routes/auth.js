@@ -6,6 +6,22 @@ const passport = require('passport');
 
 const router = express.Router();
 
+// Admin middleware
+const requireAdmin = (req, res, next) => {
+  if (!req.session.userId) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+  
+  if (req.session.role !== 'admin') {
+    return res.status(403).json({ error: 'Admin privileges required' });
+  }
+  
+  next();
+};
+
+// Export middleware for use in other routes
+router.requireAdmin = requireAdmin;
+
 // Initialize OIDC client
 let oidcClient = null;
 
@@ -37,13 +53,17 @@ const initOIDC = async () => {
         let user = result.rows[0];
         
         if (!user) {
+          // Determine user role based on OIDC_ADMIN_EMAIL
+          const isAdmin = userinfo.email === process.env.OIDC_ADMIN_EMAIL;
+          const role = isAdmin ? 'admin' : 'user';
+          
           // Create new user
           result = await pool.query(
             'INSERT INTO users (username, email, password_hash, role, is_active) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-            [userinfo.preferred_username || userinfo.email, userinfo.email, '', 'admin', true]
+            [userinfo.preferred_username || userinfo.email, userinfo.email, '', role, true]
           );
           user = result.rows[0];
-          console.log('✅ Created new OIDC user:', user.email);
+          console.log(`✅ Created new OIDC user: ${user.email} with role: ${role}`);
         }
 
         return done(null, user);
@@ -62,50 +82,12 @@ const initOIDC = async () => {
 // Initialize OIDC on startup
 initOIDC();
 
-// Login
+// Legacy login - DISABLED (OIDC only)
 router.post('/login', async (req, res) => {
-  try {
-    const { username, password } = req.body;
-
-    if (!username || !password) {
-      return res.status(400).json({ error: 'Username and password required' });
-    }
-
-    // Find user
-    const result = await pool.query(
-      'SELECT * FROM users WHERE username = $1 AND is_active = true',
-      [username]
-    );
-
-    const user = result.rows[0];
-    if (!user) {
-      return res.status(401).json({ error: 'Invalid credentials' });
-    }
-
-    // Check password
-    const isValidPassword = await bcrypt.compare(password, user.password_hash);
-    if (!isValidPassword) {
-      return res.status(401).json({ error: 'Invalid credentials' });
-    }
-
-    // Create session
-    req.session.userId = user.id;
-    req.session.username = user.username;
-    req.session.role = user.role;
-
-    res.json({
-      message: 'Login successful',
-      user: {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        role: user.role
-      }
-    });
-  } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({ error: 'Login failed' });
-  }
+  return res.status(403).json({
+    error: 'Legacy login disabled. Please use OIDC authentication.',
+    redirect: '/api/auth/oidc/login'
+  });
 });
 
 // Logout
@@ -164,13 +146,33 @@ router.get('/oidc/callback', async (req, res) => {
     let user = result.rows[0];
     
     if (!user) {
+      // Determine user role based on OIDC_ADMIN_EMAIL
+      const isAdmin = userinfo.email === process.env.OIDC_ADMIN_EMAIL;
+      const role = isAdmin ? 'admin' : 'user';
+      
       // Create new user
       result = await pool.query(
         'INSERT INTO users (username, email, password_hash, role, is_active) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-        [userinfo.preferred_username || userinfo.email, userinfo.email, '', 'admin', true]
+        [userinfo.preferred_username || userinfo.email, userinfo.email, '', role, true]
       );
       user = result.rows[0];
-      console.log('✅ Created new OIDC user:', user.email);
+      console.log(`✅ Created new OIDC user: ${user.email} with role: ${role}`);
+    }
+
+    // Check if user has admin privileges
+    if (user.role !== 'admin') {
+      return res.status(403).send(`
+        <html>
+          <head><title>Access Denied</title></head>
+          <body style="font-family: Arial, sans-serif; text-align: center; padding: 100px;">
+            <h1>🚫 Access Denied</h1>
+            <p>You don't have admin privileges for this application.</p>
+            <p>Contact the administrator if you need access.</p>
+            <p><strong>Your email:</strong> ${user.email}</p>
+            <p><strong>Admin email:</strong> ${process.env.OIDC_ADMIN_EMAIL}</p>
+          </body>
+        </html>
+      `);
     }
 
     // Create session
