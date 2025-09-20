@@ -4,6 +4,22 @@ import Link from "next/link";
 import Background from "../../../../../components/Background";
 import { ArrowLeft, ExternalLink, Github, Users } from 'lucide-react';
 
+// Utility function to generate image path from game title
+const getGameImagePath = (gameTitle) => {
+  const titleMap = {
+    "Interdimensional Cat": "/images/interdimensional-cat.png",
+    "Ever Sleep": "/images/eversleep.png",
+    "Deep Anomaly": "/images/deep-anomaly.png",
+    "The Lab of Bizarre and Wacky Anomalies": "/images/lab-of-anomalies.png",
+    "Icicle Escape": "/images/icicle-escape.jpg",
+    "Arctic Escape": "/images/arctic-escape.png",
+    "Inverse Protocol": "/images/inverse-protocol.png",
+    "Ice Break": "/images/ice-break.png"
+  };
+  
+  return titleMap[gameTitle] || "/images/placeholder-game.png";
+};
+
 export default function AllGames2025() {
   const [games, setGames] = useState([]);
   const [gameJam, setGameJam] = useState(null);
@@ -101,12 +117,18 @@ export default function AllGames2025() {
                 {/* Game Thumbnail */}
                 <div className="h-48 overflow-hidden relative">
                   <img 
-                    src={game.thumbnail} 
+                    src={game.thumbnail || getGameImagePath(game.title)} 
                     alt={game.title}
                     className="w-full h-full object-cover"
                     onError={(e) => {
-                      console.log('Image failed to load:', e.target.src, 'for game:', game);
-                      e.target.src = '/images/placeholder-game.png'; // Fallback image
+                      console.log('Image failed to load:', e.target.src, 'for game:', game.title);
+                      // Try the mapped image path as fallback
+                      const fallbackPath = getGameImagePath(game.title);
+                      if (e.target.src !== fallbackPath) {
+                        e.target.src = fallbackPath;
+                      } else {
+                        e.target.src = '/images/placeholder-game.png'; // Final fallback
+                      }
                     }}
                   />
                   {game.ranking && (
