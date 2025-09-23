@@ -20,6 +20,25 @@ const publicRoutes = require('./routes/public');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Trust proxy (important for reverse proxy setups like Zoraxy/NPM)
+app.set('trust proxy', 1);
+
+// Debug middleware for proxy headers (remove in production)
+if (process.env.NODE_ENV !== 'production') {
+  app.use((req, res, next) => {
+    console.log('🔍 Proxy Headers Debug:', {
+      host: req.get('host'),
+      'x-forwarded-host': req.get('x-forwarded-host'),
+      'x-forwarded-proto': req.get('x-forwarded-proto'),
+      'x-forwarded-for': req.get('x-forwarded-for'),
+      'x-real-ip': req.get('x-real-ip'),
+      secure: req.secure,
+      protocol: req.protocol
+    });
+    next();
+  });
+}
+
 // Security middleware
 app.use(helmet({
   contentSecurityPolicy: {
