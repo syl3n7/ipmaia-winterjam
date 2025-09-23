@@ -9,7 +9,7 @@ router.get('/settings', async (req, res) => {
     const result = await pool.query(`
       SELECT setting_key, setting_value, setting_type 
       FROM front_page_settings 
-      ORDER BY sort_order, setting_key
+      ORDER BY display_order, setting_key
     `);
     
     // Convert to key-value object for easier frontend use
@@ -37,7 +37,7 @@ router.get('/admin/settings', requireAdmin, async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT * FROM front_page_settings 
-      ORDER BY section, sort_order, setting_key
+      ORDER BY section, display_order, setting_key
     `);
     
     // Group by section for better admin UI organization
