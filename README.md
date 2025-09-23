@@ -45,10 +45,12 @@ docker-compose logs -f backend
 The application includes an intelligent migration system that:
 
 1. **Database starts** with health checks
-2. **Backend starts** and waits for database
-3. **Auto-migration runs** when backend is healthy
-4. **Frontend starts** when backend is ready
-5. **All services connected** via internal network
+2. **Backend starts** and waits for database initialization
+3. **Startup delay** allows backend to fully initialize (configurable via `STARTUP_DELAY`)
+4. **Health checks** verify backend is responding
+5. **Auto-migration runs** when backend is healthy
+6. **Frontend starts** when backend is ready
+7. **All services connected** via internal network
 
 ### Migration Scripts
 ```bash
@@ -65,12 +67,15 @@ npm run migrate:auto
 ### Migration Logs
 ```bash
 # View migration progress
-docker-compose logs backend | grep -E "(🎯|✅|❌|🚀)"
+docker-compose logs backend | grep -E "(⏳|🎯|✅|❌|🚀)"
 
 # Example output:
+# ⏳ Giving backend 10 seconds to initialize...
+# ⏳ Now checking if backend is healthy and running migrations...
 # 🎯 Auto-migration starting...
-# 🔍 Checking backend health (attempt 1/30)...
-# ✅ Backend is healthy on port 3001
+# ⚙️  Max retries: 30, Interval: 2000ms
+# ⏳ Attempt 1/30 - Backend not ready yet (58s remaining)...
+# ✅ Backend is healthy!
 # 🚀 Starting database migration...
 # ✅ Migration completed successfully!
 ```
@@ -142,6 +147,7 @@ docker-compose logs backend | grep -E "(🎯|✅|❌|🚀)"
 | `OIDC_CLIENT_SECRET` | OIDC application secret | `secret_from_pocketid` |
 | `OIDC_REDIRECT_URI` | OAuth callback URL | `https://api.example.com/api/auth/oidc/callback` |
 | `OIDC_ADMIN_EMAIL` | Admin user email | `admin@example.com` |
+| `STARTUP_DELAY` | Docker startup delay (seconds) | `10` (optional, default: 10) |
 
 ### Docker Services
 

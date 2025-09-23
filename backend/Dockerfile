@@ -25,6 +25,9 @@ RUN echo "=== Docker Build Debug ===" && \
 
 RUN mkdir -p uploads
 
+# Make scripts executable
+RUN chmod +x scripts/*.sh scripts/*.js
+
 EXPOSE 3001
 
-CMD ["node", "server.js"]
+CMD ["./scripts/docker-start.sh"]
