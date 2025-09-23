@@ -11,6 +11,38 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
   const [fetchError, setFetchError] = useState(false);
   const [currentGameJam, setCurrentGameJam] = useState(null);
+  const [frontPageSettings, setFrontPageSettings] = useState({});
+
+  // Fetch front page settings from admin-controlled API
+  const fetchFrontPageSettings = async () => {
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+      const response = await fetch(`${apiUrl}/frontpage/settings`);
+      if (!response.ok) throw new Error('Failed to fetch front page settings');
+      const settings = await response.json();
+      setFrontPageSettings(settings);
+      return settings;
+    } catch (error) {
+      console.error('Error fetching front page settings:', error);
+      // Return fallback settings if API fails
+      return {
+        hero_title: 'IPMAIA WinterJam 2025',
+        hero_description: 'Uma game jam onde estudantes de desenvolvimento de jogos criam experiências únicas em 45 horas.',
+        hero_background_image: '/images/IPMAIA_SiteBanner.png',
+        show_event_dates: true,
+        show_theme: true,
+        show_required_object: true,
+        button_before_start_text: 'Inscrever Agora',
+        button_before_start_url: '/enlist-now',
+        button_during_event_text: 'Ver Regras',
+        button_during_event_url: '/rules',
+        button_after_event_text: 'Ver Jogos Submetidos',
+        button_after_event_url: '/archive/2025/winter',
+        status_event_running: 'Evento a decorrer!',
+        status_fallback_message: 'Estamos a usar informação guardada. Algumas funcionalidades podem não refletir o tempo atual.'
+      };
+    }
+  };
 
   // Fetch current game jam data from backend
   const fetchCurrentGameJam = async () => {
@@ -154,8 +186,11 @@ export default function Home() {
       try {
         const now = await fetchCurrentTime();
         
-        // Fetch current game jam data from backend
-        const gameJam = await fetchCurrentGameJam();
+        // Fetch front page settings and current game jam data in parallel
+        const [settings, gameJam] = await Promise.all([
+          fetchFrontPageSettings(),
+          fetchCurrentGameJam()
+        ]);
         
         let eventStart, eventEnd;
         
@@ -208,7 +243,7 @@ export default function Home() {
   return (
     <main className="min-h-screen">
       <Background
-        imageUrl="/images/IPMAIA_SiteBanner.png"
+        imageUrl={frontPageSettings.hero_background_image || '/images/IPMAIA_SiteBanner.png'}
         fallbackContent={
           <div className="text-gray-500 flex items-center justify-center h-full">
             <p>A carregar imagem...</p>
@@ -221,30 +256,32 @@ export default function Home() {
           <div className="bg-black/40 backdrop-blur-md p-8 rounded-2xl shadow-xl">
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6">
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-300 to-orange-500">
-                {currentGameJam ? currentGameJam.name : 'IPMAIA WinterJam 2025'}
+                {currentGameJam ? currentGameJam.name : (frontPageSettings.hero_title || 'IPMAIA WinterJam 2025')}
               </span>
             </h1>
             
             <p className="text-xl md:text-2xl text-orange-100 mb-8">
-              {currentGameJam ? currentGameJam.description : 'Uma game jam onde estudantes de desenvolvimento de jogos criam experiências únicas em 45 horas.'}
+              {currentGameJam ? currentGameJam.description : (frontPageSettings.hero_description || 'Uma game jam onde estudantes de desenvolvimento de jogos criam experiências únicas em 45 horas.')}
             </p>
             
             <div className="flex flex-col md:flex-row items-center justify-center gap-4 mb-12">
-              <div className="px-5 py-3 bg-orange-900/50 backdrop-blur-sm rounded-full text-orange-100 inline-flex items-center gap-2">
-                <Clock size={20} />
-                <span>
-                  {currentGameJam 
-                    ? `${new Date(currentGameJam.start_date).toLocaleDateString('pt-PT')} - ${new Date(currentGameJam.end_date).toLocaleDateString('pt-PT')}`
-                    : '14-16 Fevereiro 2025'
-                  }
-                </span>
-              </div>
-              {currentGameJam && currentGameJam.theme && (
+              {frontPageSettings.show_event_dates !== false && (
+                <div className="px-5 py-3 bg-orange-900/50 backdrop-blur-sm rounded-full text-orange-100 inline-flex items-center gap-2">
+                  <Clock size={20} />
+                  <span>
+                    {currentGameJam 
+                      ? `${new Date(currentGameJam.start_date).toLocaleDateString('pt-PT')} - ${new Date(currentGameJam.end_date).toLocaleDateString('pt-PT')}`
+                      : '14-16 Fevereiro 2025'
+                    }
+                  </span>
+                </div>
+              )}
+              {frontPageSettings.show_theme !== false && currentGameJam && currentGameJam.theme && (
                 <div className="px-5 py-3 bg-orange-900/50 backdrop-blur-sm rounded-full text-orange-100">
                   <span>Tema: {currentGameJam.theme}</span>
                 </div>
               )}
-              {currentGameJam && currentGameJam.required_object && (
+              {frontPageSettings.show_required_object !== false && currentGameJam && currentGameJam.required_object && (
                 <div className="px-5 py-3 bg-orange-900/50 backdrop-blur-sm rounded-full text-orange-100">
                   <span>Objeto: {currentGameJam.required_object}</span>
                 </div>
@@ -257,29 +294,29 @@ export default function Home() {
               </div>
             ) : hasEventEnded ? (
               <Link 
-                href="/archive/2025/winter"
+                href={frontPageSettings.button_after_event_url || "/archive/2025/winter"}
                 className="bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 px-8 rounded-lg text-xl inline-flex items-center gap-2 transition-all hover:scale-105"
               >
-                Ver Jogos Submetidos <ArrowRight size={20} />
+                {frontPageSettings.button_after_event_text || "Ver Jogos Submetidos"} <ArrowRight size={20} />
               </Link>
             ) : hasEventStarted ? (
               <div className="space-y-4">
                 <div className="inline-block bg-green-500/80 text-white px-4 py-2 rounded-md mb-4">
-                  Evento a decorrer!
+                  {frontPageSettings.status_event_running || "Evento a decorrer!"}
                 </div>
                 <Link 
-                  href="/rules" 
+                  href={frontPageSettings.button_during_event_url || "/rules"}
                   className="bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 px-8 rounded-lg text-xl inline-flex items-center gap-2 transition-all hover:scale-105"
                 >
-                  Ver Regras <ArrowRight size={20} />
+                  {frontPageSettings.button_during_event_text || "Ver Regras"} <ArrowRight size={20} />
                 </Link>
               </div>
             ) : (
               <Link 
-                href="/enlist-now" 
+                href={frontPageSettings.button_before_start_url || "/enlist-now"}
                 className="bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 px-8 rounded-lg text-xl inline-flex items-center gap-2 transition-all hover:scale-105"
               >
-                Inscrever Agora <ArrowRight size={20} />
+                {frontPageSettings.button_before_start_text || "Inscrever Agora"} <ArrowRight size={20} />
               </Link>
             )}
 
