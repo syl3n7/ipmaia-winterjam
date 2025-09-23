@@ -12,23 +12,53 @@ const PORT = process.argv[2] || process.env.PORT || 3001;
 const MAX_RETRIES = parseInt(process.argv[3]) || 30; // 30 retries = 5 minutes with 10s delay
 const RETRY_DELAY = parseInt(process.argv[4]) || 10000; // 10 seconds between retries
 
-async function waitForHealth(retries = 0) {
-  console.log(`🔍 Checking backend health (attempt ${retries + 1}/${MAX_RETRIES})...`);
-  
-  try {
-    await checkHealth(PORT);
-    return true;
-  } catch (error) {
-    if (retries >= MAX_RETRIES - 1) {
-      console.error(`❌ Backend failed to become healthy after ${MAX_RETRIES} attempts`);
-      console.error(`Last error: ${error.message}`);
-      return false;
+async function waitForHealth(maxRetries = 30, retryInterval = 2000) {
+    console.log('🔍 Waiting for backend to be healthy...');
+    console.log(`⚙️  Max retries: ${maxRetries}, Interval: ${retryInterval}ms`);
+    
+    for (let i = 0; i < maxRetries; i++) {
+        try {
+            const { spawn } = require('child_process');
+            const healthCheck = spawn('node', ['scripts/health-check.js'], {
+                stdio: 'pipe'
+            });
+            
+            let output = '';
+            healthCheck.stdout.on('data', (data) => {
+                output += data.toString();
+            });
+            
+            healthCheck.stderr.on('data', (data) => {
+                output += data.toString();
+            });
+            
+            await new Promise((resolve, reject) => {
+                healthCheck.on('close', (code) => {
+                    if (code === 0) {
+                        resolve();
+                    } else {
+                        reject(new Error(`Health check failed with code ${code}: ${output}`));
+                    }
+                });
+                
+                healthCheck.on('error', (error) => {
+                    reject(new Error(`Health check process error: ${error.message}`));
+                });
+            });
+            
+            console.log('✅ Backend is healthy!');
+            return true;
+        } catch (error) {
+            const timeLeft = Math.round(((maxRetries - i - 1) * retryInterval) / 1000);
+            console.log(`⏳ Attempt ${i + 1}/${maxRetries} - Backend not ready yet (${timeLeft}s remaining)...`);
+            if (i < maxRetries - 1) {
+                await new Promise(resolve => setTimeout(resolve, retryInterval));
+            }
+        }
     }
     
-    console.log(`⏳ Backend not ready yet, retrying in ${RETRY_DELAY/1000}s...`);
-    await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
-    return waitForHealth(retries + 1);
-  }
+    console.log('❌ Backend health check timed out');
+    return false;
 }
 
 function runMigration() {
