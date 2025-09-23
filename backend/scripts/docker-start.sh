@@ -27,15 +27,23 @@ STARTUP_DELAY=${STARTUP_DELAY:-10}
 echo "⏳ Giving backend ${STARTUP_DELAY} seconds to initialize..."
 sleep $STARTUP_DELAY
 
-echo "⏳ Now checking if backend is healthy and running migrations..."
+# Check if backend process is still running
+if ! kill -0 $BACKEND_PID 2>/dev/null; then
+    echo "❌ Backend process died during initialization!"
+    exit 1
+fi
 
-# Wait for backend health and run migration with enhanced error handling
-if npm run migrate:auto; then
-    echo "✅ Auto-migration completed successfully!"
+# Give backend additional time to fully initialize database connections
+echo "⏳ Allowing backend to establish database connections..."
+sleep 5
+
+echo "⏳ Now running database migrations..."
+
+# Run migration directly instead of using the health check approach
+if npm run migrate; then
+    echo "✅ Migration completed successfully!"
 else
-    echo "❌ Auto-migration failed!"
-    echo "📋 Backend logs (last 20 lines):"
-    tail -20 /proc/$BACKEND_PID/fd/1 2>/dev/null || echo "Could not retrieve backend logs"
+    echo "❌ Migration failed!"
     exit 1
 fi
 
