@@ -35,8 +35,12 @@ RUN chmod +x scripts/*.sh scripts/*.js && \
     echo "docker-start.sh exists:" && \
     test -f scripts/docker-start.sh && echo "YES" || echo "NO" && \
     echo "docker-start.sh is executable:" && \
-    test -x scripts/docker-start.sh && echo "YES" || echo "NO"
+    test -x scripts/docker-start.sh && echo "YES" || echo "NO" && \
+    echo "Full path check:" && \
+    ls -la /app/scripts/docker-start.sh && \
+    echo "File contents first line:" && \
+    head -1 /app/scripts/docker-start.sh
 
 EXPOSE 3001
 
-CMD ["/app/scripts/docker-start.sh"]
+CMD ["sh", "/app/scripts/docker-start.sh"]
