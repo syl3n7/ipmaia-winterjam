@@ -208,6 +208,24 @@
             min-height: 100px;
             resize: vertical;
         }
+        
+        /* Front Page Settings Styles */
+        .settings-section {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .settings-section h3 {
+            margin: 0 0 1rem 0;
+            color: #667eea;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
         .btn {
             background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
@@ -546,6 +564,7 @@
             <button class="nav-btn active" data-section="gamejams">🎮 Game Jams</button>
             <button class="nav-btn" data-section="games">🎯 Games</button>
             <button class="nav-btn" data-section="users">👥 Users</button>
+            <button class="nav-btn" data-section="frontpage">🏠 Front Page</button>
             <button class="nav-btn" data-section="system">⚙️ System</button>
         </div>
 
@@ -712,6 +731,48 @@
             </div>
         </div>
 
+        <!-- Front Page Section -->
+        <div id="frontpage-section" class="card">
+            <h2>🏠 Front Page Settings</h2>
+            <p>Customize the main landing page content and behavior</p>
+            
+            <div id="frontpage-loading" class="info status">Loading front page settings...</div>
+            
+            <div id="frontpage-content" style="display: none;">
+                <form id="frontpage-form">
+                    <!-- Hero Section -->
+                    <div class="settings-section">
+                        <h3>🎨 Hero Section</h3>
+                        <div id="hero-settings"></div>
+                    </div>
+                    
+                    <!-- General Settings -->
+                    <div class="settings-section">
+                        <h3>⚙️ General Settings</h3>
+                        <div id="general-settings"></div>
+                    </div>
+                    
+                    <!-- Button Configuration -->
+                    <div class="settings-section">
+                        <h3>🔘 Button Configuration</h3>
+                        <div id="buttons-settings"></div>
+                    </div>
+                    
+                    <!-- Advanced Settings -->
+                    <div class="settings-section">
+                        <h3>🔧 Advanced Settings</h3>
+                        <div id="advanced-settings"></div>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">💾 Save All Settings</button>
+                        <button type="button" class="btn btn-secondary" id="preview-frontpage">👁️ Preview Changes</button>
+                        <button type="button" class="btn btn-warning" id="reset-frontpage" style="margin-left: auto;">🔄 Reset to Defaults</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
         <!-- System Section -->
         <div id="system-section" class="card">
             <h2>⚙️ System Information</h2>
@@ -869,6 +930,9 @@
                     break;
                 case 'games':
                     loadGames();
+                    break;
+                case 'frontpage':
+                    loadFrontPageSettings();
                     break;
                 case 'system':
                     loadSystemInfo();
@@ -1315,6 +1379,150 @@
             }
         }
 
+        // Front Page Settings Functions
+        let frontPageSettings = {};
+
+        async function loadFrontPageSettings() {
+            try {
+                const response = await fetch('/api/frontpage/admin/settings');
+                if (!response.ok) throw new Error('Failed to load settings');
+                
+                const settingsBySection = await response.json();
+                frontPageSettings = {};
+                
+                // Flatten settings for easier access
+                Object.values(settingsBySection).flat().forEach(setting => {
+                    frontPageSettings[setting.setting_key] = setting;
+                });
+                
+                renderFrontPageSettings(settingsBySection);
+                document.getElementById('frontpage-loading').style.display = 'none';
+                document.getElementById('frontpage-content').style.display = 'block';
+            } catch (error) {
+                console.error('Error loading front page settings:', error);
+                showStatus('❌ Failed to load front page settings', 'error');
+            }
+        }
+
+        function renderFrontPageSettings(settingsBySection) {
+            Object.entries(settingsBySection).forEach(([sectionName, settings]) => {
+                const container = document.getElementById(`${sectionName}-settings`);
+                if (!container) return;
+                
+                container.innerHTML = '';
+                
+                settings.forEach(setting => {
+                    const fieldHtml = createSettingField(setting);
+                    container.appendChild(fieldHtml);
+                });
+            });
+        }
+
+        function createSettingField(setting) {
+            const div = document.createElement('div');
+            div.className = 'form-group';
+            
+            const label = document.createElement('label');
+            label.setAttribute('for', setting.setting_key);
+            label.textContent = setting.display_name;
+            if (setting.description) {
+                label.title = setting.description;
+            }
+            
+            let input;
+            switch (setting.setting_type) {
+                case 'textarea':
+                    input = document.createElement('textarea');
+                    input.rows = 3;
+                    break;
+                case 'boolean':
+                    input = document.createElement('select');
+                    input.innerHTML = '<option value="true">Yes</option><option value="false">No</option>';
+                    break;
+                case 'url':
+                    input = document.createElement('input');
+                    input.type = 'url';
+                    break;
+                case 'image':
+                    input = document.createElement('input');
+                    input.type = 'text';
+                    input.placeholder = '/images/example.png';
+                    break;
+                default:
+                    input = document.createElement('input');
+                    input.type = 'text';
+            }
+            
+            input.id = setting.setting_key;
+            input.name = setting.setting_key;
+            input.value = setting.setting_value;
+            
+            if (setting.description) {
+                const desc = document.createElement('small');
+                desc.textContent = setting.description;
+                desc.style.color = '#6c757d';
+                desc.style.fontSize = '0.875rem';
+                div.appendChild(label);
+                div.appendChild(input);
+                div.appendChild(desc);
+            } else {
+                div.appendChild(label);
+                div.appendChild(input);
+            }
+            
+            return div;
+        }
+
+        async function saveFrontPageSettings() {
+            try {
+                const form = document.getElementById('frontpage-form');
+                const formData = new FormData(form);
+                const settings = {};
+                
+                for (const [key, value] of formData.entries()) {
+                    settings[key] = value;
+                }
+                
+                const response = await fetch('/api/frontpage/admin/settings', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ settings })
+                });
+                
+                if (!response.ok) throw new Error('Failed to save settings');
+                
+                const result = await response.json();
+                showStatus(`✅ Updated ${result.updated} settings successfully`, 'success');
+            } catch (error) {
+                console.error('Error saving settings:', error);
+                showStatus('❌ Failed to save settings', 'error');
+            }
+        }
+
+        function previewFrontPage() {
+            window.open('/', '_blank');
+        }
+
+        async function resetFrontPageSettings() {
+            if (!confirm('Are you sure you want to reset all front page settings to defaults? This cannot be undone.')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/frontpage/admin/settings/reset', {
+                    method: 'POST'
+                });
+                
+                if (!response.ok) throw new Error('Failed to reset settings');
+                
+                showStatus('✅ Settings reset to defaults', 'success');
+                loadFrontPageSettings(); // Reload settings
+            } catch (error) {
+                console.error('Error resetting settings:', error);
+                showStatus('❌ Failed to reset settings', 'error');
+            }
+        }
+
         // Form Handlers
         document.addEventListener('DOMContentLoaded', function() {
             // Game Jam Form Handler
@@ -1405,6 +1613,14 @@
             document.getElementById('cancel-gamejam-btn').addEventListener('click', hideGameJamForm);
             document.getElementById('add-game-btn').addEventListener('click', showGameForm);
             document.getElementById('cancel-game-btn').addEventListener('click', hideGameForm);
+            
+            // Front Page Settings event listeners
+            document.getElementById('frontpage-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                saveFrontPageSettings();
+            });
+            document.getElementById('preview-frontpage').addEventListener('click', previewFrontPage);
+            document.getElementById('reset-frontpage').addEventListener('click', resetFrontPageSettings);
 
             // Delegated event listeners for dynamic buttons (edit/delete)
             document.addEventListener('click', function(e) {

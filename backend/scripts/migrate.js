@@ -70,12 +70,53 @@ async function createTables() {
       );
     `);
 
+    // Create front_page_settings table for admin-controlled front page content
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS front_page_settings (
+        id SERIAL PRIMARY KEY,
+        setting_key VARCHAR(255) UNIQUE NOT NULL,
+        setting_value TEXT,
+        setting_type VARCHAR(50) DEFAULT 'text',
+        display_name VARCHAR(255) NOT NULL,
+        description TEXT,
+        section VARCHAR(100) DEFAULT 'general',
+        display_order INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      );
+    `);
+
+    // Insert default front page settings
+    await pool.query(`
+      INSERT INTO front_page_settings (setting_key, setting_value, setting_type, display_name, description, section, display_order) 
+      VALUES 
+        ('hero_title', 'IPMAIA WinterJam 2025', 'text', 'Hero Title', 'Main title displayed on the front page', 'hero', 1),
+        ('hero_description', 'Uma game jam onde estudantes de desenvolvimento de jogos criam experiências únicas em 45 horas.', 'textarea', 'Hero Description', 'Description text below the main title', 'hero', 2),
+        ('hero_background_image', '/images/IPMAIA_SiteBanner.png', 'image', 'Background Image', 'Hero section background image URL', 'hero', 3),
+        ('show_event_dates', 'true', 'boolean', 'Show Event Dates', 'Display event start and end dates', 'general', 4),
+        ('show_theme', 'true', 'boolean', 'Show Theme', 'Display the game jam theme when available', 'general', 5),
+        ('show_required_object', 'true', 'boolean', 'Show Required Object', 'Display the required object when available', 'general', 6),
+        ('button_before_start_text', 'Inscrever Agora', 'text', 'Pre-Event Button Text', 'Button text before event starts', 'buttons', 7),
+        ('button_before_start_url', '/enlist-now', 'url', 'Pre-Event Button URL', 'Button URL before event starts', 'buttons', 8),
+        ('button_during_event_text', 'Ver Regras', 'text', 'During Event Button Text', 'Button text during event', 'buttons', 9),
+        ('button_during_event_url', '/rules', 'url', 'During Event Button URL', 'Button URL during event', 'buttons', 10),
+        ('button_after_event_text', 'Ver Jogos Submetidos', 'text', 'Post-Event Button Text', 'Button text after event ends', 'buttons', 11),
+        ('button_after_event_url', '/archive/2025/winter', 'url', 'Post-Event Button URL', 'Button URL after event ends', 'buttons', 12),
+        ('status_event_running', 'Evento a decorrer!', 'text', 'Event Running Status', 'Message displayed when event is active', 'advanced', 13),
+        ('status_fallback_message', 'Mantém-te atento às nossas redes sociais para updates sobre o próximo Winter Jam!', 'textarea', 'Fallback Status Message', 'Message displayed when no event is running', 'advanced', 14),
+        ('custom_css', '', 'textarea', 'Custom CSS', 'Additional CSS styles for the front page', 'advanced', 15),
+        ('analytics_code', '', 'textarea', 'Analytics Code', 'Google Analytics or other tracking code', 'advanced', 16)
+      ON CONFLICT (setting_key) DO NOTHING;
+    `);
+
     // Create indexes for better performance
     await pool.query(`
       CREATE INDEX IF NOT EXISTS idx_game_jams_active ON game_jams(is_active);
       CREATE INDEX IF NOT EXISTS idx_game_jams_date ON game_jams(start_date);
       CREATE INDEX IF NOT EXISTS idx_games_jam_id ON games(game_jam_id);
       CREATE INDEX IF NOT EXISTS idx_games_featured ON games(is_featured);
+      CREATE INDEX IF NOT EXISTS idx_front_page_settings_key ON front_page_settings(setting_key);
+      CREATE INDEX IF NOT EXISTS idx_front_page_settings_section ON front_page_settings(section);
     `);
 
     console.log('✅ Database tables created successfully!');
