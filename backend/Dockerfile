@@ -25,9 +25,18 @@ RUN echo "=== Docker Build Debug ===" && \
 
 RUN mkdir -p uploads
 
-# Make scripts executable
-RUN chmod +x scripts/*.sh scripts/*.js
+# Create scripts directory and copy scripts explicitly
+COPY scripts/ ./scripts/
+
+# Make scripts executable and verify they exist
+RUN chmod +x scripts/*.sh scripts/*.js && \
+    echo "=== Scripts Debug ===" && \
+    ls -la scripts/ && \
+    echo "docker-start.sh exists:" && \
+    test -f scripts/docker-start.sh && echo "YES" || echo "NO" && \
+    echo "docker-start.sh is executable:" && \
+    test -x scripts/docker-start.sh && echo "YES" || echo "NO"
 
 EXPOSE 3001
 
-CMD ["./scripts/docker-start.sh"]
+CMD ["/app/scripts/docker-start.sh"]
