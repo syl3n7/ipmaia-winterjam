@@ -6,6 +6,7 @@ const rateLimit = require('express-rate-limit');
 const cookieParser = require('cookie-parser');
 const session = require('express-session');
 const pgSession = require('connect-pg-simple')(session);
+const passport = require('passport');
 const path = require('path');
 require('dotenv').config();
 
@@ -15,9 +16,29 @@ const gameJamRoutes = require('./routes/gamejams');
 const gameRoutes = require('./routes/games');
 const adminRoutes = require('./routes/admin');
 const publicRoutes = require('./routes/public');
+const frontPageRoutes = require('./routes/frontpage');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+
+// Trust proxy (important for reverse proxy setups like Zoraxy/NPM)
+app.set('trust proxy', 1);
+
+// Debug middleware for proxy headers (remove in production)
+if (process.env.NODE_ENV !== 'production') {
+  app.use((req, res, next) => {
+    console.log('🔍 Proxy Headers Debug:', {
+      host: req.get('host'),
+      'x-forwarded-host': req.get('x-forwarded-host'),
+      'x-forwarded-proto': req.get('x-forwarded-proto'),
+      'x-forwarded-for': req.get('x-forwarded-for'),
+      'x-real-ip': req.get('x-real-ip'),
+      secure: req.secure,
+      protocol: req.protocol
+    });
+    next();
+  });
+}
 
 // Security middleware
 app.use(helmet({
@@ -26,9 +47,10 @@ app.use(helmet({
       defaultSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdn.jsdelivr.net"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
-      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-hashes'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-hashes'", "https://static.cloudflareinsights.com"],
       scriptSrcAttr: ["'unsafe-inline'"],
       imgSrc: ["'self'", "data:", "https:"],
+      connectSrc: ["'self'", "https://cloudflareinsights.com"],
     },
   },
 }));
@@ -72,18 +94,34 @@ app.use(session({
   }
 }));
 
+// Initialize Passport
+app.use(passport.initialize());
+app.use(passport.session());
+
+// Passport serialization (required for sessions)
+passport.serializeUser((user, done) => {
+  done(null, user.id);
+});
+
+passport.deserializeUser(async (id, done) => {
+  try {
+    const result = await pool.query('SELECT * FROM users WHERE id = $1', [id]);
+    done(null, result.rows[0]);
+  } catch (error) {
+    done(error);
+  }
+});
+
 // Serve static files (uploaded images, etc.)
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Serve admin dashboard
-app.use('/admin', express.static(path.join(__dirname, 'admin/dist')));
-
-// API Routes
+// API Routes (before static file serving)
 app.use('/api/auth', authRoutes);
 app.use('/api/gamejams', gameJamRoutes);
 app.use('/api/games', gameRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/public', publicRoutes);
+app.use('/api/frontpage', frontPageRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -94,8 +132,50 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Admin dashboard fallback
-app.get('/admin/*', (req, res) => {
+// Debug endpoint to check file system
+app.get('/debug/files', (req, res) => {
+  const fs = require('fs');
+  const adminPath = path.join(__dirname, 'admin');
+  const adminDistPath = path.join(__dirname, 'admin/dist');
+  
+  try {
+    const adminExists = fs.existsSync(adminPath);
+    const adminDistExists = fs.existsSync(adminDistPath);
+    const indexExists = fs.existsSync(path.join(adminDistPath, 'index.html'));
+    
+    res.json({
+      adminPath,
+      adminDistPath,
+      adminExists,
+      adminDistExists,
+      indexExists,
+      files: adminDistExists ? fs.readdirSync(adminDistPath) : 'admin/dist not found'
+    });
+  } catch (error) {
+    res.json({ error: error.message });
+  }
+});
+
+// Admin middleware for dashboard access
+const requireAdminAccess = (req, res, next) => {
+  // Check if user is authenticated and has admin role
+  if (!req.session.userId || req.session.role !== 'admin') {
+    // Redirect to OIDC login for admin access
+    return res.redirect('/api/auth/oidc/login');
+  }
+  next();
+};
+
+// Serve admin dashboard static files (with admin protection)
+app.use('/admin', requireAdminAccess, express.static(path.join(__dirname, 'admin/dist')));
+
+// Admin dashboard fallback for SPA routing (with admin protection)
+app.get('/admin/*', requireAdminAccess, (req, res) => {
+  res.sendFile(path.join(__dirname, 'admin/dist/index.html'));
+});
+
+// Specific route for /admin (without trailing slash, with admin protection)
+app.get('/admin', requireAdminAccess, (req, res) => {
   res.sendFile(path.join(__dirname, 'admin/dist/index.html'));
 });
 
@@ -106,7 +186,9 @@ app.use((req, res) => {
 
 // Error handler
 app.use((err, req, res, next) => {
-  console.error(err.stack);
+  console.error('Server Error:', err.stack);
+  console.error('Request URL:', req.url);
+  console.error('Request Method:', req.method);
   res.status(500).json({ 
     error: process.env.NODE_ENV === 'production' 
       ? 'Something went wrong!' 
