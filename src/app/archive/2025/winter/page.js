@@ -3,6 +3,22 @@ import { useState, useEffect } from 'react';
 import Link from "next/link";
 import Background from "../../../../components/Background";
 
+// Utility function to generate image path from game title
+const getGameImagePath = (gameTitle) => {
+  const titleMap = {
+    "Interdimensional Cat": "/images/interdimensional-cat.png",
+    "Ever Sleep": "/images/eversleep.png", 
+    "Deep Anomaly": "/images/deep-anomaly.png",
+    "The Lab of Bizarre and Wacky Anomalies": "/images/lab-of-anomalies.png",
+    "Icicle Escape": "/images/icicle-escape.jpg",
+    "Arctic Escape": "/images/arctic-escape.png",
+    "Inverse Protocol": "/images/inverse-protocol.png",
+    "Ice Break": "/images/ice-break.png"
+  };
+  
+  return titleMap[gameTitle] || "/images/placeholder-game.png";
+};
+
 export default function WinterJam2025() {
   const [games, setGames] = useState([]);
   const [gameJam, setGameJam] = useState(null);
@@ -21,8 +37,13 @@ export default function WinterJam2025() {
         // Fetch games for this specific game jam
         const gamesData = await gameJamApi.getGames(specificGameJam.id);
         
-        // Process and sort games data
-        const processedGames = gamesData.map(processGameData);
+        // Process and sort games data with proper image mapping
+        const processedGames = gamesData.map(game => {
+          const processedGame = processGameData(game);
+          // Ensure thumbnail is set using our image mapping
+          processedGame.thumbnail = getGameImagePath(processedGame.title);
+          return processedGame;
+        });
         const sortedGames = sortGames(processedGames);
         
         setGames(sortedGames);

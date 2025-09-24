@@ -1,0 +1,13 @@
+# Backend specific dockerignore
+node_modules
+npm-debug.log
+.env
+.git
+.gitignore
+README.md
+.nyc_output
+coverage
+.nyc_output
+
+# Keep admin folder - it's needed!
+!admin/

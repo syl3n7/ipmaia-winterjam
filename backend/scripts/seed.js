@@ -10,19 +10,9 @@ async function seedDatabase() {
     // Ensure tables exist
     await createTables();
 
-    // Create default admin user
-    const hashedPassword = await bcrypt.hash('admin123', 12);
-    
-    try {
-      await pool.query(`
-        INSERT INTO users (username, email, password_hash, role)
-        VALUES ('admin', 'admin@ipmaia.pt', $1, 'admin')
-        ON CONFLICT (username) DO NOTHING
-      `, [hashedPassword]);
-      console.log('👤 Admin user created (username: admin, password: admin123)');
-    } catch (error) {
-      console.log('👤 Admin user already exists');
-    }
+    // Note: Admin users are now created automatically via OIDC authentication
+    // No need to create legacy admin users
+    console.log('� Admin users will be created automatically via OIDC authentication');
 
     // Create sample WinterJam 2025
     const gameJamResult = await pool.query(`

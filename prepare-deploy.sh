@@ -20,7 +20,10 @@ if [ ! -f .env.production ]; then
         echo "   - DB_PASSWORD (strong database password)"
         echo "   - JWT_SECRET (256+ bit random string)"
         echo "   - SESSION_SECRET (256+ bit random string)"
-        echo "   - ADMIN_PASSWORD (strong admin password)"
+        echo "   - OIDC_ISSUER_URL (your OIDC provider URL)"
+        echo "   - OIDC_CLIENT_ID (your OIDC client ID)"
+        echo "   - OIDC_CLIENT_SECRET (your OIDC client secret)"
+        echo "   - OIDC_ADMIN_EMAIL (email that gets admin privileges)"
         echo "   - FRONTEND_URL (your domain)"
         echo "   - NEXT_PUBLIC_API_URL (your domain/api)"
         echo ""
@@ -34,7 +37,7 @@ fi
 # Step 2: Validate environment file
 echo -e "${BLUE}🔍 Validating environment configuration...${NC}"
 
-required_vars=("DB_PASSWORD" "JWT_SECRET" "SESSION_SECRET" "ADMIN_PASSWORD")
+required_vars=("DB_PASSWORD" "JWT_SECRET" "SESSION_SECRET" "OIDC_ISSUER_URL" "OIDC_CLIENT_ID" "OIDC_CLIENT_SECRET" "OIDC_ADMIN_EMAIL"}
 missing_vars=()
 
 while IFS= read -r line; do
