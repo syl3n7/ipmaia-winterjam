@@ -8,6 +8,7 @@ const session = require('express-session');
 const pgSession = require('connect-pg-simple')(session);
 const passport = require('passport');
 const path = require('path');
+const csrf = require('lusca').csrf;
 require('dotenv').config();
 
 const { pool } = require('./config/database');
@@ -93,6 +94,9 @@ app.use(session({
     maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
   }
 }));
+
+// CSRF Protection middleware
+app.use(csrf());
 
 // Initialize Passport
 app.use(passport.initialize());
