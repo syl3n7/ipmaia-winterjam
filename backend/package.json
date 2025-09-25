@@ -28,10 +28,15 @@
     "openid-client": "^5.7.1",
     "passport": "^0.7.0",
     "passport-openidconnect": "^0.1.2",
-    "lusca": "^1.7.0"
+    "lusca": "^1.7.0",
+    "cross-spawn": "^7.0.5"
   },
   "devDependencies": {
     "nodemon": "^3.0.2"
+  },
+  "engines": {
+    "node": ">=20.19.2",
+    "npm": ">=8.0.0"
   },
   "keywords": [
     "express",
