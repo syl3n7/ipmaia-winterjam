@@ -9,11 +9,13 @@ A comprehensive web application for IPMAIA's WinterJam event - a 45-hour game de
 - **🎮 Event Management**: Complete game jam lifecycle management
 - **👤 OIDC Authentication**: Secure admin access via PocketID
 - **📊 Admin Dashboard**: Full control over front page content, events, and games
-- **🤖 Auto-Migration**: Automated database setup and updates
-- **📱 Responsive Design**: Mobile and desktop optimized
+- **🤖 Auto-Migration**: Automated database setup and updates with timing metrics
+- **📱 Responsive Design**: Mobile and desktop optimized with modal game details
 - **🔄 Real-time Status**: Dynamic event status detection
-- **🎯 Game Archive**: Browse and showcase submitted games
-- **🛡️ Security**: Proper session handling and input validation
+- **🎯 Game Archive**: Browse and showcase submitted games with detailed modals
+- **🛡️ Security**: Proper session handling, input validation, and CSP protection
+- **🔍 SEO Optimized**: Automatic sitemap generation with next-sitemap
+- **⚡ Performance**: Image URL localization and optimized loading
 
 ## 🚀 Quick Start
 
@@ -31,7 +33,10 @@ nano .env
 # Start everything with automated migration
 docker-compose up -d
 
-# Check logs to see auto-migration in action
+# OR use the timed build script for detailed build timing
+./scripts/timed-build.sh up -d --build
+
+# Check logs to see auto-migration and timing in action
 docker-compose logs -f backend
 ```
 
@@ -103,6 +108,8 @@ docker-compose logs backend | grep -E "(⏳|🎯|✅|❌|🚀)"
 - Tailwind CSS + Flowbite
 - Responsive design
 - API integration
+- Automatic sitemap generation
+- Image URL localization for performance
 
 **Backend:**
 - Node.js + Express
@@ -113,9 +120,10 @@ docker-compose logs backend | grep -E "(⏳|🎯|✅|❌|🚀)"
 
 **DevOps:**
 - Docker + Docker Compose
-- Automated migrations
-- Health checks
-- CI/CD ready
+- Automated migrations with timing metrics
+- Health checks and startup monitoring
+- CI/CD ready with GitHub Actions
+- Automatic sitemap generation (next-sitemap)
 
 ## 📊 Database Schema
 
@@ -130,6 +138,13 @@ docker-compose logs backend | grep -E "(⏳|🎯|✅|❌|🚀)"
 - **Event Management**: Create/edit game jams, set dates and themes
 - **Game Management**: Feature games, manage submissions
 - **User Management**: Admin access control
+
+### Game Archive Features
+- **Interactive Game Cards**: Click to open detailed modal views
+- **Team Member Display**: Proper name formatting from database objects
+- **Ranking System**: Visual badges for top 3 placements
+- **Direct Links**: Quick access to itch.io pages and GitHub repositories
+- **Tag System**: Categorized games with theme and ranking tags
 
 ## 🔧 Configuration
 
@@ -148,6 +163,7 @@ docker-compose logs backend | grep -E "(⏳|🎯|✅|❌|🚀)"
 | `OIDC_REDIRECT_URI` | OAuth callback URL | `https://api.example.com/api/auth/oidc/callback` |
 | `OIDC_ADMIN_EMAIL` | Admin user email | `admin@example.com` |
 | `STARTUP_DELAY` | Docker startup delay (seconds) | `10` (optional, default: 10) |
+| `NEXT_PUBLIC_API_URL` | Frontend API endpoint | `https://api.example.com/api` |
 
 ### Docker Services
 
@@ -166,6 +182,37 @@ docker-compose logs backend | grep -E "(⏳|🎯|✅|❌|🚀)"
 - Static file serving
 - API proxy configuration
 - Responsive design
+- Automatic sitemap generation
+- Image URL localization for performance
+
+## 🔍 SEO & Sitemap
+
+The application includes automatic SEO optimization:
+
+### Sitemap Generation
+- **next-sitemap** integration for automatic XML sitemap creation
+- Single sitemap file generation (configurable size limits)
+- Automatic robots.txt generation with custom rules
+- Includes all static and dynamic routes
+
+### Configuration
+```javascript
+// next-sitemap.config.js
+module.exports = {
+  siteUrl: 'https://ipmaia-winterjam.pt',
+  generateRobotsTxt: true,
+  sitemapSize: 5000, // Single file for all URLs
+  robotsTxtOptions: {
+    additionalSitemaps: ['https://ipmaia-winterjam.pt/sitemap.xml'],
+    additionalRobotsTxt: `...custom rules...`
+  }
+}
+```
+
+### Performance Optimizations
+- **Image URL Localization**: Automatically converts domain-relative URLs to local paths
+- **CSP Headers**: Proper Content Security Policy with Cloudflare support
+- **Responsive Images**: Optimized loading with fallbacks
 
 ## 🛠️ Development
 
@@ -196,14 +243,19 @@ ipmaia-winterjam/
 ├── src/                    # Frontend source
 │   ├── app/               # Next.js pages (App Router)
 │   ├── components/        # Reusable UI components
-│   └── data/             # Data models and API calls
-├── backend/              # Backend API
+│   └── utils/             # API utilities and helpers
+├── backend/               # Backend API
 │   ├── routes/           # API endpoints
 │   ├── scripts/          # Migration and utility scripts
 │   ├── admin/            # Admin panel static files
 │   └── config/           # Database and auth configuration
 ├── public/               # Static assets
-└── docker-compose.yml    # Container orchestration
+├── scripts/              # Build and utility scripts
+│   ├── timed-build.sh    # Docker build timing script
+│   └── timing-aliases.sh # Helper aliases
+├── next-sitemap.config.js # Sitemap configuration
+├── docker-compose.yml    # Container orchestration
+└── README.md            # This file
 ```
 
 ## 🚢 Production Deployment
@@ -276,6 +328,25 @@ docker-compose exec backend npm run migrate
 - Check backend health: `curl http://localhost:3001/health`
 - Ensure services are on same Docker network
 
+**Game modals not opening:**
+- Check browser console for JavaScript errors
+- Verify game data is loading properly
+- Ensure modal state is updating correctly
+
+**Team members showing as "[object Object]":**
+- This was fixed in recent updates - team members now display properly
+- If issue persists, check database migration status
+
+**CSP blocking resources:**
+- Cloudflare Insights and other external scripts are now allowed
+- Check browser console for CSP violation messages
+- Update CSP directives in `backend/server.js` if needed
+
+**Sitemap not generating:**
+- Run `npm run build` to trigger next-sitemap
+- Check `next-sitemap.config.js` configuration
+- Verify `public/sitemap.xml` and `public/robots.txt` exist
+
 ## 📞 Contact & Support
 
 - **Event Email**: gamejam.at.ipmaia@gmail.com
@@ -292,3 +363,21 @@ This project is developed for IPMAIA's educational purposes. See the repository 
 ---
 
 **🎮 Ready to host your own game jam? Fork this repository and customize it for your event!**
+
+## 📋 Recent Updates
+
+### v2.5.0 - Enhanced User Experience
+- ✅ **Game Detail Modals**: Click any game card to view full details in a modal
+- ✅ **Team Member Display**: Fixed "[object Object]" issue - names now display correctly
+- ✅ **SEO Optimization**: Automatic sitemap generation with next-sitemap
+- ✅ **Performance Improvements**: Image URL localization for faster loading
+- ✅ **Security Enhancements**: Updated CSP to allow Cloudflare Insights
+- ✅ **Build Monitoring**: Added timing metrics for Docker startup and builds
+- ✅ **Error Handling**: Improved error messages and debugging information
+
+### v2.0.0 - Production Ready
+- ✅ **Automated Migration**: Docker startup with intelligent health checks
+- ✅ **OIDC Authentication**: Secure admin access via PocketID
+- ✅ **Admin Dashboard**: Complete front page content management
+- ✅ **Responsive Design**: Mobile and desktop optimized
+- ✅ **Real-time Status**: Dynamic event status detection
