@@ -2,6 +2,7 @@
 module.exports = {
   siteUrl: 'https://ipmaia-winterjam.pt', // Your production URL
   generateRobotsTxt: true, // (optional)
+  sitemapSize: 5000, // Increase limit to keep everything in one file
   robotsTxtOptions: {
     additionalSitemaps: [
       'https://ipmaia-winterjam.pt/sitemap.xml',
