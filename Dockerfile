@@ -1,16 +1,16 @@
-FROM node:20.19.2-alpine AS deps
+FROM node:20.19.2-alpine3.20 AS deps
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci --only=production --no-cache
 
-FROM node:20.19.2-alpine AS builder
+FROM node:20.19.2-alpine3.20 AS builder
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci --no-cache
 COPY . .
 RUN npm run build
 
-FROM node:20.19.2-alpine AS runner
+FROM node:20.19.2-alpine3.20 AS runner
 WORKDIR /app
 ENV NODE_ENV production
 
