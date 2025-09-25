@@ -98,8 +98,23 @@ export const processGameData = (game) => {
   else if (tags.includes('rank_2')) ranking = 2;
   else if (tags.includes('rank_3')) ranking = 3;
   
-  // Generate thumbnail path based on title
-  const thumbnail = `/images/${game.title.toLowerCase().replace(/\s+/g, '-')}.png`;
+  // Generate thumbnail path based on title (using same mapping as frontend)
+  const getGameImagePath = (gameTitle) => {
+    const titleMap = {
+      "Interdimensional Cat": "/images/interdimensional-cat.png",
+      "Ever Sleep": "/images/eversleep.png",
+      "Deep Anomaly": "/images/deep-anomaly.png",
+      "The Lab of Bizarre and Wacky Anomalies": "/images/lab-of-anomalies.png",
+      "Icicle Escape": "/images/icicle-escape.jpg",
+      "Arctic Escape": "/images/arctic-escape.png",
+      "Inverse Protocol": "/images/inverse-protocol.png",
+      "Ice Break": "/images/ice-break.png"
+    };
+    
+    return titleMap[gameTitle] || "/images/placeholder-game.png";
+  };
+  
+  const thumbnail = getGameImagePath(game.title);
   
   return {
     ...game,

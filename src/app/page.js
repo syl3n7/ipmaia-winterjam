@@ -82,6 +82,7 @@ export default function Home() {
     }
   }, []);
 
+  // Fetch current time (optimized for production)
   const fetchCurrentTime = async () => {
     // Don't use external APIs in development to avoid unnecessary errors
     if (process.env.NODE_ENV === 'development') {
@@ -89,93 +90,24 @@ export default function Home() {
       return new Date();
     }
 
-    // Try multiple time APIs in order with timeout
-    const timeApis = [
-      'https://worldtimeapi.org/api/timezone/Europe/London',
-      'https://timeapi.io/api/Time/current/zone?timeZone=Europe/London',
-      'https://worldtimeapi.org/api/timezone/UTC',
-      'https://timeapi.io/api/Time/current/zone?timeZone=UTC'
-    ];
-
-    // Helper function to fetch with timeout
-    const fetchWithTimeout = async (url, options = {}, timeout = 5000) => {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), timeout);
+    // In production, use a faster, more reliable time source
+    try {
+      // Try a fast, reliable time API first
+      const response = await fetch('https://worldtimeapi.org/api/timezone/Europe/Lisbon', {
+        signal: AbortSignal.timeout(3000), // 3 second timeout
+        cache: 'no-store'
+      });
       
-      try {
-        const response = await fetch(url, { 
-          ...options, 
-          signal: controller.signal,
-          cache: 'no-store'
-        });
-        clearTimeout(timeoutId);
-        return response;
-      } catch (error) {
-        clearTimeout(timeoutId);
-        throw error;
-      }
-    };
-
-    // Try each API with timeout
-    for (const api of timeApis) {
-      try {
-        const response = await fetchWithTimeout(api);
-        if (!response.ok) continue;
-        
+      if (response.ok) {
         const data = await response.json();
-        let datetime;
-        
-        // Handle different API response formats
-        if (data.datetime) {
-          // worldtimeapi.org format
-          datetime = data.datetime;
-        } else if (data.dateTime) {
-          // timeapi.io format
-          datetime = data.dateTime;
-        }
-        
-        if (datetime) {
-          // Cache the successful time in localStorage (browser only)
-          if (typeof window !== 'undefined') {
-            try {
-              localStorage.setItem('lastKnownTime', JSON.stringify({
-                time: datetime,
-                timestamp: Date.now()
-              }));
-              setFetchError(false);
-            } catch (error) {
-              console.warn('Could not store time in localStorage:', error);
-            }
-          }
-          return new Date(datetime);
-        }
-      } catch (error) {
-        console.error(`Failed to fetch time from ${api}:`, error);
-        // Continue to the next API
+        return new Date(data.datetime);
       }
+    } catch (error) {
+      console.warn('Fast time API failed, using local time:', error);
     }
 
-    // All API calls failed, try to use cached time
-    setFetchError(true);
-    if (typeof window !== 'undefined') {
-      try {
-        const cachedTimeStr = localStorage.getItem('lastKnownTime');
-        if (cachedTimeStr) {
-          const cachedTime = JSON.parse(cachedTimeStr);
-          const { time, timestamp } = cachedTime;
-          console.log('Using cached time from localStorage');
-          const cachedDate = new Date(time);
-          // Add the elapsed time since the cache was stored
-          cachedDate.setMilliseconds(cachedDate.getMilliseconds() + (Date.now() - timestamp));
-          return cachedDate;
-        }
-      } catch (error) {
-        console.error('Error retrieving cached time:', error);
-      }
-    }
-
-    // Last resort: use local system time
-    console.warn('Using local system time as fallback');
+    // Fallback to local system time if external APIs are slow/unavailable
+    console.log('Using local system time as fallback');
     return new Date();
   };
 
@@ -245,8 +177,13 @@ export default function Home() {
       <Background
         imageUrl={frontPageSettings.hero_background_image || '/images/IPMAIA_SiteBanner.png'}
         fallbackContent={
-          <div className="text-gray-500 flex items-center justify-center h-full">
-            <p>A carregar imagem...</p>
+          <div className="text-center">
+            <img 
+              src="/images/placeholder-game.png" 
+              alt="WinterJam Background" 
+              className="max-w-md mx-auto opacity-50"
+            />
+            <p className="text-gray-400 mt-4">Imagem de fundo não disponível</p>
           </div>
         }
       />
