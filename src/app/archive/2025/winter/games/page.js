@@ -17,7 +17,7 @@ const getGameImagePath = (gameTitle) => {
     "Ice Break": "/images/ice-break.png"
   };
   
-  return titleMap[gameTitle] || "/images/placeholder-game.png";
+  return titleMap[gameTitle] || "/images/placeholder-image.png";
 };
 
 export default function AllGames2025() {
@@ -152,7 +152,7 @@ export default function AllGames2025() {
                       if (e.target.src !== fallbackPath) {
                         e.target.src = fallbackPath;
                       } else {
-                        e.target.src = '/images/placeholder-game.png'; // Final fallback
+                        e.target.src = '/images/placeholder-image.png'; // Final fallback
                       }
                     }}
                   />
@@ -290,7 +290,7 @@ export default function AllGames2025() {
                     if (e.target.src !== fallbackPath) {
                       e.target.src = fallbackPath;
                     } else {
-                      e.target.src = '/images/placeholder-game.png';
+                      e.target.src = '/images/placeholder-image.png';
                     }
                   }}
                 />
