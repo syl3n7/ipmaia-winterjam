@@ -21,6 +21,8 @@ export default function Home() {
       if (!response.ok) throw new Error('Failed to fetch front page settings');
       const settings = await response.json();
       setFrontPageSettings(settings);
+      console.log('Front page settings loaded:', settings);
+      console.log('Hero background image:', settings.hero_background_image);
       return settings;
     } catch (error) {
       console.error('Error fetching front page settings:', error);
