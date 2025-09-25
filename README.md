@@ -167,7 +167,7 @@ docker-compose logs backend | grep -E "(⏳|🎯|✅|❌|🚀)"
 
 ### Docker Services
 
-**Database (PostgreSQL 15)**
+**Database (PostgreSQL 17)**
 - Health checks with `pg_isready`
 - Persistent data volume
 - Network isolation
