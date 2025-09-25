@@ -11,7 +11,7 @@ version: '3.8'
 services:
   # PostgreSQL Database
   db:
-    image: postgres:15-alpine
+    image: postgres:17-alpine
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${DB_NAME:-winterjam}
