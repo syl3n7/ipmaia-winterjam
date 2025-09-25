@@ -9,13 +9,15 @@
   "lint": "next lint",
   "docker:build": "docker build -t ipmaia-winterjam .",
   "docker:run": "docker run -d --name ipmaia-winterjam -p 3000:3000 ipmaia-winterjam",
-  "docker:stop": "docker stop ipmaia-winterjam && docker rm ipmaia-winterjam"
+  "docker:stop": "docker stop ipmaia-winterjam && docker rm ipmaia-winterjam",
+  "postbuild": "next-sitemap"
  },
  "dependencies": {
   "critters": "^0.0.23",
   "flowbite-react": "^0.10.2",
   "lucide-react": "^0.321.0",
   "next": "^15.2.4",
+  "next-sitemap": "^4.2.3",
   "react": "18.2.0",
   "react-dom": "18.2.0"
  },
