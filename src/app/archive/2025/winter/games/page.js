@@ -110,7 +110,7 @@ export default function AllGames2025() {
           {/* Header */}
           <div className="flex items-center gap-4 mb-8">
             <Link 
-              href="/archive/2025/winter" 
+              href="https://ipmaia-winterjam.pt/archive/2025/winter/" 
               className="flex items-center gap-2 text-orange-400 hover:text-orange-300 transition-colors"
             >
               <ArrowLeft size={20} />

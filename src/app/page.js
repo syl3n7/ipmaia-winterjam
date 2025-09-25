@@ -175,11 +175,11 @@ export default function Home() {
   return (
     <main className="min-h-screen">
       <Background
-        imageUrl={frontPageSettings.hero_background_image || '/images/IPMAIA_SiteBanner.png'}
+        imageUrl="/images/IPMAIA_SiteBanner.png"
         fallbackContent={
           <div className="text-center">
             <img 
-              src="/images/placeholder-game.png" 
+              src="/images/placeholder-image.png" 
               alt="WinterJam Background" 
               className="max-w-md mx-auto opacity-50"
             />
