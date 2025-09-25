@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const { spawn } = require('child_process');
+const spawn = require('cross-spawn');
 const { checkHealth } = require('./health-check');
 
 /**
@@ -18,7 +18,6 @@ async function waitForHealth(maxRetries = 30, retryInterval = 2000) {
     
     for (let i = 0; i < maxRetries; i++) {
         try {
-            const { spawn } = require('child_process');
             const healthCheck = spawn('node', ['scripts/health-check.js'], {
                 stdio: 'pipe'
             });
