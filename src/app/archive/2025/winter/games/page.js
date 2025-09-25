@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import Link from "next/link";
 import Background from "../../../../../components/Background";
-import { ArrowLeft, ExternalLink, Github, Users } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Github, Users, X } from 'lucide-react';
 
 // Utility function to generate image path from game title
 const getGameImagePath = (gameTitle) => {
@@ -25,6 +25,8 @@ export default function AllGames2025() {
   const [gameJam, setGameJam] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedGame, setSelectedGame] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -53,6 +55,28 @@ export default function AllGames2025() {
 
     fetchData();
   }, []);
+
+  // Handle escape key to close modal
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape' && isModalOpen) {
+        closeGameModal();
+      }
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [isModalOpen]);
+
+  const openGameModal = (game) => {
+    setSelectedGame(game);
+    setIsModalOpen(true);
+  };
+
+  const closeGameModal = () => {
+    setSelectedGame(null);
+    setIsModalOpen(false);
+  };
 
   if (isLoading) {
     return (
@@ -112,7 +136,8 @@ export default function AllGames2025() {
             {games.map((game) => (
               <div 
                 key={game.id} 
-                className="bg-black/30 backdrop-blur-sm rounded-xl overflow-hidden hover:transform hover:scale-105 transition-all duration-300 border border-gray-700 hover:border-orange-500"
+                className="bg-black/30 backdrop-blur-sm rounded-xl overflow-hidden hover:transform hover:scale-105 transition-all duration-300 border border-gray-700 hover:border-orange-500 cursor-pointer"
+                onClick={() => openGameModal(game)}
               >
                 {/* Game Thumbnail */}
                 <div className="h-48 overflow-hidden relative">
@@ -162,7 +187,9 @@ export default function AllGames2025() {
                     <div className="mb-4">
                       <p className="text-sm text-gray-400 mb-1">Equipa:</p>
                       <div className="text-sm text-gray-300">
-                        {game.team_members.join(', ')}
+                        {game.team_members.map(member => 
+                          typeof member === 'string' ? member : member.name
+                        ).join(', ')}
                       </div>
                     </div>
                   )}
@@ -226,6 +253,123 @@ export default function AllGames2025() {
           )}
         </div>
       </div>
+
+      {/* Game Modal */}
+      {isModalOpen && selectedGame && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="bg-slate-900 rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              {/* Modal Header */}
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold text-white mb-2">{selectedGame.title}</h2>
+                  {selectedGame.ranking && (
+                    <div className="mb-2">
+                      {selectedGame.ranking === 1 && <span className="text-3xl">🥇 1º LUGAR</span>}
+                      {selectedGame.ranking === 2 && <span className="text-3xl">🥈 2º LUGAR</span>}
+                      {selectedGame.ranking === 3 && <span className="text-3xl">🥉 3º LUGAR</span>}
+                    </div>
+                  )}
+                </div>
+                <button
+                  onClick={closeGameModal}
+                  className="text-gray-400 hover:text-white text-2xl"
+                >
+                  <X />
+                </button>
+              </div>
+
+              {/* Game Image */}
+              <div className="mb-6">
+                <img
+                  src={selectedGame.thumbnail || getGameImagePath(selectedGame.title)}
+                  alt={selectedGame.title}
+                  className="w-full h-64 object-cover rounded-lg"
+                  onError={(e) => {
+                    const fallbackPath = getGameImagePath(selectedGame.title);
+                    if (e.target.src !== fallbackPath) {
+                      e.target.src = fallbackPath;
+                    } else {
+                      e.target.src = '/images/placeholder-game.png';
+                    }
+                  }}
+                />
+              </div>
+
+              {/* Team Info */}
+              <div className="mb-6">
+                <div className="flex items-center gap-2 mb-3 text-gray-300">
+                  <Users size={16} />
+                  <span className="font-semibold">{selectedGame.team_name}</span>
+                </div>
+
+                {selectedGame.team_members && selectedGame.team_members.length > 0 && (
+                  <div className="mb-4">
+                    <p className="text-sm text-gray-400 mb-1">Equipa:</p>
+                    <div className="text-sm text-gray-300">
+                      {selectedGame.team_members.map(member =>
+                        typeof member === 'string' ? member : member.name
+                      ).join(', ')}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Description */}
+              {selectedGame.description && (
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold text-white mb-2">Sobre o Jogo</h3>
+                  <p className="text-gray-300 whitespace-pre-line">{selectedGame.description}</p>
+                </div>
+              )}
+
+              {/* Links */}
+              <div className="flex gap-3 mb-6">
+                {selectedGame.itch_url && (
+                  <a
+                    href={selectedGame.itch_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded transition-colors"
+                  >
+                    <ExternalLink size={16} />
+                    Jogar no itch.io
+                  </a>
+                )}
+
+                {selectedGame.github_url && (
+                  <a
+                    href={selectedGame.github_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded transition-colors"
+                  >
+                    <Github size={16} />
+                    Ver Código
+                  </a>
+                )}
+              </div>
+
+              {/* Tags */}
+              {selectedGame.tags && selectedGame.tags.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold text-white mb-2">Tags</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedGame.tags.filter(tag => !tag.startsWith('rank_')).map((tag, index) => (
+                      <span
+                        key={index}
+                        className="bg-gray-700 text-gray-300 px-3 py-1 rounded text-sm"
+                      >
+                        #{tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
