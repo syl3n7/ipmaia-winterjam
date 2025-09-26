@@ -47,7 +47,17 @@ else
     exit 1
 fi
 
-echo "🎉 Backend is ready with migrations applied!"
+echo "🌱 Running database seeding..."
+
+# Run seeding
+if npm run seed; then
+    echo "✅ Seeding completed successfully!"
+else
+    echo "❌ Seeding failed!"
+    exit 1
+fi
+
+echo "🎉 Backend is ready with migrations and data applied!"
 
 # Keep the backend running (bring to foreground)
 wait $BACKEND_PID

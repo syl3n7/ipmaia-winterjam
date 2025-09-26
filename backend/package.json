@@ -7,6 +7,7 @@
     "start": "node server.js",
     "dev": "nodemon server.js",
     "migrate": "node scripts/migrate.js",
+    "seed": "node scripts/seed.js",
     "migrate:auto": "node scripts/auto-migrate.js",
     "health": "node scripts/health-check.js",
     "poststart": "echo '🔧 To run auto-migration after startup: npm run migrate:auto'"
