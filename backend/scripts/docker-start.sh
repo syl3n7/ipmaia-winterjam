@@ -47,13 +47,13 @@ else
     exit 1
 fi
 
-echo "🌱 Running database seeding..."
+echo "🔄 Migrating frontend data..."
 
-# Run seeding
-if npm run seed; then
-    echo "✅ Seeding completed successfully!"
+# Run frontend data migration
+if node migrate_frontend_data.js; then
+    echo "✅ Frontend data migration completed successfully!"
 else
-    echo "❌ Seeding failed!"
+    echo "❌ Frontend data migration failed!"
     exit 1
 fi
 
