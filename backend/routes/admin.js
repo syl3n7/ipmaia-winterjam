@@ -1,7 +1,7 @@
 const express = require('express');
 const GameJam = require('../models/GameJam');
 const Game = require('../models/Game');
-const { requireAdmin } = require('./auth');
+const { requireAdmin, requireSuperAdmin } = require('./auth');
 const router = express.Router();
 
 // All admin routes require admin privileges
@@ -66,7 +66,7 @@ router.put('/gamejams/:id', async (req, res) => {
   }
 });
 
-router.delete('/gamejams/:id', async (req, res) => {
+router.delete('/gamejams/:id', requireSuperAdmin, async (req, res) => {
   try {
     const success = await GameJam.delete(req.params.id);
     if (!success) {
@@ -132,7 +132,7 @@ router.put('/games/:id', async (req, res) => {
   }
 });
 
-router.delete('/games/:id', async (req, res) => {
+router.delete('/games/:id', requireSuperAdmin, async (req, res) => {
   try {
     const success = await Game.delete(req.params.id);
     if (!success) {
