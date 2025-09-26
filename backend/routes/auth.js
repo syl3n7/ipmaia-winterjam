@@ -12,8 +12,21 @@ const requireAdmin = (req, res, next) => {
     return res.status(401).json({ error: 'Authentication required' });
   }
   
-  if (req.session.role !== 'admin') {
+  if (req.session.role !== 'admin' && req.session.role !== 'super_admin') {
     return res.status(403).json({ error: 'Admin privileges required' });
+  }
+  
+  next();
+};
+
+// Super admin middleware (for destructive operations)
+const requireSuperAdmin = (req, res, next) => {
+  if (!req.session.userId) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+  
+  if (req.session.role !== 'super_admin') {
+    return res.status(403).json({ error: 'Super admin privileges required' });
   }
   
   next();
@@ -21,6 +34,7 @@ const requireAdmin = (req, res, next) => {
 
 // Export middleware for use in other routes
 router.requireAdmin = requireAdmin;
+router.requireSuperAdmin = requireSuperAdmin;
 
 // Initialize OIDC client
 let oidcClient = null;
@@ -53,9 +67,18 @@ const initOIDC = async () => {
         let user = result.rows[0];
         
         if (!user) {
-          // Determine user role based on OIDC_ADMIN_EMAIL
-          const isAdmin = userinfo.email === process.env.OIDC_ADMIN_EMAIL;
-          const role = isAdmin ? 'admin' : 'user';
+          // Determine user role based on OIDC groups and email
+          const groups = userinfo.groups || userinfo.memberOf || [];
+          let role = 'user'; // default role
+          
+          // Super admin: must be in "admin" group AND have the admin email
+          if (groups.includes('admin') && userinfo.email === process.env.OIDC_ADMIN_EMAIL) {
+            role = 'super_admin';
+          } 
+          // Admin: must be in "IPMAIA" or "users" group
+          else if (groups.includes('IPMAIA') || groups.includes('users')) {
+            role = 'admin';
+          }
           
           // Create new user
           result = await pool.query(
@@ -63,7 +86,29 @@ const initOIDC = async () => {
             [userinfo.preferred_username || userinfo.email, userinfo.email, '', role, true]
           );
           user = result.rows[0];
-          console.log(`✅ Created new OIDC user: ${user.email} with role: ${role}`);
+          console.log(`✅ Created new OIDC user: ${user.email} with role: ${role} (groups: ${groups.join(', ')})`);
+        } else {
+          // Update existing user's role if their groups/email have changed
+          const groups = userinfo.groups || userinfo.memberOf || [];
+          let newRole = 'user';
+          
+          // Super admin: must be in "admin" group AND have the admin email
+          if (groups.includes('admin') && userinfo.email === process.env.OIDC_ADMIN_EMAIL) {
+            newRole = 'super_admin';
+          } 
+          // Admin: must be in "IPMAIA" or "users" group
+          else if (groups.includes('IPMAIA') || groups.includes('users')) {
+            newRole = 'admin';
+          }
+          
+          if (user.role !== newRole) {
+            await pool.query(
+              'UPDATE users SET role = $1, updated_at = NOW() WHERE id = $2',
+              [newRole, user.id]
+            );
+            user.role = newRole;
+            console.log(`🔄 Updated existing user ${user.email} role to: ${newRole} (groups: ${groups.join(', ')})`);
+          }
         }
 
         return done(null, user);
@@ -133,7 +178,7 @@ router.get('/oidc/login', (req, res, next) => {
   });
   
   const authorizationUrl = oidcClient.authorizationUrl({
-    scope: 'openid email profile',
+    scope: 'openid email profile groups',
     state: state
   });
   
@@ -192,7 +237,13 @@ router.get('/oidc/callback', async (req, res) => {
     
     console.log('🔄 Fetching user info...');
     const userinfo = await oidcClient.userinfo(tokenSet);
-    console.log('👤 User info received:', { email: userinfo.email, preferred_username: userinfo.preferred_username });
+    console.log('👤 User info received:', { 
+      email: userinfo.email, 
+      preferred_username: userinfo.preferred_username,
+      groups: userinfo.groups,
+      memberOf: userinfo.memberOf,
+      roles: userinfo.roles
+    });
 
     // Check if user exists or create them
     let result = await pool.query(
@@ -203,9 +254,18 @@ router.get('/oidc/callback', async (req, res) => {
     let user = result.rows[0];
     
     if (!user) {
-      // Determine user role based on OIDC_ADMIN_EMAIL
-      const isAdmin = userinfo.email === process.env.OIDC_ADMIN_EMAIL;
-      const role = isAdmin ? 'admin' : 'user';
+      // Determine user role based on OIDC groups and email
+      const groups = userinfo.groups || userinfo.memberOf || [];
+      let role = 'user'; // default role
+      
+      // Super admin: must be in "admin" group AND have the admin email
+      if (groups.includes('admin') && userinfo.email === process.env.OIDC_ADMIN_EMAIL) {
+        role = 'super_admin';
+      } 
+      // Admin: must be in "IPMAIA" or "users" group
+      else if (groups.includes('IPMAIA') || groups.includes('users')) {
+        role = 'admin';
+      }
       
       // Create new user
       result = await pool.query(
@@ -213,11 +273,33 @@ router.get('/oidc/callback', async (req, res) => {
         [userinfo.preferred_username || userinfo.email, userinfo.email, '', role, true]
       );
       user = result.rows[0];
-      console.log(`✅ Created new OIDC user: ${user.email} with role: ${role}`);
+      console.log(`✅ Created new OIDC user: ${user.email} with role: ${role} (groups: ${groups.join(', ')})`);
+    } else {
+      // Update existing user's role if their groups/email have changed
+      const groups = userinfo.groups || userinfo.memberOf || [];
+      let newRole = 'user';
+      
+      // Super admin: must be in "admin" group AND have the admin email
+      if (groups.includes('admin') && userinfo.email === process.env.OIDC_ADMIN_EMAIL) {
+        newRole = 'super_admin';
+      } 
+      // Admin: must be in "IPMAIA" or "users" group
+      else if (groups.includes('IPMAIA') || groups.includes('users')) {
+        newRole = 'admin';
+      }
+      
+      if (user.role !== newRole) {
+        await pool.query(
+          'UPDATE users SET role = $1, updated_at = NOW() WHERE id = $2',
+          [newRole, user.id]
+        );
+        user.role = newRole;
+        console.log(`🔄 Updated existing user ${user.email} role to: ${newRole} (groups: ${groups.join(', ')})`);
+      }
     }
 
     // Check if user has admin privileges
-    if (user.role !== 'admin') {
+    if (user.role !== 'admin' && user.role !== 'super_admin') {
       return res.status(403).send(`
         <html>
           <head><title>Access Denied</title></head>
@@ -226,6 +308,7 @@ router.get('/oidc/callback', async (req, res) => {
             <p>You don't have admin privileges for this application.</p>
             <p>Contact the administrator if you need access.</p>
             <p><strong>Your email:</strong> ${user.email}</p>
+            <p><strong>Your role:</strong> ${user.role}</p>
             <p><strong>Admin email:</strong> ${process.env.OIDC_ADMIN_EMAIL}</p>
           </body>
         </html>
