@@ -576,7 +576,11 @@
             <div style="display: flex; gap: 10px; margin-bottom: 20px;">
                 <button class="btn btn-success" id="add-gamejam-btn">+ Adicionar Nova Game Jam</button>
                 <button class="btn btn-primary" id="export-all-btn" style="margin-left: auto;">📥 Exportar Todos os Dados</button>
+                <button class="btn btn-primary" id="import-data-btn">📤 Importar Dados</button>
             </div>
+            
+            <!-- Hidden file input for import -->
+            <input type="file" id="import-file-input" accept=".json" style="display: none;" />
             
             <div id="gamejam-form" class="form-section" style="display: none;">
                 <h3>📝 Add/Edit Game Jam</h3>
@@ -2189,6 +2193,65 @@
                     console.error('Error exporting data:', error);
                     showStatus('❌ Failed to export data', 'error');
                 }
+            });
+            
+            // Import button event listener
+            document.getElementById('import-data-btn').addEventListener('click', function() {
+                document.getElementById('import-file-input').click();
+            });
+            
+            // File input change listener
+            document.getElementById('import-file-input').addEventListener('change', async function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                try {
+                    showStatus('📤 Importing data...', 'info');
+                    
+                    const reader = new FileReader();
+                    reader.onload = async function(event) {
+                        try {
+                            const data = JSON.parse(event.target.result);
+                            
+                            const response = await fetch('/api/admin/import', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(data)
+                            });
+                            
+                            if (!response.ok) throw new Error('Import failed');
+                            
+                            const result = await response.json();
+                            
+                            let message = '✅ Importação concluída!\n';
+                            message += `Game Jams: ${result.gamejams_imported}\n`;
+                            message += `Jogos: ${result.games_imported}\n`;
+                            message += `Configurações: ${result.frontpage_settings_imported}\n`;
+                            message += `Regras: ${result.rules_content_imported}`;
+                            
+                            if (result.errors && result.errors.length > 0) {
+                                message += `\n\n⚠️ Errors: ${result.errors.length}`;
+                            }
+                            
+                            showStatus(message, 'success');
+                            
+                            // Reload current section data
+                            const activeSection = document.querySelector('.card.active').id.replace('-section', '');
+                            showSection(activeSection);
+                        } catch (error) {
+                            console.error('Error parsing import file:', error);
+                            showStatus('❌ Failed to parse import file', 'error');
+                        }
+                    };
+                    
+                    reader.readAsText(file);
+                } catch (error) {
+                    console.error('Error importing data:', error);
+                    showStatus('❌ Failed to import data', 'error');
+                }
+                
+                // Reset file input
+                e.target.value = '';
             });
             
             // Front Page Settings event listeners

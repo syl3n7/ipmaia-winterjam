@@ -204,4 +204,111 @@ router.get('/export/gamejam/:id', async (req, res) => {
   }
 });
 
+// Import endpoint - restore exported data
+router.post('/import', async (req, res) => {
+  try {
+    const { gamejams, games, frontpage_settings, rules_content } = req.body;
+    
+    const results = {
+      gamejams_imported: 0,
+      games_imported: 0,
+      frontpage_settings_imported: 0,
+      rules_content_imported: 0,
+      errors: []
+    };
+
+    // Import Game Jams
+    if (gamejams && Array.isArray(gamejams)) {
+      for (const jam of gamejams) {
+        try {
+          // Check if already exists
+          const existing = await GameJam.findById(jam.id);
+          if (existing) {
+            await GameJam.update(jam.id, jam);
+          } else {
+            await GameJam.create(jam);
+          }
+          results.gamejams_imported++;
+        } catch (error) {
+          results.errors.push(`Failed to import game jam ${jam.id}: ${error.message}`);
+        }
+      }
+    }
+
+    // Import Games
+    if (games && Array.isArray(games)) {
+      for (const game of games) {
+        try {
+          const existing = await Game.findById(game.id);
+          if (existing) {
+            await Game.update(game.id, game);
+          } else {
+            await Game.create(game);
+          }
+          results.games_imported++;
+        } catch (error) {
+          results.errors.push(`Failed to import game ${game.id}: ${error.message}`);
+        }
+      }
+    }
+
+    // Import Front Page Settings
+    if (frontpage_settings && Array.isArray(frontpage_settings)) {
+      const { pool } = require('../config/database');
+      for (const setting of frontpage_settings) {
+        try {
+          await pool.query(
+            `INSERT INTO frontpage_settings (setting_key, setting_value, setting_type, display_name, section_name, description, display_order)
+             VALUES ($1, $2, $3, $4, $5, $6, $7)
+             ON CONFLICT (setting_key) DO UPDATE 
+             SET setting_value = EXCLUDED.setting_value,
+                 setting_type = EXCLUDED.setting_type,
+                 display_name = EXCLUDED.display_name,
+                 section_name = EXCLUDED.section_name,
+                 description = EXCLUDED.description,
+                 display_order = EXCLUDED.display_order`,
+            [setting.setting_key, setting.setting_value, setting.setting_type, 
+             setting.display_name, setting.section_name, setting.description, setting.display_order]
+          );
+          results.frontpage_settings_imported++;
+        } catch (error) {
+          results.errors.push(`Failed to import frontpage setting ${setting.setting_key}: ${error.message}`);
+        }
+      }
+    }
+
+    // Import Rules Content
+    if (rules_content && Array.isArray(rules_content)) {
+      const { pool } = require('../config/database');
+      for (const rule of rules_content) {
+        try {
+          await pool.query(
+            `INSERT INTO rules_content (section_key, section_title, content, display_order, is_active)
+             VALUES ($1, $2, $3, $4, $5)
+             ON CONFLICT (section_key) DO UPDATE 
+             SET section_title = EXCLUDED.section_title,
+                 content = EXCLUDED.content,
+                 display_order = EXCLUDED.display_order,
+                 is_active = EXCLUDED.is_active`,
+            [rule.section_key, rule.section_title, rule.content, rule.display_order, 
+             rule.is_active !== false]
+          );
+          results.rules_content_imported++;
+        } catch (error) {
+          results.errors.push(`Failed to import rule ${rule.section_key}: ${error.message}`);
+        }
+      }
+    }
+
+    res.json({
+      success: true,
+      message: 'Import completed',
+      ...results
+    });
+  } catch (error) {
+    console.error('Error importing data:', error);
+    res.status(500).json({ error: 'Failed to import data', details: error.message });
+  }
+});
+
 module.exports = router;
