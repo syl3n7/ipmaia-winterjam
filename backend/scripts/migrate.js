@@ -126,22 +126,22 @@ async function createTables() {
     await pool.query(`
       INSERT INTO front_page_settings (setting_key, setting_value, setting_type, display_name, description, section, display_order) 
       VALUES 
-        ('hero_title', 'IPMAIA WinterJam 2025', 'text', 'Hero Title', 'Main title displayed on the front page', 'hero', 1),
-        ('hero_description', 'Uma game jam onde estudantes de desenvolvimento de jogos criam experiências únicas em 45 horas.', 'textarea', 'Hero Description', 'Description text below the main title', 'hero', 2),
-        ('hero_background_image', '/images/IPMAIA_SiteBanner.png', 'image', 'Background Image', 'Hero section background image URL', 'hero', 3),
-        ('show_event_dates', 'true', 'boolean', 'Show Event Dates', 'Display event start and end dates', 'general', 4),
-        ('show_theme', 'true', 'boolean', 'Show Theme', 'Display the game jam theme when available', 'general', 5),
-        ('show_required_object', 'true', 'boolean', 'Show Required Object', 'Display the required object when available', 'general', 6),
-        ('button_before_start_text', 'Inscrever Agora', 'text', 'Pre-Event Button Text', 'Button text before event starts', 'buttons', 7),
-        ('button_before_start_url', '/enlist-now', 'url', 'Pre-Event Button URL', 'Button URL before event starts', 'buttons', 8),
-        ('button_during_event_text', 'Ver Regras', 'text', 'During Event Button Text', 'Button text during event', 'buttons', 9),
-        ('button_during_event_url', '/rules', 'url', 'During Event Button URL', 'Button URL during event', 'buttons', 10),
-        ('button_after_event_text', 'Ver Jogos Submetidos', 'text', 'Post-Event Button Text', 'Button text after event ends', 'buttons', 11),
-        ('button_after_event_url', '/archive/2025/winter', 'url', 'Post-Event Button URL', 'Button URL after event ends', 'buttons', 12),
-        ('status_event_running', 'Evento a decorrer!', 'text', 'Event Running Status', 'Message displayed when event is active', 'advanced', 13),
-        ('status_fallback_message', 'Mantém-te atento às nossas redes sociais para updates sobre o próximo Winter Jam!', 'textarea', 'Fallback Status Message', 'Message displayed when no event is running', 'advanced', 14),
-        ('custom_css', '', 'textarea', 'Custom CSS', 'Additional CSS styles for the front page', 'advanced', 15),
-        ('analytics_code', '', 'textarea', 'Analytics Code', 'Google Analytics or other tracking code', 'advanced', 16)
+        ('hero_title', 'IPMAIA WinterJam 2025', 'text', 'Título Principal', 'Título principal exibido na página inicial', 'hero', 1),
+        ('hero_description', 'Uma game jam onde estudantes de desenvolvimento de jogos criam experiências únicas em 45 horas.', 'textarea', 'Descrição do Hero', 'Texto de descrição abaixo do título principal', 'hero', 2),
+        ('hero_background_image', '/images/IPMAIA_SiteBanner.png', 'image', 'Imagem de Fundo', 'URL da imagem de fundo da secção hero', 'hero', 3),
+        ('show_event_dates', 'true', 'boolean', 'Mostrar Datas do Evento', 'Exibir datas de início e fim do evento', 'general', 4),
+        ('show_theme', 'true', 'boolean', 'Mostrar Tema', 'Exibir o tema da game jam quando disponível', 'general', 5),
+        ('show_required_object', 'true', 'boolean', 'Mostrar Objeto Obrigatório', 'Exibir o objeto obrigatório quando disponível', 'general', 6),
+        ('button_before_start_text', 'Inscrever Agora', 'text', 'Botão ANTES do Evento - Texto', 'Texto do botão antes do evento começar (ex: Inscrever Agora)', 'buttons', 7),
+        ('button_before_start_url', '/enlist-now', 'url', 'Botão ANTES do Evento - URL', 'URL do botão antes do evento começar', 'buttons', 8),
+        ('button_during_event_text', 'Ver Regras', 'text', 'Botão DURANTE o Evento - Texto', 'Texto do botão durante o evento (ex: Ver Regras)', 'buttons', 9),
+        ('button_during_event_url', '/rules', 'url', 'Botão DURANTE o Evento - URL', 'URL do botão durante o evento', 'buttons', 10),
+        ('button_after_event_text', 'Ver Jogos Submetidos', 'text', 'Botão DEPOIS do Evento - Texto', 'Texto do botão após o evento terminar (ex: Ver Todos os Jogos)', 'buttons', 11),
+        ('button_after_event_url', '/archive/2025/winter', 'url', 'Botão DEPOIS do Evento - URL', 'URL do botão após o evento terminar', 'buttons', 12),
+        ('status_event_running', 'Evento a decorrer!', 'text', 'Mensagem de Evento Ativo', 'Mensagem exibida quando o evento está a decorrer', 'advanced', 13),
+        ('status_fallback_message', 'Mantém-te atento às nossas redes sociais para updates sobre o próximo Winter Jam!', 'textarea', 'Mensagem de Fallback', 'Mensagem exibida quando não há evento ativo', 'advanced', 14),
+        ('custom_css', '', 'textarea', 'CSS Personalizado', 'Estilos CSS adicionais para a página inicial', 'advanced', 15),
+        ('analytics_code', '', 'textarea', 'Código de Analytics', 'Código do Google Analytics ou outro sistema de tracking', 'advanced', 16)
       ON CONFLICT (setting_key) DO NOTHING;
     `);
 
