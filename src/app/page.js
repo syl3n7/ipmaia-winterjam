@@ -193,34 +193,45 @@ export default function Home() {
       <div className="relative z-10 flex items-center justify-center min-h-screen">
         <div className="max-w-4xl w-full px-4 py-16 text-center">
           <div className="bg-black/40 backdrop-blur-md p-8 rounded-2xl shadow-xl">
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6">
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-300 to-orange-500">
-                {currentGameJam ? currentGameJam.name : (frontPageSettings.hero_title || 'IPMAIA WinterJam 2025')}
-              </span>
-            </h1>
-            
-            <p className="text-xl md:text-2xl text-orange-100 mb-8">
-              {currentGameJam ? currentGameJam.description : (frontPageSettings.hero_description || 'Uma game jam onde estudantes de desenvolvimento de jogos criam experiências únicas em 45 horas.')}
-            </p>
+            {/* Title toggle */}
+            {(!currentGameJam || currentGameJam.show_title !== false) && (
+              <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-300 to-orange-500">
+                  {currentGameJam ? currentGameJam.name : (frontPageSettings.hero_title || 'IPMAIA WinterJam 2025')}
+                </span>
+              </h1>
+            )}
+
+            {/* Description toggle */}
+            {(!currentGameJam || currentGameJam.show_description !== false) && (
+              <p className="text-xl md:text-2xl text-orange-100 mb-8">
+                {currentGameJam ? currentGameJam.description : (frontPageSettings.hero_description || 'Uma game jam onde estudantes de desenvolvimento de jogos criam experiências únicas em 45 horas.')}
+              </p>
+            )}
             
             <div className="flex flex-col md:flex-row items-center justify-center gap-4 mb-12">
-              {frontPageSettings.show_event_dates !== false && (
+              {/* Date toggle and fallback */}
+              {(frontPageSettings.show_event_dates !== false && (!currentGameJam || currentGameJam.show_start_date !== false)) ? (
                 <div className="px-5 py-3 bg-orange-900/50 backdrop-blur-sm rounded-full text-orange-100 inline-flex items-center gap-2">
                   <Clock size={20} />
                   <span>
-                    {currentGameJam 
-                      ? `${new Date(currentGameJam.start_date).toLocaleDateString('pt-PT')} - ${new Date(currentGameJam.end_date).toLocaleDateString('pt-PT')}`
+                    {currentGameJam
+                      ? ((currentGameJam.show_start_date === false && currentGameJam.date_fallback)
+                          ? (currentGameJam.date_fallback === 'hidden' ? null : currentGameJam.date_fallback)
+                          : `${new Date(currentGameJam.start_date).toLocaleDateString('pt-PT')} - ${new Date(currentGameJam.end_date).toLocaleDateString('pt-PT')}`)
                       : '14-16 Fevereiro 2025'
                     }
                   </span>
                 </div>
-              )}
-              {frontPageSettings.show_theme !== false && currentGameJam && currentGameJam.theme && (
+              ) : null}
+              {/* Theme toggle */}
+              {frontPageSettings.show_theme !== false && currentGameJam && currentGameJam.theme && currentGameJam.show_theme !== false && (
                 <div className="px-5 py-3 bg-orange-900/50 backdrop-blur-sm rounded-full text-orange-100">
                   <span>Tema: {currentGameJam.theme}</span>
                 </div>
               )}
-              {frontPageSettings.show_required_object !== false && currentGameJam && currentGameJam.required_object && (
+              {/* Required object toggle */}
+              {frontPageSettings.show_required_object !== false && currentGameJam && currentGameJam.required_object && currentGameJam.show_required_object !== false && (
                 <div className="px-5 py-3 bg-orange-900/50 backdrop-blur-sm rounded-full text-orange-100">
                   <span>Objeto: {currentGameJam.required_object}</span>
                 </div>

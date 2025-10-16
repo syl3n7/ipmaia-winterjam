@@ -86,6 +86,32 @@ function runMigration() {
   });
 }
 
+function runToggleFieldsMigration() {
+  return new Promise((resolve, reject) => {
+    console.log('🔄 Adding toggle fields to existing tables...');
+    
+    const migration = spawn('node', ['scripts/add-toggle-fields.js'], {
+      cwd: __dirname + '/..',
+      stdio: 'inherit'
+    });
+    
+    migration.on('close', (code) => {
+      if (code === 0) {
+        console.log('✅ Toggle fields migration completed successfully!');
+        resolve();
+      } else {
+        console.error(`❌ Toggle fields migration failed with exit code ${code}`);
+        reject(new Error(`Toggle fields migration process exited with code ${code}`));
+      }
+    });
+    
+    migration.on('error', (error) => {
+      console.error('❌ Failed to start toggle fields migration process:', error.message);
+      reject(error);
+    });
+  });
+}
+
 async function main() {
   console.log('🎯 Auto-migration starting...');
   console.log(`Configuration:
@@ -103,8 +129,11 @@ async function main() {
       process.exit(1);
     }
     
-    // Run migration
+    // Run main migration
     await runMigration();
+    
+    // Run toggle fields migration (adds columns to existing tables)
+    await runToggleFieldsMigration();
     
     console.log('🎉 Auto-migration completed successfully!');
     process.exit(0);
@@ -131,4 +160,4 @@ if (require.main === module) {
   main();
 }
 
-module.exports = { waitForHealth, runMigration };
+module.exports = { waitForHealth, runMigration, runToggleFieldsMigration };

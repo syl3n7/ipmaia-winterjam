@@ -31,7 +31,7 @@ async function createTables() {
       );
     `);
 
-    // Create game_jams table
+    // Create game_jams table with toggle fields
     await pool.query(`
       CREATE TABLE IF NOT EXISTS game_jams (
         id SERIAL PRIMARY KEY,
@@ -46,12 +46,26 @@ async function createTables() {
         rules_pdf_url TEXT,
         is_active BOOLEAN DEFAULT true,
         banner_image_url TEXT,
+        -- Toggle fields for visibility control
+        show_theme BOOLEAN DEFAULT true,
+        show_description BOOLEAN DEFAULT true,
+        show_start_date BOOLEAN DEFAULT true,
+        show_end_date BOOLEAN DEFAULT true,
+        date_fallback VARCHAR(50) DEFAULT 'TBD',
+        show_registration_dates BOOLEAN DEFAULT true,
+        registration_date_fallback VARCHAR(50) DEFAULT 'TBD',
+        show_registration_url BOOLEAN DEFAULT true,
+        show_rules_pdf_url BOOLEAN DEFAULT true,
+        show_banner_image BOOLEAN DEFAULT true,
+        banner_fallback VARCHAR(50) DEFAULT 'placeholder',
+        custom_fields JSONB DEFAULT '{}',
+        custom_fields_visibility JSONB DEFAULT '{}',
         created_at TIMESTAMP DEFAULT NOW(),
         updated_at TIMESTAMP DEFAULT NOW()
       );
     `);
 
-    // Create games table
+    // Create games table with toggle fields
     await pool.query(`
       CREATE TABLE IF NOT EXISTS games (
         id SERIAL PRIMARY KEY,
@@ -65,6 +79,28 @@ async function createTables() {
         screenshot_urls JSONB,
         tags JSONB,
         is_featured BOOLEAN DEFAULT false,
+        -- Additional fields
+        thumbnail_url TEXT,
+        instructions TEXT,
+        lore TEXT,
+        ranking INTEGER,
+        -- Toggle fields for visibility control
+        show_title BOOLEAN DEFAULT true,
+        show_description BOOLEAN DEFAULT true,
+        show_team_name BOOLEAN DEFAULT true,
+        show_team_members BOOLEAN DEFAULT true,
+        show_github_url BOOLEAN DEFAULT true,
+        show_itch_url BOOLEAN DEFAULT true,
+        show_screenshots BOOLEAN DEFAULT true,
+        screenshot_fallback VARCHAR(50) DEFAULT 'placeholder',
+        show_tags BOOLEAN DEFAULT true,
+        show_thumbnail BOOLEAN DEFAULT true,
+        thumbnail_fallback VARCHAR(50) DEFAULT 'placeholder',
+        show_instructions BOOLEAN DEFAULT true,
+        show_lore BOOLEAN DEFAULT true,
+        show_ranking BOOLEAN DEFAULT true,
+        custom_fields JSONB DEFAULT '{}',
+        custom_fields_visibility JSONB DEFAULT '{}',
         created_at TIMESTAMP DEFAULT NOW(),
         updated_at TIMESTAMP DEFAULT NOW()
       );

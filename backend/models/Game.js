@@ -12,7 +12,29 @@ class Game {
       itch_url,
       screenshot_urls,
       tags,
-      is_featured
+      is_featured,
+      // New fields from migration
+      thumbnail_url,
+      instructions,
+      lore,
+      ranking,
+      // Toggle fields
+      show_title = true,
+      show_description = true,
+      show_team_name = true,
+      show_team_members = true,
+      show_github_url = true,
+      show_itch_url = true,
+      show_screenshots = true,
+      screenshot_fallback = 'placeholder',
+      show_tags = true,
+      show_thumbnail = true,
+      thumbnail_fallback = 'placeholder',
+      show_instructions = true,
+      show_lore = true,
+      show_ranking = true,
+      custom_fields = {},
+      custom_fields_visibility = {}
     } = data;
 
     // Convert arrays to JSON strings for PostgreSQL JSON columns
@@ -24,14 +46,24 @@ class Game {
       INSERT INTO games (
         game_jam_id, title, description, team_name, team_members,
         github_url, itch_url, screenshot_urls, tags, is_featured,
+        thumbnail_url, instructions, lore, ranking,
+        show_title, show_description, show_team_name, show_team_members,
+        show_github_url, show_itch_url, show_screenshots, screenshot_fallback,
+        show_tags, show_thumbnail, thumbnail_fallback, show_instructions,
+        show_lore, show_ranking, custom_fields, custom_fields_visibility,
         created_at, updated_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, NOW(), NOW())
       RETURNING *
     `;
 
     const values = [
       game_jam_id, title, description, team_name, processedTeamMembers,
-      github_url, itch_url, processedScreenshotUrls, processedTags, is_featured
+      github_url, itch_url, processedScreenshotUrls, processedTags, is_featured,
+      thumbnail_url, instructions, lore, ranking,
+      show_title, show_description, show_team_name, show_team_members,
+      show_github_url, show_itch_url, show_screenshots, screenshot_fallback,
+      show_tags, show_thumbnail, thumbnail_fallback, show_instructions,
+      show_lore, show_ranking, JSON.stringify(custom_fields), JSON.stringify(custom_fields_visibility)
     ];
 
     const result = await pool.query(query, values);
@@ -96,10 +128,18 @@ class Game {
         let value = data[key];
         
         // Convert arrays to JSON strings for PostgreSQL JSON columns
-        if (key === 'team_members' || key === 'tags') {
+        if (key === 'team_members' || key === 'tags' || key === 'screenshot_urls') {
           if (Array.isArray(value)) {
             value = JSON.stringify(value);
             console.log(`🔄 Converting ${key} array to JSON:`, value);
+          }
+        }
+        
+        // Convert objects to JSON strings for custom fields
+        if (key === 'custom_fields' || key === 'custom_fields_visibility') {
+          if (typeof value === 'object' && value !== null) {
+            value = JSON.stringify(value);
+            console.log(`🔄 Converting ${key} object to JSON:`, value);
           }
         }
         
