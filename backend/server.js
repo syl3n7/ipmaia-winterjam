@@ -95,8 +95,10 @@ app.use(session({
   }
 }));
 
-// CSRF Protection middleware
-app.use(csrf());
+// CSRF Protection middleware with custom header
+app.use(csrf({
+  header: 'csrf-token' // Match the header name sent by the admin dashboard
+}));
 
 // Initialize Passport
 app.use(passport.initialize());
@@ -185,8 +187,8 @@ app.get('/admin', requireAdminAccess, (req, res) => {
   const htmlPath = path.join(__dirname, 'admin/dist/index.html');
   let html = fs.readFileSync(htmlPath, 'utf8');
   
-  // Inject CSRF token into the HTML
-  const csrfToken = req.session._csrf || '';
+  // Get CSRF token from session (lusca stores it here)
+  const csrfToken = req.session._csrfSecret || '';
   html = html.replace('</head>', `<meta name="csrf-token" content="${csrfToken}"></head>`);
   
   res.send(html);
