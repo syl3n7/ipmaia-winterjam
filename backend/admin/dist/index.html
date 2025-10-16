@@ -572,7 +572,10 @@
         <div id="gamejams-section" class="card active">
             <h2>🎮 Game Jams Management</h2>
             
-            <button class="btn btn-success" id="add-gamejam-btn">+ Add New Game Jam</button>
+            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                <button class="btn btn-success" id="add-gamejam-btn">+ Add New Game Jam</button>
+                <button class="btn btn-primary" id="export-all-btn" style="margin-left: auto;">📥 Export All Data</button>
+            </div>
             
             <div id="gamejam-form" class="form-section" style="display: none;">
                 <h3>📝 Add/Edit Game Jam</h3>
@@ -1232,6 +1235,7 @@
                                 <td>
                                     <div class="action-buttons">
                                         <button class="btn btn-sm" data-edit-jam="${jam.id}">✏️ Edit</button>
+                                        <button class="btn btn-sm btn-primary" data-export-jam="${jam.id}">📥 Export</button>
                                         <button class="btn btn-danger btn-sm" data-delete-jam="${jam.id}">🗑️ Delete</button>
                                     </div>
                                 </td>
@@ -1406,6 +1410,26 @@
                 loadGameJams();
             } catch (error) {
                 showStatus(`❌ Error deleting game jam: ${error.message}`, 'error');
+            }
+        }
+
+        async function exportGameJam(id) {
+            try {
+                showStatus('📥 Preparing game jam export...', 'info');
+                
+                // Trigger download by opening the export URL
+                const exportUrl = `/api/admin/export/gamejam/${id}?format=json`;
+                const link = document.createElement('a');
+                link.href = exportUrl;
+                link.download = `gamejam-${id}-export-${Date.now()}.json`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                showStatus('✅ Game jam exported successfully!', 'success');
+            } catch (error) {
+                console.error('Error exporting game jam:', error);
+                showStatus('❌ Failed to export game jam', 'error');
             }
         }
 
@@ -1971,6 +1995,27 @@
             document.getElementById('add-game-btn').addEventListener('click', showGameForm);
             document.getElementById('cancel-game-btn').addEventListener('click', hideGameForm);
             
+            // Export button event listener
+            document.getElementById('export-all-btn').addEventListener('click', async function() {
+                try {
+                    showStatus('📥 Preparing export...', 'info');
+                    
+                    // Trigger download by opening the export URL
+                    const exportUrl = '/api/admin/export/all?format=json';
+                    const link = document.createElement('a');
+                    link.href = exportUrl;
+                    link.download = `winterjam-export-${Date.now()}.json`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    
+                    showStatus('✅ Export downloaded successfully!', 'success');
+                } catch (error) {
+                    console.error('Error exporting data:', error);
+                    showStatus('❌ Failed to export data', 'error');
+                }
+            });
+            
             // Front Page Settings event listeners
             document.getElementById('frontpage-form').addEventListener('submit', function(e) {
                 e.preventDefault();
@@ -1988,6 +2033,10 @@
                     const id = e.target.getAttribute('data-edit-jam');
                     console.log('📝 Edit jam button clicked, ID:', id);
                     editGameJam(id);
+                } else if (e.target.hasAttribute('data-export-jam')) {
+                    const id = e.target.getAttribute('data-export-jam');
+                    console.log('📥 Export jam button clicked, ID:', id);
+                    exportGameJam(id);
                 } else if (e.target.hasAttribute('data-delete-jam')) {
                     const id = e.target.getAttribute('data-delete-jam');
                     console.log('🗑️ Delete jam button clicked, ID:', id);

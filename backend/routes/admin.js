@@ -145,4 +145,63 @@ router.delete('/games/:id', requireSuperAdmin, async (req, res) => {
   }
 });
 
+// Export endpoints
+router.get('/export/all', async (req, res) => {
+  try {
+    const format = req.query.format || 'json';
+    const gameJams = await GameJam.findAll(true); // Include inactive
+    const games = await Game.findAll();
+    
+    const exportData = {
+      exported_at: new Date().toISOString(),
+      total_game_jams: gameJams.length,
+      total_games: games.length,
+      game_jams: gameJams,
+      games: games
+    };
+
+    if (format === 'json') {
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Disposition', `attachment; filename="winterjam-export-${Date.now()}.json"`);
+      res.json(exportData);
+    } else {
+      res.status(400).json({ error: 'Unsupported format. Use ?format=json' });
+    }
+  } catch (error) {
+    console.error('Error exporting data:', error);
+    res.status(500).json({ error: 'Failed to export data' });
+  }
+});
+
+router.get('/export/gamejam/:id', async (req, res) => {
+  try {
+    const format = req.query.format || 'json';
+    const gameJam = await GameJam.findById(req.params.id);
+    
+    if (!gameJam) {
+      return res.status(404).json({ error: 'Game jam not found' });
+    }
+    
+    const games = await Game.findByGameJamId(req.params.id);
+    
+    const exportData = {
+      exported_at: new Date().toISOString(),
+      game_jam: gameJam,
+      games: games,
+      total_games: games.length
+    };
+
+    if (format === 'json') {
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Disposition', `attachment; filename="gamejam-${gameJam.id}-export-${Date.now()}.json"`);
+      res.json(exportData);
+    } else {
+      res.status(400).json({ error: 'Unsupported format. Use ?format=json' });
+    }
+  } catch (error) {
+    console.error('Error exporting game jam:', error);
+    res.status(500).json({ error: 'Failed to export game jam' });
+  }
+});
+
 module.exports = router;
