@@ -56,6 +56,15 @@ else
     echo "⚠️ Toggle fields migration failed (might already exist)"
 fi
 
+echo "🔄 Adding rules content table..."
+
+# Run rules content migration
+if node scripts/add-rules-content.js; then
+    echo "✅ Rules content migration completed successfully!"
+else
+    echo "⚠️ Rules content migration failed (might already exist)"
+fi
+
 echo "🔄 Migrating frontend data..."
 
 # Run frontend data migration
