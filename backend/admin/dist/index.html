@@ -1100,6 +1100,9 @@
         // API Helper Functions
         async function apiCall(endpoint, method = 'GET', data = null) {
             try {
+                // Get CSRF token from meta tag
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                
                 const options = { 
                     method,
                     headers: {
@@ -1107,6 +1110,11 @@
                     },
                     credentials: 'same-origin'
                 };
+                
+                // Add CSRF token to headers for POST, PUT, DELETE requests
+                if (csrfToken && (method === 'POST' || method === 'PUT' || method === 'DELETE')) {
+                    options.headers['CSRF-Token'] = csrfToken;
+                }
                 
                 if (data) {
                     options.body = JSON.stringify(data);
