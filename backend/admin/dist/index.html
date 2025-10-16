@@ -963,41 +963,47 @@
 
         <!-- Front Page Section -->
         <div id="frontpage-section" class="card">
-            <h2>🏠 Front Page Settings</h2>
-            <p>Customize the main landing page content and behavior</p>
+            <h2>🏠 Configurações da Página Inicial</h2>
+            <p>Personalize o conteúdo e comportamento da página principal</p>
             
-            <div id="frontpage-loading" class="info status">Loading front page settings...</div>
+            <div id="frontpage-loading" class="info status">A carregar configurações...</div>
             
             <div id="frontpage-content" style="display: none;">
                 <form id="frontpage-form">
                     <!-- Hero Section -->
                     <div class="settings-section">
-                        <h3>🎨 Hero Section</h3>
+                        <h3>🎨 Secção Hero</h3>
                         <div id="hero-settings"></div>
                     </div>
                     
                     <!-- General Settings -->
                     <div class="settings-section">
-                        <h3>⚙️ General Settings</h3>
+                        <h3>⚙️ Configurações Gerais</h3>
                         <div id="general-settings"></div>
                     </div>
                     
                     <!-- Button Configuration -->
                     <div class="settings-section">
-                        <h3>🔘 Button Configuration</h3>
+                        <h3>🔘 Configuração de Botões</h3>
+                        <p style="color: #6c757d; font-size: 0.9rem; margin-bottom: 15px;">
+                            Os botões mudam automaticamente baseado nas datas do evento ativo:<br>
+                            • <strong>ANTES</strong>: Mostrado antes do evento começar (ex: inscrições)<br>
+                            • <strong>DURANTE</strong>: Mostrado enquanto o evento está a decorrer (ex: regras)<br>
+                            • <strong>DEPOIS</strong>: Mostrado após o evento terminar (ex: ver jogos submetidos)
+                        </p>
                         <div id="buttons-settings"></div>
                     </div>
                     
                     <!-- Advanced Settings -->
                     <div class="settings-section">
-                        <h3>🔧 Advanced Settings</h3>
+                        <h3>🔧 Configurações Avançadas</h3>
                         <div id="advanced-settings"></div>
                     </div>
                     
                     <div class="form-actions">
-                        <button type="submit" class="btn btn-primary">💾 Save All Settings</button>
-                        <button type="button" class="btn btn-secondary" id="preview-frontpage">👁️ Preview Changes</button>
-                        <button type="button" class="btn btn-warning" id="reset-frontpage" style="margin-left: auto;">🔄 Reset to Defaults</button>
+                        <button type="submit" class="btn btn-primary">💾 Guardar Todas as Configurações</button>
+                        <button type="button" class="btn btn-secondary" id="preview-frontpage">👁️ Pré-visualizar Alterações</button>
+                        <button type="button" class="btn btn-warning" id="reset-frontpage" style="margin-left: auto;">🔄 Repor Valores Padrão</button>
                     </div>
                 </form>
             </div>
