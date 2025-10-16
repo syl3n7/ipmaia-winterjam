@@ -1992,11 +1992,25 @@
                 
                 const sections = await response.json();
                 
+                // Map section keys to form field IDs
+                const fieldMapping = {
+                    'pdf_url': 'pdf-url',
+                    'conduct': 'conduct-content',
+                    'guidelines': 'guidelines-content',
+                    'prizes': 'prizes-content',
+                    'evaluation': 'evaluation-content',
+                    'participation': 'participation-content',
+                    'schedule': 'schedule-content'
+                };
+                
                 // Populate each section
                 sections.forEach(section => {
-                    const element = document.getElementById(`${section.section_key.replace('_', '-')}`);
-                    if (element) {
-                        element.value = section.content || '';
+                    const fieldId = fieldMapping[section.section_key];
+                    if (fieldId) {
+                        const element = document.getElementById(fieldId);
+                        if (element) {
+                            element.value = section.content || '';
+                        }
                     }
                 });
                 
