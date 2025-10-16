@@ -102,9 +102,21 @@ class GameJam {
     const values = [];
     let index = 1;
 
+    // Date field names that should convert empty strings to null
+    const dateFields = [
+      'start_date', 'end_date', 
+      'registration_start_date', 'registration_end_date'
+    ];
+
     Object.keys(data).forEach(key => {
       if (data[key] !== undefined) {
         let value = data[key];
+        
+        // Convert empty strings to null for date/timestamp fields
+        if (dateFields.includes(key) && value === '') {
+          value = null;
+          console.log(`🔄 Converting empty ${key} to NULL`);
+        }
         
         // Convert objects to JSON strings for custom fields
         if (key === 'custom_fields' || key === 'custom_fields_visibility') {

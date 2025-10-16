@@ -280,7 +280,7 @@ async function migrateFromFrontend() {
                     null,                           // registration_end_date
                     null,                           // registration_url
                     '/WinterJam_Rulebook.pdf',      // rules_pdf_url
-                    true,                           // is_active
+                    false,                          // is_active (set to false by default)
                     jamData.banner                  // banner_image_url
                 ];
                 
