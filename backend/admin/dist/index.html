@@ -1113,7 +1113,7 @@
                 
                 // Add CSRF token to headers for POST, PUT, DELETE requests
                 if (csrfToken && (method === 'POST' || method === 'PUT' || method === 'DELETE')) {
-                    options.headers['CSRF-Token'] = csrfToken;
+                    options.headers['csrf-token'] = csrfToken;
                 }
                 
                 if (data) {
