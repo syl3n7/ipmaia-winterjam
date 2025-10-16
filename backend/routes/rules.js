@@ -15,17 +15,8 @@ router.get('/content', async (req, res) => {
     `;
     const result = await pool.query(query);
     
-    // Convert to key-value object for easier access
-    const rulesContent = {};
-    result.rows.forEach(row => {
-      rulesContent[row.section_key] = {
-        title: row.section_title,
-        content: row.content,
-        order: row.display_order
-      };
-    });
-    
-    res.json(rulesContent);
+    // Return array of rules content
+    res.json(result.rows);
   } catch (error) {
     console.error('Error fetching rules content:', error);
     res.status(500).json({ error: 'Failed to fetch rules content' });
