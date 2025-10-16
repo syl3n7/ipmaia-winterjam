@@ -565,6 +565,7 @@
             <button class="nav-btn" data-section="games">🎯 Jogos</button>
             <button class="nav-btn" data-section="users">👥 Utilizadores</button>
             <button class="nav-btn" data-section="frontpage">🏠 Página Inicial</button>
+            <button class="nav-btn" data-section="rules">📋 Regras</button>
             <button class="nav-btn" data-section="system">⚙️ Sistema</button>
         </div>
 
@@ -1009,6 +1010,56 @@
             </div>
         </div>
 
+        <!-- Rules Section -->
+        <div id="rules-section" class="card">
+            <h2>📋 Gestão de Regras</h2>
+            <p style="margin-bottom: 20px; color: #6c757d;">Edite o conteúdo da página de regras. Pode usar HTML para formatação.</p>
+            
+            <div id="rules-status" class="status" style="display: none;"></div>
+            
+            <div class="form-section">
+                <div class="form-group">
+                    <label for="pdf-url">📄 URL do PDF</label>
+                    <input type="text" id="pdf-url" placeholder="/WinterJam_Rulebook.pdf" />
+                </div>
+
+                <div class="form-group">
+                    <label for="conduct-content">1. Código de Conduta</label>
+                    <textarea id="conduct-content" rows="8" placeholder="Conteúdo HTML para a secção Código de Conduta..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="guidelines-content">2. Diretrizes para a Criação de Jogos</label>
+                    <textarea id="guidelines-content" rows="8" placeholder="Conteúdo HTML para a secção Diretrizes..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="prizes-content">3. Prémios</label>
+                    <textarea id="prizes-content" rows="6" placeholder="Conteúdo HTML para a secção Prémios..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="evaluation-content">4. Critérios de Avaliação</label>
+                    <textarea id="evaluation-content" rows="6" placeholder="Conteúdo HTML para a secção Avaliação..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="participation-content">5. Regras de Participação</label>
+                    <textarea id="participation-content" rows="8" placeholder="Conteúdo HTML para a secção Participação..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="schedule-content">6. Horário do Evento</label>
+                    <textarea id="schedule-content" rows="6" placeholder="Conteúdo HTML para a secção Horário..."></textarea>
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn btn-primary" onclick="saveRulesContent()">💾 Guardar Regras</button>
+                    <button class="btn" onclick="loadRulesContent()">🔄 Recarregar</button>
+                </div>
+            </div>
+        </div>
+
         <!-- System Section -->
         <div id="system-section" class="card">
             <h2>⚙️ System Information</h2>
@@ -1213,6 +1264,9 @@
                     break;
                 case 'frontpage':
                     loadFrontPageSettings();
+                    break;
+                case 'rules':
+                    loadRulesContent();
                     break;
                 case 'system':
                     loadSystemInfo();
@@ -1928,6 +1982,67 @@
                 console.error('Error resetting settings:', error);
                 showStatus('❌ Failed to reset settings', 'error');
             }
+        }
+
+        // Rules Content Functions
+        async function loadRulesContent() {
+            try {
+                const response = await fetch('/api/rules/admin/content');
+                if (!response.ok) throw new Error('Failed to load rules content');
+                
+                const sections = await response.json();
+                
+                // Populate each section
+                sections.forEach(section => {
+                    const element = document.getElementById(`${section.section_key.replace('_', '-')}`);
+                    if (element) {
+                        element.value = section.content || '';
+                    }
+                });
+                
+                showRulesStatus('✅ Regras carregadas com sucesso', 'success');
+            } catch (error) {
+                console.error('Error loading rules content:', error);
+                showRulesStatus('❌ Erro ao carregar regras', 'error');
+            }
+        }
+
+        async function saveRulesContent() {
+            try {
+                const sections = [
+                    { section_key: 'pdf_url', content: document.getElementById('pdf-url').value },
+                    { section_key: 'conduct', content: document.getElementById('conduct-content').value },
+                    { section_key: 'guidelines', content: document.getElementById('guidelines-content').value },
+                    { section_key: 'prizes', content: document.getElementById('prizes-content').value },
+                    { section_key: 'evaluation', content: document.getElementById('evaluation-content').value },
+                    { section_key: 'participation', content: document.getElementById('participation-content').value },
+                    { section_key: 'schedule', content: document.getElementById('schedule-content').value }
+                ];
+                
+                const response = await fetch('/api/rules/admin/content', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sections })
+                });
+                
+                if (!response.ok) throw new Error('Failed to save rules content');
+                
+                showRulesStatus('✅ Regras guardadas com sucesso', 'success');
+            } catch (error) {
+                console.error('Error saving rules content:', error);
+                showRulesStatus('❌ Erro ao guardar regras', 'error');
+            }
+        }
+
+        function showRulesStatus(message, type) {
+            const statusEl = document.getElementById('rules-status');
+            statusEl.textContent = message;
+            statusEl.className = `status ${type}`;
+            statusEl.style.display = 'block';
+            
+            setTimeout(() => {
+                statusEl.style.display = 'none';
+            }, 5000);
         }
 
         // Form Handlers

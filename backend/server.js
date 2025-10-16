@@ -18,6 +18,7 @@ const gameRoutes = require('./routes/games');
 const adminRoutes = require('./routes/admin');
 const publicRoutes = require('./routes/public');
 const frontPageRoutes = require('./routes/frontpage');
+const rulesRoutes = require('./routes/rules');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -133,6 +134,7 @@ app.use('/api/games', gameRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/public', publicRoutes);
 app.use('/api/frontpage', frontPageRoutes);
+app.use('/api/rules', rulesRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
