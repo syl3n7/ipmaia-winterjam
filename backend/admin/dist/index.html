@@ -638,6 +638,100 @@
                         </label>
                     </div>
                     
+                    <!-- Toggle Controls Section -->
+                    <div style="border-top: 2px solid #667eea; margin-top: 30px; padding-top: 30px;">
+                        <h4 style="color: #667eea; margin-bottom: 20px;">👁️ Visibility Controls</h4>
+                        
+                        <div class="grid">
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" id="show-theme" name="show_theme" checked>
+                                    Show Theme
+                                </label>
+                            </div>
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" id="show-description" name="show_description" checked>
+                                    Show Description
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="grid">
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" id="show-start-date" name="show_start_date" checked>
+                                    Show Start Date
+                                </label>
+                            </div>
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" id="show-end-date" name="show_end_date" checked>
+                                    Show End Date
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="date-fallback">When dates are disabled, show:</label>
+                            <select id="date-fallback" name="date_fallback">
+                                <option value="TBD">TBD (To Be Determined)</option>
+                                <option value="Coming Soon">Coming Soon</option>
+                                <option value="To Be Announced">To Be Announced</option>
+                                <option value="hidden">Hide Completely</option>
+                            </select>
+                        </div>
+                        
+                        <div class="grid">
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" id="show-registration-dates" name="show_registration_dates" checked>
+                                    Show Registration Dates
+                                </label>
+                            </div>
+                            <div class="form-group">
+                                <label for="registration-date-fallback">Registration date fallback:</label>
+                                <select id="registration-date-fallback" name="registration_date_fallback">
+                                    <option value="TBD">TBD</option>
+                                    <option value="Coming Soon">Coming Soon</option>
+                                    <option value="hidden">Hide Completely</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="grid">
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" id="show-registration-url" name="show_registration_url" checked>
+                                    Show Registration URL
+                                </label>
+                            </div>
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" id="show-rules-pdf-url" name="show_rules_pdf_url" checked>
+                                    Show Rules PDF URL
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="grid">
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" id="show-banner-image" name="show_banner_image" checked>
+                                    Show Banner Image
+                                </label>
+                            </div>
+                            <div class="form-group">
+                                <label for="banner-fallback">When banner is disabled, show:</label>
+                                <select id="banner-fallback" name="banner_fallback">
+                                    <option value="placeholder">Placeholder</option>
+                                    <option value="hide">Hide Completely</option>
+                                    <option value="default">Default Background</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div style="margin-top: 20px;">
                         <button type="submit" class="btn btn-success">💾 Save Game Jam</button>
                         <button type="button" class="btn" id="cancel-gamejam-btn">❌ Cancel</button>
@@ -705,10 +799,143 @@
                     </div>
                     
                     <div class="form-group">
+                        <label for="game-thumbnail">Thumbnail URL</label>
+                        <input type="url" id="game-thumbnail" name="thumbnail_url" placeholder="https://example.com/thumbnail.jpg">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="game-instructions">Instructions</label>
+                        <textarea id="game-instructions" name="instructions" placeholder="How to play..."></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="game-lore">Lore/Story</label>
+                        <textarea id="game-lore" name="lore" placeholder="Game backstory..."></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="game-ranking">Ranking</label>
+                        <input type="number" id="game-ranking" name="ranking" placeholder="1">
+                    </div>
+                    
+                    <div class="form-group">
                         <label>
                             <input type="checkbox" id="game-featured" name="is_featured">
                             Featured Game
                         </label>
+                    </div>
+                    
+                    <!-- Toggle Controls Section -->
+                    <div style="border-top: 2px solid #667eea; margin-top: 30px; padding-top: 30px;">
+                        <h4 style="color: #667eea; margin-bottom: 20px;">👁️ Visibility Controls</h4>
+                        
+                        <div class="grid">
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" id="show-title" name="show_title" checked>
+                                    Show Title
+                                </label>
+                            </div>
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" id="show-description" name="show_description" checked>
+                                    Show Description
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="grid">
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" id="show-team-name" name="show_team_name" checked>
+                                    Show Team Name
+                                </label>
+                            </div>
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" id="show-team-members" name="show_team_members" checked>
+                                    Show Team Members
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="grid">
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" id="show-github-url" name="show_github_url" checked>
+                                    Show GitHub URL
+                                </label>
+                            </div>
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" id="show-itch-url" name="show_itch_url" checked>
+                                    Show Itch.io URL
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="grid">
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" id="show-screenshots" name="show_screenshots" checked>
+                                    Show Screenshots
+                                </label>
+                            </div>
+                            <div class="form-group">
+                                <label for="screenshot-fallback">When screenshots are disabled:</label>
+                                <select id="screenshot-fallback" name="screenshot_fallback">
+                                    <option value="placeholder">Show Placeholder</option>
+                                    <option value="hide">Hide Completely</option>
+                                    <option value="default">Default Image</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="grid">
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" id="show-tags" name="show_tags" checked>
+                                    Show Tags
+                                </label>
+                            </div>
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" id="show-thumbnail" name="show_thumbnail" checked>
+                                    Show Thumbnail
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="thumbnail-fallback">When thumbnail is disabled:</label>
+                            <select id="thumbnail-fallback" name="thumbnail_fallback">
+                                <option value="placeholder">Show Placeholder</option>
+                                <option value="hide">Hide Completely</option>
+                                <option value="default">Default Image</option>
+                            </select>
+                        </div>
+                        
+                        <div class="grid">
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" id="show-instructions" name="show_instructions" checked>
+                                    Show Instructions
+                                </label>
+                            </div>
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" id="show-lore" name="show_lore" checked>
+                                    Show Lore
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="show-ranking" name="show_ranking" checked>
+                                Show Ranking
+                            </label>
+                        </div>
                     </div>
                     
                     <div style="margin-top: 20px;">
@@ -1087,6 +1314,40 @@
                 console.log('✅ Active field found:', activeField, 'Setting to:', jam.is_active);
                 if (activeField) activeField.checked = jam.is_active;
                 
+                // Toggle fields
+                const showThemeField = document.getElementById('show-theme');
+                if (showThemeField) showThemeField.checked = jam.show_theme !== false;
+                
+                const showDescField = document.getElementById('show-description');
+                if (showDescField) showDescField.checked = jam.show_description !== false;
+                
+                const showStartDateField = document.getElementById('show-start-date');
+                if (showStartDateField) showStartDateField.checked = jam.show_start_date !== false;
+                
+                const showEndDateField = document.getElementById('show-end-date');
+                if (showEndDateField) showEndDateField.checked = jam.show_end_date !== false;
+                
+                const dateFallbackField = document.getElementById('date-fallback');
+                if (dateFallbackField) dateFallbackField.value = jam.date_fallback || 'TBD';
+                
+                const showRegDatesField = document.getElementById('show-registration-dates');
+                if (showRegDatesField) showRegDatesField.checked = jam.show_registration_dates !== false;
+                
+                const regDateFallbackField = document.getElementById('registration-date-fallback');
+                if (regDateFallbackField) regDateFallbackField.value = jam.registration_date_fallback || 'TBD';
+                
+                const showRegUrlField = document.getElementById('show-registration-url');
+                if (showRegUrlField) showRegUrlField.checked = jam.show_registration_url !== false;
+                
+                const showRulesPdfField = document.getElementById('show-rules-pdf-url');
+                if (showRulesPdfField) showRulesPdfField.checked = jam.show_rules_pdf_url !== false;
+                
+                const showBannerField = document.getElementById('show-banner-image');
+                if (showBannerField) showBannerField.checked = jam.show_banner_image !== false;
+                
+                const bannerFallbackField = document.getElementById('banner-fallback');
+                if (bannerFallbackField) bannerFallbackField.value = jam.banner_fallback || 'placeholder';
+                
                 console.log('🎯 Showing form first, then populating...');
                 showGameJamForm(true); // Pass true to indicate this is an edit operation
                 
@@ -1104,6 +1365,18 @@
                     if (rulesPdfField) rulesPdfField.value = jam.rules_pdf_url || '';
                     if (bannerField) bannerField.value = jam.banner_image_url || '';
                     if (activeField) activeField.checked = jam.is_active;
+                    // Re-populate toggle fields
+                    if (showThemeField) showThemeField.checked = jam.show_theme !== false;
+                    if (showDescField) showDescField.checked = jam.show_description !== false;
+                    if (showStartDateField) showStartDateField.checked = jam.show_start_date !== false;
+                    if (showEndDateField) showEndDateField.checked = jam.show_end_date !== false;
+                    if (dateFallbackField) dateFallbackField.value = jam.date_fallback || 'TBD';
+                    if (showRegDatesField) showRegDatesField.checked = jam.show_registration_dates !== false;
+                    if (regDateFallbackField) regDateFallbackField.value = jam.registration_date_fallback || 'TBD';
+                    if (showRegUrlField) showRegUrlField.checked = jam.show_registration_url !== false;
+                    if (showRulesPdfField) showRulesPdfField.checked = jam.show_rules_pdf_url !== false;
+                    if (showBannerField) showBannerField.checked = jam.show_banner_image !== false;
+                    if (bannerFallbackField) bannerFallbackField.value = jam.banner_fallback || 'placeholder';
                     console.log('✅ All game jam form fields re-populated after showing form!');
                 }, 100);
                 
@@ -1306,6 +1579,62 @@
                     const featuredField = document.getElementById('game-featured');
                     console.log('⭐ Featured field found:', featuredField, 'Setting to:', game.is_featured);
                     if (featuredField) featuredField.checked = game.is_featured;
+                    
+                    // Populate additional fields
+                    const thumbnailField = document.getElementById('game-thumbnail');
+                    if (thumbnailField) thumbnailField.value = game.thumbnail_url || '';
+                    
+                    const instructionsField = document.getElementById('game-instructions');
+                    if (instructionsField) instructionsField.value = game.instructions || '';
+                    
+                    const loreField = document.getElementById('game-lore');
+                    if (loreField) loreField.value = game.lore || '';
+                    
+                    const rankingField = document.getElementById('game-ranking');
+                    if (rankingField) rankingField.value = game.ranking || '';
+                    
+                    // Populate toggle fields
+                    const showTitleField = document.getElementById('show-title');
+                    if (showTitleField) showTitleField.checked = game.show_title !== false;
+                    
+                    const showDescField = document.getElementById('show-description');
+                    if (showDescField) showDescField.checked = game.show_description !== false;
+                    
+                    const showTeamNameField = document.getElementById('show-team-name');
+                    if (showTeamNameField) showTeamNameField.checked = game.show_team_name !== false;
+                    
+                    const showTeamMembersField = document.getElementById('show-team-members');
+                    if (showTeamMembersField) showTeamMembersField.checked = game.show_team_members !== false;
+                    
+                    const showGithubUrlField = document.getElementById('show-github-url');
+                    if (showGithubUrlField) showGithubUrlField.checked = game.show_github_url !== false;
+                    
+                    const showItchUrlField = document.getElementById('show-itch-url');
+                    if (showItchUrlField) showItchUrlField.checked = game.show_itch_url !== false;
+                    
+                    const showScreenshotsField = document.getElementById('show-screenshots');
+                    if (showScreenshotsField) showScreenshotsField.checked = game.show_screenshots !== false;
+                    
+                    const screenshotFallbackField = document.getElementById('screenshot-fallback');
+                    if (screenshotFallbackField) screenshotFallbackField.value = game.screenshot_fallback || 'placeholder';
+                    
+                    const showTagsField = document.getElementById('show-tags');
+                    if (showTagsField) showTagsField.checked = game.show_tags !== false;
+                    
+                    const showThumbnailField = document.getElementById('show-thumbnail');
+                    if (showThumbnailField) showThumbnailField.checked = game.show_thumbnail !== false;
+                    
+                    const thumbnailFallbackField = document.getElementById('thumbnail-fallback');
+                    if (thumbnailFallbackField) thumbnailFallbackField.value = game.thumbnail_fallback || 'placeholder';
+                    
+                    const showInstructionsField = document.getElementById('show-instructions');
+                    if (showInstructionsField) showInstructionsField.checked = game.show_instructions !== false;
+                    
+                    const showLoreField = document.getElementById('show-lore');
+                    if (showLoreField) showLoreField.checked = game.show_lore !== false;
+                    
+                    const showRankingField = document.getElementById('show-ranking');
+                    if (showRankingField) showRankingField.checked = game.show_ranking !== false;
                     
                     console.log('✅ All game form fields populated after showing form!');
                 }, 100);
@@ -1537,8 +1866,16 @@
                     data.team_members = data.team_members.split(',').map(m => m.trim());
                 }
                 
-                // Convert checkbox to boolean
+                // Convert checkboxes to boolean
                 data.is_active = formData.has('is_active');
+                data.show_theme = formData.has('show_theme');
+                data.show_description = formData.has('show_description');
+                data.show_start_date = formData.has('show_start_date');
+                data.show_end_date = formData.has('show_end_date');
+                data.show_registration_dates = formData.has('show_registration_dates');
+                data.show_registration_url = formData.has('show_registration_url');
+                data.show_rules_pdf_url = formData.has('show_rules_pdf_url');
+                data.show_banner_image = formData.has('show_banner_image');
                 
                 try {
                     console.log('💾 Saving game jam...');
@@ -1579,8 +1916,20 @@
                     data.tags = data.tags.split(',').map(t => t.trim());
                 }
                 
-                // Convert checkbox to boolean
+                // Convert checkboxes to boolean
                 data.is_featured = formData.has('is_featured');
+                data.show_title = formData.has('show_title');
+                data.show_description = formData.has('show_description');
+                data.show_team_name = formData.has('show_team_name');
+                data.show_team_members = formData.has('show_team_members');
+                data.show_github_url = formData.has('show_github_url');
+                data.show_itch_url = formData.has('show_itch_url');
+                data.show_screenshots = formData.has('show_screenshots');
+                data.show_tags = formData.has('show_tags');
+                data.show_thumbnail = formData.has('show_thumbnail');
+                data.show_instructions = formData.has('show_instructions');
+                data.show_lore = formData.has('show_lore');
+                data.show_ranking = formData.has('show_ranking');
                 
                 try {
                     showStatus('💾 Saving game...', 'info');
