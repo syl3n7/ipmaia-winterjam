@@ -162,8 +162,8 @@ app.get('/debug/files', (req, res) => {
 
 // Admin middleware for dashboard access
 const requireAdminAccess = (req, res, next) => {
-  // Check if user is authenticated and has admin role
-  if (!req.session.userId || req.session.role !== 'admin') {
+  // Check if user is authenticated and has admin or super_admin role
+  if (!req.session.userId || (req.session.role !== 'admin' && req.session.role !== 'super_admin')) {
     // Redirect to OIDC login for admin access
     return res.redirect('/api/auth/oidc/login');
   }
