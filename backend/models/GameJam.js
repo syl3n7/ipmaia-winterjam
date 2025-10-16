@@ -95,19 +95,36 @@ class GameJam {
   }
 
   static async update(id, data) {
+    console.log('🔄 GameJam.update - ID:', id);
+    console.log('🔄 GameJam.update - Data:', JSON.stringify(data, null, 2));
+    
     const fields = [];
     const values = [];
     let index = 1;
 
     Object.keys(data).forEach(key => {
       if (data[key] !== undefined) {
+        let value = data[key];
+        
+        // Convert objects to JSON strings for custom fields
+        if (key === 'custom_fields' || key === 'custom_fields_visibility') {
+          if (typeof value === 'object' && value !== null) {
+            value = JSON.stringify(value);
+            console.log(`🔄 Converting ${key} object to JSON:`, value);
+          }
+        }
+        
         fields.push(`${key} = $${index}`);
-        values.push(data[key]);
+        values.push(value);
+        console.log(`📝 Field ${index}: ${key} = ${value} (type: ${typeof value})`);
         index++;
       }
     });
 
-    if (fields.length === 0) return null;
+    if (fields.length === 0) {
+      console.log('⚠️ No fields to update');
+      return null;
+    }
 
     fields.push(`updated_at = NOW()`);
     values.push(id);
@@ -119,8 +136,19 @@ class GameJam {
       RETURNING *
     `;
 
-    const result = await pool.query(query, values);
-    return result.rows[0];
+    console.log('🔄 GameJam.update - Query:', query);
+    console.log('🔄 GameJam.update - Values:', values);
+
+    try {
+      const result = await pool.query(query, values);
+      console.log('✅ GameJam.update - Success:', result.rows[0]);
+      return result.rows[0];
+    } catch (error) {
+      console.error('❌ GameJam.update - Database error:', error);
+      console.error('❌ GameJam.update - Query:', query);
+      console.error('❌ GameJam.update - Values:', values);
+      throw error;
+    }
   }
 
   static async delete(id) {
