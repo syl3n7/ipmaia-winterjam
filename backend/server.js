@@ -172,27 +172,33 @@ const requireAdminAccess = (req, res, next) => {
   next();
 };
 
-// Serve admin dashboard static files (with admin protection)
-app.use('/admin', requireAdminAccess, express.static(path.join(__dirname, 'admin/dist')));
-
-// Admin dashboard fallback for SPA routing (with admin protection)
-app.get('/admin/*', requireAdminAccess, (req, res) => {
-  res.sendFile(path.join(__dirname, 'admin/dist/index.html'));
-});
-
-// Specific route for /admin (without trailing slash, with admin protection)
-app.get('/admin', requireAdminAccess, (req, res) => {
-  // Read the HTML file and inject CSRF token
+// Middleware to inject CSRF token into HTML responses
+const injectCsrfToken = (req, res, next) => {
   const fs = require('fs');
   const htmlPath = path.join(__dirname, 'admin/dist/index.html');
   let html = fs.readFileSync(htmlPath, 'utf8');
   
-  // Get CSRF token from session (lusca stores it here)
-  const csrfToken = req.session._csrfSecret || '';
+  // Ensure CSRF secret exists in session
+  if (!req.session._csrfSecret) {
+    // Generate a new CSRF secret using crypto
+    const crypto = require('crypto');
+    req.session._csrfSecret = crypto.randomBytes(24).toString('hex');
+    console.log('🔐 Generated new CSRF token');
+  }
+  
+  const csrfToken = req.session._csrfSecret;
+  console.log('🔐 Injecting CSRF token:', csrfToken ? 'Token exists' : 'NO TOKEN!');
   html = html.replace('</head>', `<meta name="csrf-token" content="${csrfToken}"></head>`);
   
   res.send(html);
-});
+};
+
+// Specific routes for /admin (with admin protection and CSRF injection)
+app.get('/admin', requireAdminAccess, injectCsrfToken);
+app.get('/admin/', requireAdminAccess, injectCsrfToken);
+
+// Admin dashboard fallback for SPA routing (with admin protection and CSRF injection)
+app.get('/admin/*', requireAdminAccess, injectCsrfToken);
 
 // 404 handler
 app.use((req, res) => {
