@@ -47,6 +47,15 @@ else
     exit 1
 fi
 
+echo "🔄 Adding toggle fields to existing tables..."
+
+# Run toggle fields migration to add missing columns
+if node scripts/add-toggle-fields.js; then
+    echo "✅ Toggle fields migration completed successfully!"
+else
+    echo "⚠️ Toggle fields migration failed (might already exist)"
+fi
+
 echo "🔄 Migrating frontend data..."
 
 # Run frontend data migration
