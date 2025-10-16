@@ -180,7 +180,16 @@ app.get('/admin/*', requireAdminAccess, (req, res) => {
 
 // Specific route for /admin (without trailing slash, with admin protection)
 app.get('/admin', requireAdminAccess, (req, res) => {
-  res.sendFile(path.join(__dirname, 'admin/dist/index.html'));
+  // Read the HTML file and inject CSRF token
+  const fs = require('fs');
+  const htmlPath = path.join(__dirname, 'admin/dist/index.html');
+  let html = fs.readFileSync(htmlPath, 'utf8');
+  
+  // Inject CSRF token into the HTML
+  const csrfToken = req.session._csrf || '';
+  html = html.replace('</head>', `<meta name="csrf-token" content="${csrfToken}"></head>`);
+  
+  res.send(html);
 });
 
 // 404 handler
