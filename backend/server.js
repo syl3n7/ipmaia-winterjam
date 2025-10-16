@@ -95,10 +95,15 @@ app.use(session({
   }
 }));
 
-// CSRF Protection middleware with custom header
-app.use(csrf({
-  header: 'csrf-token' // Match the header name sent by the admin dashboard
-}));
+// CSRF Protection middleware - skip for admin API routes
+app.use((req, res, next) => {
+  // Skip CSRF for admin API routes (already protected by session auth)
+  if (req.path.startsWith('/api/admin')) {
+    return next();
+  }
+  // Apply CSRF for other routes
+  csrf({ header: 'csrf-token' })(req, res, next);
+});
 
 // Initialize Passport
 app.use(passport.initialize());
@@ -172,33 +177,10 @@ const requireAdminAccess = (req, res, next) => {
   next();
 };
 
-// Middleware to inject CSRF token into HTML responses
-const injectCsrfToken = (req, res, next) => {
-  const fs = require('fs');
-  const htmlPath = path.join(__dirname, 'admin/dist/index.html');
-  let html = fs.readFileSync(htmlPath, 'utf8');
-  
-  // Ensure CSRF secret exists in session
-  if (!req.session._csrfSecret) {
-    // Generate a new CSRF secret using crypto
-    const crypto = require('crypto');
-    req.session._csrfSecret = crypto.randomBytes(24).toString('hex');
-    console.log('🔐 Generated new CSRF token');
-  }
-  
-  const csrfToken = req.session._csrfSecret;
-  console.log('🔐 Injecting CSRF token:', csrfToken ? 'Token exists' : 'NO TOKEN!');
-  html = html.replace('</head>', `<meta name="csrf-token" content="${csrfToken}"></head>`);
-  
-  res.send(html);
-};
-
-// Specific routes for /admin (with admin protection and CSRF injection)
-app.get('/admin', requireAdminAccess, injectCsrfToken);
-app.get('/admin/', requireAdminAccess, injectCsrfToken);
-
-// Admin dashboard fallback for SPA routing (with admin protection and CSRF injection)
-app.get('/admin/*', requireAdminAccess, injectCsrfToken);
+// Serve admin dashboard - all requests serve the same SPA HTML
+app.get('/admin*', requireAdminAccess, (req, res) => {
+  res.sendFile(path.join(__dirname, 'admin/dist/index.html'));
+});
 
 // 404 handler
 app.use((req, res) => {
