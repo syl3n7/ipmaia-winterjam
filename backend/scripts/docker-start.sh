@@ -65,6 +65,15 @@ else
     echo "⚠️ Rules content migration failed (might already exist)"
 fi
 
+echo "🔄 Adding slug and archive_url fields..."
+
+# Run slug fields migration
+if node scripts/add-slug-fields.js; then
+    echo "✅ Slug fields migration completed successfully!"
+else
+    echo "⚠️ Slug fields migration failed (might already exist)"
+fi
+
 echo "🔄 Migrating frontend data..."
 
 # Run frontend data migration

@@ -36,6 +36,8 @@ async function createTables() {
       CREATE TABLE IF NOT EXISTS game_jams (
         id SERIAL PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
+        slug VARCHAR(255) UNIQUE,
+        archive_url VARCHAR(255),
         theme VARCHAR(255),
         description TEXT,
         start_date TIMESTAMP NOT NULL,
