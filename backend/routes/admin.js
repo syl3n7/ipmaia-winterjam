@@ -207,7 +207,11 @@ router.get('/export/gamejam/:id', async (req, res) => {
 // Import endpoint - restore exported data
 router.post('/import', async (req, res) => {
   try {
-    const { gamejams, games, frontpage_settings, rules_content } = req.body;
+    // Support both formats: game_jams (from export) and gamejams
+    const gamejams = req.body.gamejams || req.body.game_jams;
+    const games = req.body.games;
+    const frontpage_settings = req.body.frontpage_settings;
+    const rules_content = req.body.rules_content;
     
     const results = {
       gamejams_imported: 0,
@@ -221,16 +225,21 @@ router.post('/import', async (req, res) => {
     if (gamejams && Array.isArray(gamejams)) {
       for (const jam of gamejams) {
         try {
+          // Remove system fields
+          const jamData = { ...jam };
+          delete jamData.created_at;
+          delete jamData.updated_at;
+          
           // Check if already exists
           const existing = await GameJam.findById(jam.id);
           if (existing) {
-            await GameJam.update(jam.id, jam);
+            await GameJam.update(jam.id, jamData);
           } else {
-            await GameJam.create(jam);
+            await GameJam.create(jamData);
           }
           results.gamejams_imported++;
         } catch (error) {
-          results.errors.push(`Failed to import game jam ${jam.id}: ${error.message}`);
+          results.errors.push(`Failed to import game jam ${jam.id || 'unknown'}: ${error.message}`);
         }
       }
     }
@@ -239,15 +248,20 @@ router.post('/import', async (req, res) => {
     if (games && Array.isArray(games)) {
       for (const game of games) {
         try {
+          // Remove system fields
+          const gameData = { ...game };
+          delete gameData.created_at;
+          delete gameData.updated_at;
+          
           const existing = await Game.findById(game.id);
           if (existing) {
-            await Game.update(game.id, game);
+            await Game.update(game.id, gameData);
           } else {
-            await Game.create(game);
+            await Game.create(gameData);
           }
           results.games_imported++;
         } catch (error) {
-          results.errors.push(`Failed to import game ${game.id}: ${error.message}`);
+          results.errors.push(`Failed to import game ${game.id || 'unknown'}: ${error.message}`);
         }
       }
     }
