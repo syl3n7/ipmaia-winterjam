@@ -71,12 +71,15 @@ const initOIDC = async () => {
           const groups = userinfo.groups || userinfo.memberOf || [];
           let role = 'user'; // default role
           
+          // Normalize groups to lowercase for case-insensitive comparison
+          const normalizedGroups = groups.map(g => g.toLowerCase());
+          
           // Super admin: must be in "admin" group AND have the admin email
-          if (groups.includes('admin') && userinfo.email === process.env.OIDC_ADMIN_EMAIL) {
+          if (normalizedGroups.includes('admin') && userinfo.email === process.env.OIDC_ADMIN_EMAIL) {
             role = 'super_admin';
           } 
-          // Admin: must be in "IPMAIA" or "users" group
-          else if (groups.includes('IPMAIA') || groups.includes('users')) {
+          // Admin: must be in "IPMAIA" or "users" group (case-insensitive)
+          else if (normalizedGroups.includes('ipmaia') || normalizedGroups.includes('users')) {
             role = 'admin';
           }
           
@@ -92,12 +95,15 @@ const initOIDC = async () => {
           const groups = userinfo.groups || userinfo.memberOf || [];
           let newRole = 'user';
           
+          // Normalize groups to lowercase for case-insensitive comparison
+          const normalizedGroups = groups.map(g => g.toLowerCase());
+          
           // Super admin: must be in "admin" group AND have the admin email
-          if (groups.includes('admin') && userinfo.email === process.env.OIDC_ADMIN_EMAIL) {
+          if (normalizedGroups.includes('admin') && userinfo.email === process.env.OIDC_ADMIN_EMAIL) {
             newRole = 'super_admin';
           } 
-          // Admin: must be in "IPMAIA" or "users" group
-          else if (groups.includes('IPMAIA') || groups.includes('users')) {
+          // Admin: must be in "IPMAIA" or "users" group (case-insensitive)
+          else if (normalizedGroups.includes('ipmaia') || normalizedGroups.includes('users')) {
             newRole = 'admin';
           }
           
@@ -237,12 +243,24 @@ router.get('/oidc/callback', async (req, res) => {
     
     console.log('🔄 Fetching user info...');
     const userinfo = await oidcClient.userinfo(tokenSet);
-    console.log('👤 User info received:', { 
+    console.log('👤 User info received (full object):', JSON.stringify(userinfo, null, 2));
+    console.log('👤 User info received (summary):', { 
       email: userinfo.email, 
       preferred_username: userinfo.preferred_username,
       groups: userinfo.groups,
       memberOf: userinfo.memberOf,
       roles: userinfo.roles
+    });
+    
+    // Also check the ID token claims
+    const idTokenClaims = tokenSet.claims();
+    console.log('🎫 ID Token claims (full):', JSON.stringify(idTokenClaims, null, 2));
+    console.log('🎫 ID Token groups/roles:', {
+      groups: idTokenClaims.groups,
+      memberOf: idTokenClaims.memberOf,
+      roles: idTokenClaims.roles,
+      'cognito:groups': idTokenClaims['cognito:groups'],
+      realm_access: idTokenClaims.realm_access
     });
 
     // Check if user exists or create them
@@ -255,17 +273,31 @@ router.get('/oidc/callback', async (req, res) => {
     
     if (!user) {
       // Determine user role based on OIDC groups and email
-      const groups = userinfo.groups || userinfo.memberOf || [];
+      // Try multiple possible locations for group information
+      const groups = userinfo.groups || 
+                     userinfo.memberOf || 
+                     idTokenClaims.groups || 
+                     idTokenClaims.memberOf ||
+                     idTokenClaims['cognito:groups'] ||
+                     (idTokenClaims.realm_access && idTokenClaims.realm_access.roles) ||
+                     [];
+      
+      console.log('🔍 Extracted groups for new user:', groups);
       let role = 'user'; // default role
       
+      // Normalize groups to lowercase for case-insensitive comparison
+      const normalizedGroups = groups.map(g => g.toLowerCase());
+      
       // Super admin: must be in "admin" group AND have the admin email
-      if (groups.includes('admin') && userinfo.email === process.env.OIDC_ADMIN_EMAIL) {
+      if (normalizedGroups.includes('admin') && userinfo.email === process.env.OIDC_ADMIN_EMAIL) {
         role = 'super_admin';
       } 
-      // Admin: must be in "IPMAIA" or "users" group
-      else if (groups.includes('IPMAIA') || groups.includes('users')) {
+      // Admin: must be in "IPMAIA" or "users" group (case-insensitive)
+      else if (normalizedGroups.includes('ipmaia') || normalizedGroups.includes('users')) {
         role = 'admin';
       }
+      
+      console.log(`🎯 Determined role for new user: ${role} (email: ${userinfo.email}, groups: ${JSON.stringify(groups)})`);
       
       // Create new user
       result = await pool.query(
@@ -276,17 +308,30 @@ router.get('/oidc/callback', async (req, res) => {
       console.log(`✅ Created new OIDC user: ${user.email} with role: ${role} (groups: ${groups.join(', ')})`);
     } else {
       // Update existing user's role if their groups/email have changed
-      const groups = userinfo.groups || userinfo.memberOf || [];
+      const groups = userinfo.groups || 
+                     userinfo.memberOf || 
+                     idTokenClaims.groups || 
+                     idTokenClaims.memberOf ||
+                     idTokenClaims['cognito:groups'] ||
+                     (idTokenClaims.realm_access && idTokenClaims.realm_access.roles) ||
+                     [];
+      
+      console.log('🔍 Extracted groups for existing user:', groups);
       let newRole = 'user';
       
+      // Normalize groups to lowercase for case-insensitive comparison
+      const normalizedGroups = groups.map(g => g.toLowerCase());
+      
       // Super admin: must be in "admin" group AND have the admin email
-      if (groups.includes('admin') && userinfo.email === process.env.OIDC_ADMIN_EMAIL) {
+      if (normalizedGroups.includes('admin') && userinfo.email === process.env.OIDC_ADMIN_EMAIL) {
         newRole = 'super_admin';
       } 
-      // Admin: must be in "IPMAIA" or "users" group
-      else if (groups.includes('IPMAIA') || groups.includes('users')) {
+      // Admin: must be in "IPMAIA" or "users" group (case-insensitive)
+      else if (normalizedGroups.includes('ipmaia') || normalizedGroups.includes('users')) {
         newRole = 'admin';
       }
+      
+      console.log(`🎯 Determined role for existing user: ${newRole} (email: ${userinfo.email}, groups: ${JSON.stringify(groups)})`);
       
       if (user.role !== newRole) {
         await pool.query(
@@ -294,7 +339,7 @@ router.get('/oidc/callback', async (req, res) => {
           [newRole, user.id]
         );
         user.role = newRole;
-        console.log(`🔄 Updated existing user ${user.email} role to: ${newRole} (groups: ${groups.join(', ')})`);
+        console.log(`🔄 Updated existing user ${user.email} role from ${user.role} to: ${newRole} (groups: ${groups.join(', ')})`);
       }
     }
 
