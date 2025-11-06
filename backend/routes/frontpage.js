@@ -1,7 +1,58 @@
 const express = require('express');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs').promises;
+const rateLimit = require('express-rate-limit');
 const { pool } = require('../config/database');
 const { requireAdmin } = require('./auth');
 const router = express.Router();
+
+// Rate limiter for image uploads
+const uploadLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 10, // limit each IP to 10 uploads per hour
+  message: 'Too many upload attempts, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => {
+    const ip = req.ip || req.connection.remoteAddress || '0.0.0.0';
+    return ip.split(':')[0];
+  }
+});
+
+// Configure multer for background image uploads
+const storage = multer.diskStorage({
+  destination: async (req, file, cb) => {
+    const uploadDir = path.join(__dirname, '../uploads/images');
+    try {
+      await fs.access(uploadDir);
+    } catch {
+      await fs.mkdir(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const timestamp = Date.now();
+    const ext = path.extname(file.originalname);
+    const filename = `background_${timestamp}${ext}`;
+    cb(null, filename);
+  }
+});
+
+const upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only JPEG, PNG, and WebP images are allowed'));
+    }
+  }
+});
 
 // Get all front page settings (public endpoint)
 router.get('/settings', async (req, res) => {
@@ -131,6 +182,118 @@ router.post('/admin/settings/reset', requireAdmin, async (req, res) => {
   } catch (error) {
     console.error('Error resetting settings:', error);
     res.status(500).json({ error: 'Failed to reset settings' });
+  }
+});
+
+// Upload background image (admin only)
+router.post('/admin/upload-background', requireAdmin, uploadLimiter, upload.single('image'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ 
+        error: 'No file uploaded',
+        message: 'Nenhum ficheiro foi enviado'
+      });
+    }
+
+    console.log('🖼️ Background image uploaded:', req.file.filename);
+    console.log('👤 Uploaded by:', req.session.email || req.session.userId);
+
+    // Get the old background filename from database
+    const oldBgResult = await pool.query(`
+      SELECT setting_value 
+      FROM front_page_settings 
+      WHERE setting_key = 'hero_background_filename'
+    `);
+
+    // Delete old background file if it exists
+    if (oldBgResult.rows.length > 0 && oldBgResult.rows[0].setting_value) {
+      const oldFilePath = path.join(__dirname, '../uploads/images', oldBgResult.rows[0].setting_value);
+      await fs.unlink(oldFilePath).catch(console.error);
+    }
+
+    // Construct the API URL for downloading
+    const protocol = req.protocol || 'https';
+    const host = req.get('host') || 'ipmaia-winterjam.pt';
+    const imageUrl = `${protocol}://${host}/api/frontpage/background`;
+
+    // Update database with new filename and URL
+    await pool.query(`
+      INSERT INTO front_page_settings (setting_key, setting_value, setting_type, display_name, section, display_order)
+      VALUES ('hero_background_filename', $1, 'text', 'Background Filename', 'hero', 99)
+      ON CONFLICT (setting_key) DO UPDATE SET setting_value = $1, updated_at = CURRENT_TIMESTAMP
+    `, [req.file.filename]);
+
+    await pool.query(`
+      UPDATE front_page_settings 
+      SET setting_value = $1, updated_at = CURRENT_TIMESTAMP 
+      WHERE setting_key = 'hero_background_image'
+    `, [imageUrl]);
+
+    res.json({
+      message: 'Background image uploaded successfully',
+      filename: req.file.filename,
+      url: imageUrl,
+      size: req.file.size
+    });
+  } catch (error) {
+    console.error('Error uploading background image:', error);
+    res.status(500).json({ 
+      error: 'Failed to upload background image',
+      message: 'Erro ao carregar imagem'
+    });
+  }
+});
+
+// Download/serve background image (public)
+router.get('/background', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT setting_value 
+      FROM front_page_settings 
+      WHERE setting_key = 'hero_background_filename'
+    `);
+    
+    if (!result.rows.length || !result.rows[0].setting_value) {
+      return res.status(404).json({ 
+        error: 'Background image not found',
+        message: 'Nenhuma imagem de fundo foi carregada'
+      });
+    }
+    
+    const filename = result.rows[0].setting_value;
+    const filePath = path.join(__dirname, '../uploads/images', filename);
+    
+    // Check if file exists
+    try {
+      await fs.access(filePath);
+    } catch {
+      return res.status(404).json({ 
+        error: 'Background image file not found',
+        message: 'Ficheiro de imagem não encontrado'
+      });
+    }
+    
+    // Determine content type from extension
+    const ext = path.extname(filename).toLowerCase();
+    const contentTypes = {
+      '.jpg': 'image/jpeg',
+      '.jpeg': 'image/jpeg',
+      '.png': 'image/png',
+      '.webp': 'image/webp'
+    };
+    
+    res.setHeader('Content-Type', contentTypes[ext] || 'image/jpeg');
+    res.setHeader('Cache-Control', 'public, max-age=31536000'); // Cache for 1 year
+    
+    // Stream the file
+    const fileStream = require('fs').createReadStream(filePath);
+    fileStream.pipe(res);
+  } catch (error) {
+    console.error('Error serving background image:', error);
+    res.status(500).json({ 
+      error: 'Failed to serve background image',
+      message: 'Erro ao carregar imagem'
+    });
   }
 });
 
