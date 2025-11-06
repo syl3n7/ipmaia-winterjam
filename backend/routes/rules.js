@@ -99,17 +99,27 @@ router.get('/active', async (req, res) => {
 router.get('/pdf-url', async (req, res) => {
   try {
     const rules = await Rules.getActive();
-    // Return API endpoint URL instead of direct file path
-    const apiUrl = process.env.API_URL || 'http://localhost:3001/api';
-    const pdfUrl = rules?.pdf_url || `${apiUrl}/rules/download`;
+    
+    // Construct the full API URL for the download endpoint
+    const protocol = req.protocol || 'https';
+    const host = req.get('host') || 'ipmaia-winterjam.pt';
+    const apiUrl = `${protocol}://${host}/api`;
+    
+    // Always return the download endpoint, regardless of what's stored in the database
+    const pdfUrl = `${apiUrl}/rules/download`;
     
     res.json({ 
       pdfUrl: pdfUrl,
-      message: 'PDF URL retrieved successfully'
+      message: 'PDF URL retrieved successfully',
+      hasFile: !!(rules && rules.pdf_filename)
     });
   } catch (error) {
     console.error('Error fetching PDF URL:', error);
-    const apiUrl = process.env.API_URL || 'http://localhost:3001/api';
+    // Fallback URL
+    const protocol = req.protocol || 'https';
+    const host = req.get('host') || 'ipmaia-winterjam.pt';
+    const apiUrl = `${protocol}://${host}/api`;
+    
     res.json({ 
       pdfUrl: `${apiUrl}/rules/download`,
       message: 'Using default PDF URL'
