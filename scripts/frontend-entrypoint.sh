@@ -20,6 +20,6 @@ echo "✅ Public files synced successfully!"
 echo "📂 Contents of /app/public:"
 ls -la /app/public/
 
-# Start Next.js server
+# Start Next.js server as nextjs user
 echo "🚀 Starting Next.js server..."
-exec node server.js
+exec su-exec nextjs node server.js
