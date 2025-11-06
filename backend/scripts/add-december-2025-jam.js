@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { pool } = require('./config/database');
+const { pool } = require('../config/database');
 
 async function addDecember2025Jam() {
     console.log('📝 Adding December 2025 WinterJam...');
