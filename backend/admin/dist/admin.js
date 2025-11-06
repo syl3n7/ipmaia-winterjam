@@ -1,3 +1,5 @@
+// Admin Dashboard JavaScript
+document.addEventListener('DOMContentLoaded', function() {
         let currentEditingGameJam = null;
         let currentEditingGame = null;
         let gameJams = [];
@@ -1351,3 +1353,4 @@
             showStatus('🚀 System ready', 'success');
             loadGameJams();
         });
+});
