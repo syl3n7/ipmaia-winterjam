@@ -1043,43 +1043,71 @@
             </div>
             
             <div id="rules-form" class="form-section" style="display: none;">
-                <h3>📝 Adicionar/Editar Livro de Regras</h3>
-                <form id="rules-form-element">
+                <h3>📝 Upload PDF e Conteúdo das Regras</h3>
+                <form id="rules-form-element" enctype="multipart/form-data">
                     <input type="hidden" id="rules-id" />
                     
                     <div class="form-group">
-                        <label for="rules-title">Título *</label>
-                        <input type="text" id="rules-title" name="title" placeholder="WinterJam 2025 Rulebook" required />
+                        <label for="rules-pdf-file">📄 Upload PDF *</label>
+                        <input type="file" id="rules-pdf-file" name="pdf" accept=".pdf" required style="padding: 10px; border: 2px dashed #667eea; border-radius: 8px; background: #f8f9ff;" />
+                        <small>Carregue o PDF do livro de regras. Será guardado como /public/WinterJam_Rulebook.pdf</small>
                     </div>
                     
                     <div class="form-group">
-                        <label for="rules-description">Descrição</label>
-                        <textarea id="rules-description" name="description" rows="3" placeholder="Livro de regras oficial da WinterJam 2025"></textarea>
-                    </div>
-                    
-                    <div class="grid">
-                        <div class="form-group">
-                            <label for="rules-pdf-url">URL do PDF *</label>
-                            <input type="text" id="rules-pdf-url" name="pdf_url" placeholder="/WinterJam_Rulebook.pdf" required />
-                            <small>Caminho relativo ou URL absoluto. Ex: /WinterJam_Rulebook.pdf</small>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="rules-version">Versão</label>
-                            <input type="text" id="rules-version" name="version" placeholder="1.0" />
-                        </div>
+                        <label for="rules-title">Título</label>
+                        <input type="text" id="rules-title" name="title" placeholder="WinterJam 2025 Rulebook" value="WinterJam 2025 Rulebook" />
                     </div>
                     
                     <div class="form-group">
-                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                            <input type="checkbox" id="rules-active" name="is_active" checked />
-                            <span>Ativar este livro de regras</span>
-                        </label>
-                        <small>Apenas um livro de regras pode estar ativo de cada vez.</small>
+                        <label for="rules-version">Versão</label>
+                        <input type="text" id="rules-version" name="version" placeholder="1.0" value="1.0" />
+                    </div>
+
+                    <hr style="margin: 30px 0; border: none; border-top: 2px solid #e9ecef;">
+                    
+                    <h4 style="color: #667eea; margin-bottom: 20px;">📝 Conteúdo das Secções (HTML)</h4>
+                    <p style="color: #6c757d; margin-bottom: 20px; font-size: 0.9rem;">
+                        Preencha o conteúdo HTML para cada secção das regras. Este conteúdo será exibido na página de regras.
+                    </p>
+                    
+                    <div class="form-group">
+                        <label for="rules-code-of-conduct">🤝 Código de Conduta</label>
+                        <textarea id="rules-code-of-conduct" name="code_of_conduct" rows="6" placeholder="<p>Conteúdo HTML...</p>"></textarea>
+                        <small>HTML formatado para a secção Código de Conduta</small>
                     </div>
                     
-                    <div class="form-actions" style="display: flex; gap: 10px; margin-top: 20px;">
-                        <button type="submit" class="btn btn-primary">💾 Guardar</button>
+                    <div class="form-group">
+                        <label for="rules-guidelines">📐 Diretrizes</label>
+                        <textarea id="rules-guidelines" name="guidelines" rows="6" placeholder="<div><h3>Título</h3><p>Conteúdo...</p></div>"></textarea>
+                        <small>HTML formatado para a secção Diretrizes para Criação de Jogos</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="rules-prizes">🏆 Prémios</label>
+                        <textarea id="rules-prizes" name="prizes" rows="6" placeholder="<div>Conteúdo sobre prémios...</div>"></textarea>
+                        <small>HTML formatado para a secção Prémios</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="rules-evaluation">📊 Critérios de Avaliação</label>
+                        <textarea id="rules-evaluation" name="evaluation" rows="6" placeholder="<div>Critérios de avaliação...</div>"></textarea>
+                        <small>HTML formatado para a secção Avaliação</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="rules-participation">👥 Regras de Participação</label>
+                        <textarea id="rules-participation" name="participation" rows="6" placeholder="<div>Regras de participação...</div>"></textarea>
+                        <small>HTML formatado para a secção Participação</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="rules-schedule">📅 Horário do Evento</label>
+                        <textarea id="rules-schedule" name="schedule" rows="6" placeholder="<div>Horário detalhado...</div>"></textarea>
+                        <small>HTML formatado para a secção Horário</small>
+                    </div>
+                    
+                    <div class="form-actions" style="display: flex; gap: 10px; margin-top: 30px;">
+                        <button type="submit" class="btn btn-primary">� Upload PDF e Guardar Conteúdo</button>
                         <button type="button" class="btn" onclick="hideRulesForm()">❌ Cancelar</button>
                     </div>
                 </form>
@@ -2317,24 +2345,43 @@
                 e.preventDefault();
                 
                 const formData = new FormData(this);
-                const data = Object.fromEntries(formData.entries());
-                data.is_active = formData.has('is_active');
+                
+                // Check if PDF file is present
+                const pdfFile = formData.get('pdf');
+                if (!pdfFile || pdfFile.size === 0) {
+                    showStatus('❌ Por favor selecione um ficheiro PDF', 'error');
+                    return;
+                }
                 
                 try {
-                    showStatus('💾 Guardando livro de regras...', 'info');
+                    showStatus('� Uploading PDF e guardando conteúdo...', 'info');
                     
-                    const endpoint = currentEditingRules ? 
-                        `/api/rules/admin/${currentEditingRules}` : 
-                        '/api/rules/admin';
-                    const method = currentEditingRules ? 'PUT' : 'POST';
+                    // Use the upload endpoint
+                    const response = await fetch('/api/rules/admin/upload-pdf', {
+                        method: 'POST',
+                        headers: {
+                            // Don't set Content-Type, let browser set it with boundary for multipart
+                        },
+                        body: formData,
+                        credentials: 'include'
+                    });
                     
-                    await apiCall(endpoint, method, data);
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.message || 'Erro ao fazer upload');
+                    }
                     
-                    showStatus('✅ Livro de regras guardado com sucesso!', 'success');
+                    const result = await response.json();
+                    
+                    showStatus('✅ PDF carregado e conteúdo guardado com sucesso!', 'success');
                     hideRulesForm();
                     loadRules();
+                    
+                    // Reset form
+                    this.reset();
                 } catch (error) {
-                    showStatus(`❌ Erro ao guardar livro de regras: ${error.message}`, 'error');
+                    showStatus(`❌ Erro ao guardar: ${error.message}`, 'error');
+                    console.error('Upload error:', error);
                 }
             });
             
