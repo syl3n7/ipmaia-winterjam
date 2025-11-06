@@ -2267,14 +2267,20 @@
                 }
                 
                 try {
-                    showStatus('� Uploading PDF e guardando conteúdo...', 'info');
+                    showStatus('⏳ Uploading PDF e guardando conteúdo...', 'info');
+                    
+                    // Get CSRF token from meta tag
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
                     
                     // Use the upload endpoint
+                    const headers = {};
+                    if (csrfToken) {
+                        headers['csrf-token'] = csrfToken;
+                    }
+                    
                     const response = await fetch('/api/rules/admin/upload-pdf', {
                         method: 'POST',
-                        headers: {
-                            // Don't set Content-Type, let browser set it with boundary for multipart
-                        },
+                        headers: headers,
                         body: formData,
                         credentials: 'include'
                     });
