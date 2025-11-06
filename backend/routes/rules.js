@@ -2,10 +2,20 @@ const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs').promises;
+const rateLimit = require('express-rate-limit');
 const Rules = require('../models/Rules');
 const { requireAdmin } = require('./auth');
 
 const router = express.Router();
+
+// Rate limiter for PDF uploads - very restrictive
+const uploadLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 5, // limit each IP to 5 uploads per hour
+  message: 'Too many upload attempts, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 // Configure multer for PDF uploads
 const storage = multer.diskStorage({
@@ -105,7 +115,13 @@ router.get('/admin/all', async (req, res) => {
 });
 
 // Upload/Replace PDF and update rules content (admin only)
-router.post('/admin/upload-pdf', upload.single('pdf'), async (req, res) => {
+// Security measures:
+// - requireAdmin middleware (session + role check)
+// - uploadLimiter (5 uploads/hour per IP)
+// - Multer file validation (mimetype + size)
+// - PDF magic bytes verification
+// - Audit logging (user tracking)
+router.post('/admin/upload-pdf', uploadLimiter, upload.single('pdf'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ 
@@ -114,7 +130,34 @@ router.post('/admin/upload-pdf', upload.single('pdf'), async (req, res) => {
       });
     }
 
+    // Additional security validation
+    if (req.file.size > 10 * 1024 * 1024) {
+      // Delete the uploaded file if it exceeds size
+      await fs.unlink(req.file.path).catch(console.error);
+      return res.status(400).json({ 
+        error: 'File too large',
+        message: 'Ficheiro demasiado grande (máximo 10MB)'
+      });
+    }
+
+    // Verify file is actually a PDF by checking magic bytes
+    const fileBuffer = await fs.readFile(req.file.path);
+    const isPDF = fileBuffer.length > 4 && 
+                  fileBuffer[0] === 0x25 && // %
+                  fileBuffer[1] === 0x50 && // P
+                  fileBuffer[2] === 0x44 && // D
+                  fileBuffer[3] === 0x46;   // F
+    
+    if (!isPDF) {
+      await fs.unlink(req.file.path).catch(console.error);
+      return res.status(400).json({ 
+        error: 'Invalid file type',
+        message: 'O ficheiro não é um PDF válido'
+      });
+    }
+
     console.log('📄 PDF uploaded successfully:', req.file.filename);
+    console.log('👤 Uploaded by:', req.session.email || req.session.userId);
 
     // Process the rules content from form data
     const sections = processRulesContent(req.body);
