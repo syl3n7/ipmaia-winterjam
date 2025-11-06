@@ -1,5 +1,7 @@
 // Admin Dashboard JavaScript
+console.log('🚀 Admin.js loaded!');
 document.addEventListener('DOMContentLoaded', function() {
+        console.log('🎯 DOMContentLoaded fired!');
         let currentEditingGameJam = null;
         let currentEditingGame = null;
         let gameJams = [];
@@ -1103,8 +1105,14 @@ document.addEventListener('DOMContentLoaded', function() {
             });
 
             // Navigation event listeners
-            document.querySelectorAll('[data-section]').forEach(button => {
+            console.log('🔧 Setting up navigation listeners...');
+            const navButtons = document.querySelectorAll('[data-section]');
+            console.log('📊 Found nav buttons:', navButtons.length);
+            
+            navButtons.forEach(button => {
+                console.log('➕ Adding listener to:', button.getAttribute('data-section'));
                 button.addEventListener('click', function() {
+                    console.log('🖱️ Nav button clicked!', this.getAttribute('data-section'));
                     const section = this.getAttribute('data-section');
                     showSection(section, this);
                 });
@@ -1356,8 +1364,10 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             
             // Initial load
+            console.log('📋 Starting initial load...');
             checkAuthentication();
             showStatus('🚀 System ready', 'success');
+            console.log('🎮 Loading game jams...');
             loadGameJams();
         });
 });
