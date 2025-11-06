@@ -59,6 +59,10 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
+        // Expose functions to global scope for onclick handlers in HTML
+        window.loginWithOIDC = loginWithOIDC;
+        window.logout = logout;
+
         // Portuguese (Portugal) Date Formatting Utilities
         const PT_LOCALE = 'pt-PT';
         
