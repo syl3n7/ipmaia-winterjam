@@ -21,15 +21,13 @@ COPY --from=builder /app/public ./public-init
 COPY --from=builder --chown=nextjs:nextjs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nextjs /app/.next/static ./.next/static
 
-# Copy entrypoint script
-COPY scripts/frontend-entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
+    # Copy entrypoint script
+    COPY scripts/frontend-entrypoint.sh /usr/local/bin/entrypoint.sh
+    RUN chmod +x /usr/local/bin/entrypoint.sh
 
-# Create empty public directory (will be mounted as shared volume)
-RUN mkdir -p ./public && chown nextjs:nextjs ./public
+    # Create empty public directory (will be mounted as shared volume)
+    RUN mkdir -p ./public && chown -R nextjs:nogroup ./public
 
-USER nextjs
-
-EXPOSE 3000
+    USER nextjsEXPOSE 3000
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
