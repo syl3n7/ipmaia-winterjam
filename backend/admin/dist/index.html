@@ -1988,11 +1988,14 @@
                 });
                 
                 renderFrontPageSettings(settingsBySection);
-                document.getElementById('frontpage-loading').style.display = 'none';
-                document.getElementById('frontpage-content').style.display = 'block';
             } catch (error) {
                 console.error('Error loading front page settings:', error);
-                showStatus('❌ Failed to load front page settings', 'error');
+                // Even if settings fail to load, we can still show the image upload section
+                console.log('Settings not available, but banner upload will still work');
+            } finally {
+                // Always hide loading and show content, even if there's an error
+                document.getElementById('frontpage-loading').style.display = 'none';
+                document.getElementById('frontpage-content').style.display = 'block';
             }
         }
 
