@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Background from '../components/Background';
-import { Clock, ArrowRight } from 'lucide-react';
+import { Clock, ArrowRight, Calendar, Target, Trophy, Users, Info, Lightbulb } from 'lucide-react';
 
 export default function Home() {
   const [hasEventStarted, setHasEventStarted] = useState(false);
@@ -190,91 +190,238 @@ export default function Home() {
         }
       />
       
-      <div className="relative z-10 flex items-center justify-center min-h-screen">
-        <div className="max-w-4xl w-full px-4 py-16 text-center">
-          <div className="bg-black/40 backdrop-blur-md p-8 rounded-2xl shadow-xl">
-            {/* Title toggle */}
-            {(!currentGameJam || currentGameJam.show_title !== false) && (
-              <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6">
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-300 to-orange-500">
-                  {currentGameJam ? currentGameJam.name : (frontPageSettings.hero_title || 'IPMAIA WinterJam 2025')}
-                </span>
-              </h1>
-            )}
-
-            {/* Description toggle */}
-            {(!currentGameJam || currentGameJam.show_description !== false) && (
-              <p className="text-xl md:text-2xl text-orange-100 mb-8">
-                {currentGameJam ? currentGameJam.description : (frontPageSettings.hero_description || 'Uma game jam onde estudantes de desenvolvimento de jogos criam experiências únicas em 45 horas.')}
-              </p>
-            )}
+      <div className="relative z-10 flex items-center justify-center min-h-screen py-16">
+        <div className="max-w-6xl w-full px-4">
+          {/* Main Hero Section */}
+          <div className="bg-black/50 backdrop-blur-md rounded-2xl shadow-2xl overflow-hidden">
             
-            <div className="flex flex-col md:flex-row items-center justify-center gap-4 mb-12">
-              {/* Date toggle and fallback */}
-              {(frontPageSettings.show_event_dates !== false && (!currentGameJam || currentGameJam.show_start_date !== false)) ? (
-                <div className="px-5 py-3 bg-orange-900/50 backdrop-blur-sm rounded-full text-orange-100 inline-flex items-center gap-2">
-                  <Clock size={20} />
-                  <span>
-                    {currentGameJam
-                      ? ((currentGameJam.show_start_date === false && currentGameJam.date_fallback)
-                          ? (currentGameJam.date_fallback === 'hidden' ? null : currentGameJam.date_fallback)
-                          : `${new Date(currentGameJam.start_date).toLocaleDateString('pt-PT')} - ${new Date(currentGameJam.end_date).toLocaleDateString('pt-PT')}`)
-                      : '14-16 Fevereiro 2025'
-                    }
+            {/* Header Section */}
+            <div className="text-center p-8 border-b border-orange-500/30">
+              {(!currentGameJam || currentGameJam.show_title !== false) && (
+                <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-4">
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-300 to-orange-500">
+                    {currentGameJam ? currentGameJam.name : (frontPageSettings.hero_title || 'IPMAIA WinterJam 2025')}
                   </span>
-                </div>
-              ) : null}
-              {/* Theme toggle */}
-              {frontPageSettings.show_theme !== false && currentGameJam && currentGameJam.theme && currentGameJam.show_theme !== false && (
-                <div className="px-5 py-3 bg-orange-900/50 backdrop-blur-sm rounded-full text-orange-100">
-                  <span>Tema: {currentGameJam.theme}</span>
-                </div>
+                </h1>
               )}
-              {/* Required object toggle */}
-              {frontPageSettings.show_required_object !== false && currentGameJam && currentGameJam.required_object && currentGameJam.show_required_object !== false && (
-                <div className="px-5 py-3 bg-orange-900/50 backdrop-blur-sm rounded-full text-orange-100">
-                  <span>Objeto: {currentGameJam.required_object}</span>
+
+              {(!currentGameJam || currentGameJam.show_description !== false) && (
+                <p className="text-xl md:text-2xl text-orange-100 max-w-3xl mx-auto">
+                  {currentGameJam ? currentGameJam.description : (frontPageSettings.hero_description || 'Uma game jam onde estudantes de desenvolvimento de jogos criam experiências únicas em 45 horas.')}
+                </p>
+              )}
+            </div>
+
+            {/* Event Info Stack - Full Width Sections */}
+            <div className="flex flex-col gap-4 p-8">
+              
+              {/* Introduction */}
+              <div className="bg-orange-900/30 backdrop-blur-sm rounded-xl p-6 border border-orange-500/20 w-full">
+                <div className="flex items-center gap-3 mb-3">
+                  <Info className="text-orange-400" size={24} />
+                  <h3 className="text-2xl font-semibold text-orange-100">
+                    {currentGameJam?.name ? `O que é a ${currentGameJam.name}?` : 'O que é a WinterJam?'}
+                  </h3>
+                </div>
+                {currentGameJam?.introduction ? (
+                  <div className="text-orange-200 text-lg leading-relaxed" dangerouslySetInnerHTML={{ __html: currentGameJam.introduction }} />
+                ) : (
+                  <p className="text-orange-200 text-lg leading-relaxed">
+                    Uma game jam onde estudantes de desenvolvimento de jogos e entusiastas se juntam para criar experiências únicas em 45 horas. É um evento presencial no IPMAIA com mentores disponíveis, workshops, e muita colaboração. Todos os níveis de experiência são bem-vindos!
+                  </p>
+                )}
+                <div className="mt-4 flex flex-wrap gap-4 text-orange-300/90">
+                  <div className="flex items-center gap-2">
+                    <Users size={18} />
+                    <span>Equipas (máximo 4 pessoas)</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Clock size={18} />
+                    <span>45 horas de desenvolvimento</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Target size={18} />
+                    <span>Tema revelado no início</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Prizes */}
+              <div className="bg-orange-900/30 backdrop-blur-sm rounded-xl p-6 border border-orange-500/20 w-full">
+                <div className="flex items-center gap-3 mb-4">
+                  <Trophy className="text-orange-400" size={24} />
+                  <h3 className="text-2xl font-semibold text-orange-100">Prémios</h3>
+                </div>
+                {currentGameJam?.prizes_content ? (
+                  <div className="text-orange-200" dangerouslySetInnerHTML={{ __html: currentGameJam.prizes_content }} />
+                ) : (
+                  <div className="space-y-4">
+                    <div className="bg-gradient-to-br from-yellow-500/20 to-yellow-600/20 border border-yellow-500/50 rounded-xl p-6">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="text-4xl">🥇</div>
+                        <h4 className="text-2xl font-bold text-yellow-300">1º Lugar</h4>
+                      </div>
+                      <ul className="list-disc list-inside space-y-1 text-orange-200">
+                        <li>Gift card InstantGaming de 10€ (por cada elemento)</li>
+                        <li>Certificado</li>
+                      </ul>
+                    </div>
+                    
+                    <div className="bg-gradient-to-br from-orange-500/20 to-orange-600/20 border border-orange-500/50 rounded-xl p-6">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="text-4xl">🎁</div>
+                        <h4 className="text-2xl font-bold text-orange-200">Todos os Participantes</h4>
+                      </div>
+                      <ul className="list-disc list-inside space-y-1 text-orange-200">
+                        <li>Fita ou porta-chaves do evento</li>
+                        <li>Certificado de participação</li>
+                      </ul>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Schedule */}
+              <div className="bg-orange-900/30 backdrop-blur-sm rounded-xl p-6 border border-orange-500/20 w-full">
+                <div className="flex items-center gap-3 mb-4">
+                  <Calendar className="text-orange-400" size={24} />
+                  <h3 className="text-2xl font-semibold text-orange-100">Horário do Evento</h3>
+                </div>
+                
+                <div className="space-y-6">
+                  {currentGameJam ? (
+                    <>
+                      {/* Day 1 - Start */}
+                      <div>
+                        <h4 className="text-xl font-semibold text-orange-200 mb-3 flex items-center gap-2">
+                          📅 {new Date(currentGameJam.start_date).toLocaleDateString('pt-PT', { day: 'numeric', month: 'long', weekday: 'long' })}
+                        </h4>
+                        <div className="space-y-2 ml-4">
+                          <div className="flex items-start gap-3">
+                            <span className="font-mono text-orange-300 min-w-[80px]">
+                              {new Date(currentGameJam.start_date).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                            <div>
+                              <strong className="text-orange-100">🚀 Início do Jam</strong>
+                              <p className="text-sm text-orange-300/70">Começa a contagem das 45 horas</p>
+                            </div>
+                          </div>
+                          <div className="flex items-start gap-3">
+                            <span className="font-mono text-orange-300 min-w-[80px]">
+                              {new Date(new Date(currentGameJam.start_date).getTime() + 15*60000).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                            <div>
+                              <strong className="text-orange-100">Divulgação do tema</strong>
+                              <p className="text-sm text-orange-300/70">Tema revelado aos participantes</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Day 2 - Middle day(s) */}
+                      {(() => {
+                        const start = new Date(currentGameJam.start_date);
+                        const end = new Date(currentGameJam.end_date);
+                        const daysDiff = Math.floor((end - start) / (1000 * 60 * 60 * 24));
+                        
+                        if (daysDiff >= 2) {
+                          const middleDay = new Date(start.getTime() + (1000 * 60 * 60 * 24));
+                          return (
+                            <div>
+                              <h4 className="text-xl font-semibold text-orange-200 mb-3 flex items-center gap-2">
+                                📅 {middleDay.toLocaleDateString('pt-PT', { day: 'numeric', month: 'long', weekday: 'long' })}
+                              </h4>
+                              <div className="space-y-2 ml-4">
+                                <div className="flex items-start gap-3">
+                                  <span className="font-mono text-orange-300 min-w-[80px]">00:00-24:00</span>
+                                  <div>
+                                    <strong className="text-orange-100">Desenvolvimento Contínuo</strong>
+                                    <p className="text-sm text-orange-300/70">Dia completo de criação</p>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        }
+                        return null;
+                      })()}
+
+                      {/* Day 3 - End */}
+                      <div>
+                        <h4 className="text-xl font-semibold text-orange-200 mb-3 flex items-center gap-2">
+                          📅 {new Date(currentGameJam.end_date).toLocaleDateString('pt-PT', { day: 'numeric', month: 'long', weekday: 'long' })}
+                        </h4>
+                        <div className="space-y-2 ml-4">
+                          <div className="flex items-start gap-3">
+                            <span className="font-mono text-orange-300 min-w-[80px]">
+                              {new Date(currentGameJam.end_date).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                            <div>
+                              <strong className="text-orange-100">⏰ FIM DO JAM!</strong>
+                              <p className="text-sm text-orange-300/70">Término das 45 horas</p>
+                            </div>
+                          </div>
+                          <div className="flex items-start gap-3">
+                            <span className="font-mono text-orange-300 min-w-[80px]">
+                              {new Date(currentGameJam.end_date).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}+
+                            </span>
+                            <div>
+                              <strong className="text-orange-100">🏆 Avaliação</strong>
+                              <p className="text-sm text-orange-300/70">Avaliação a cargo do júri</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <p className="text-orange-300/70 text-center">A carregar horário...</p>
+                  )}
+                </div>
+              </div>
+
+            </div>
+
+            {/* Action Button Section */}
+            <div className="text-center p-8 border-t border-orange-500/30">
+              {isLoading ? (
+                <div className="animate-pulse bg-orange-500/30 text-transparent rounded-lg py-4 px-6 inline-block">
+                  A verificar status do evento...
+                </div>
+              ) : hasEventEnded ? (
+                <Link 
+                  href={frontPageSettings.button_after_event_url || "/archive/2025/winter"}
+                  className="bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 px-8 rounded-lg text-xl inline-flex items-center gap-2 transition-all hover:scale-105"
+                >
+                  {frontPageSettings.button_after_event_text || "Ver Jogos Submetidos"} <ArrowRight size={20} />
+                </Link>
+              ) : hasEventStarted ? (
+                <div className="space-y-4">
+                  <div className="inline-block bg-green-500/80 text-white px-4 py-2 rounded-md mb-4">
+                    {frontPageSettings.status_event_running || "Evento a decorrer!"}
+                  </div>
+                  <Link 
+                    href={frontPageSettings.button_during_event_url || "/rules"}
+                    className="bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 px-8 rounded-lg text-xl inline-flex items-center gap-2 transition-all hover:scale-105"
+                  >
+                    {frontPageSettings.button_during_event_text || "Ver Regras"} <ArrowRight size={20} />
+                  </Link>
+                </div>
+              ) : (
+                <Link 
+                  href={frontPageSettings.button_before_start_url || "/enlist-now"}
+                  className="bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 px-8 rounded-lg text-xl inline-flex items-center gap-2 transition-all hover:scale-105"
+                >
+                  {frontPageSettings.button_before_start_text || "Inscrever Agora"} <ArrowRight size={20} />
+                </Link>
+              )}
+
+              {fetchError && (
+                <div className="mt-4 text-amber-300 text-sm">
+                  <p>{frontPageSettings.status_fallback_message || "Nota: Estamos a usar informação guardada."}</p>
                 </div>
               )}
             </div>
-            
-            {isLoading ? (
-              <div className="animate-pulse bg-orange-500/30 text-transparent rounded-lg py-4 px-6 inline-block">
-                A verificar status do evento...
-              </div>
-            ) : hasEventEnded ? (
-              <Link 
-                href={frontPageSettings.button_after_event_url || "/archive/2025/winter"}
-                className="bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 px-8 rounded-lg text-xl inline-flex items-center gap-2 transition-all hover:scale-105"
-              >
-                {frontPageSettings.button_after_event_text || "Ver Jogos Submetidos"} <ArrowRight size={20} />
-              </Link>
-            ) : hasEventStarted ? (
-              <div className="space-y-4">
-                <div className="inline-block bg-green-500/80 text-white px-4 py-2 rounded-md mb-4">
-                  {frontPageSettings.status_event_running || "Evento a decorrer!"}
-                </div>
-                <Link 
-                  href={frontPageSettings.button_during_event_url || "/rules"}
-                  className="bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 px-8 rounded-lg text-xl inline-flex items-center gap-2 transition-all hover:scale-105"
-                >
-                  {frontPageSettings.button_during_event_text || "Ver Regras"} <ArrowRight size={20} />
-                </Link>
-              </div>
-            ) : (
-              <Link 
-                href={frontPageSettings.button_before_start_url || "/enlist-now"}
-                className="bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 px-8 rounded-lg text-xl inline-flex items-center gap-2 transition-all hover:scale-105"
-              >
-                {frontPageSettings.button_before_start_text || "Inscrever Agora"} <ArrowRight size={20} />
-              </Link>
-            )}
 
-            {fetchError && (
-              <div className="mt-4 text-amber-300 text-sm">
-                <p>Nota: Estamos a usar informação guardada. Algumas funcionalidades podem não refletir o tempo atual.</p>
-              </div>
-            )}
           </div>
         </div>
       </div>
