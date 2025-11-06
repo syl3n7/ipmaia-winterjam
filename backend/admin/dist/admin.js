@@ -6,21 +6,36 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Authentication Functions
         async function checkAuthentication() {
+            console.log('🔐 Checking authentication...');
             try {
+                // Add timeout to prevent hanging
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+                
                 const response = await fetch('/api/auth/me', {
-                    credentials: 'same-origin'
+                    credentials: 'same-origin',
+                    signal: controller.signal
                 });
+                
+                clearTimeout(timeoutId);
+                console.log('🔐 Auth response status:', response.status);
                 
                 if (response.ok) {
                     currentUser = await response.json();
+                    console.log('✅ User authenticated:', currentUser);
                     showAdminDashboard();
                     updateUserInfo();
+                    showStatus('🚀 System ready', 'success');
+                    loadGameJams();
                 } else {
+                    console.log('❌ Not authenticated (status ' + response.status + '), showing login overlay');
                     showAuthOverlay();
+                    showStatus('🔐 Please log in to continue', 'info');
                 }
             } catch (error) {
-                console.error('Auth check failed:', error);
+                console.error('❌ Auth check failed:', error);
                 showAuthOverlay();
+                showStatus('❌ Connection error. Please check if the server is running.', 'error');
             }
         }
 
@@ -1364,9 +1379,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
             
-            // Initial load
+            // Initial load - checkAuthentication handles showing dashboard and loading data
+            console.log('🎬 Initializing admin dashboard...');
             checkAuthentication();
-            showStatus('🚀 System ready', 'success');
-            loadGameJams();
         });
 });
