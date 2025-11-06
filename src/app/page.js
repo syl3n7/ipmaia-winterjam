@@ -4,6 +4,12 @@ import Link from 'next/link';
 import Background from '../components/Background';
 import { Clock, ArrowRight, Calendar, Target, Trophy, Users, Info, Lightbulb } from 'lucide-react';
 
+// Helper function to convert line breaks to HTML
+const nl2br = (text) => {
+  if (!text) return '';
+  return text.replace(/\n/g, '<br />');
+};
+
 export default function Home() {
   const [hasEventStarted, setHasEventStarted] = useState(false);
   const [hasEventEnded, setHasEventEnded] = useState(false);
@@ -224,7 +230,7 @@ export default function Home() {
                   </h3>
                 </div>
                 {currentGameJam?.introduction ? (
-                  <div className="text-orange-200 text-lg leading-relaxed" dangerouslySetInnerHTML={{ __html: currentGameJam.introduction }} />
+                  <div className="text-orange-200 text-lg leading-relaxed" dangerouslySetInnerHTML={{ __html: nl2br(currentGameJam.introduction) }} />
                 ) : (
                   <p className="text-orange-200 text-lg leading-relaxed">
                     Uma game jam onde estudantes de desenvolvimento de jogos e entusiastas se juntam para criar experiências únicas em 45 horas. É um evento presencial no IPMAIA com mentores disponíveis, workshops, e muita colaboração. Todos os níveis de experiência são bem-vindos!
@@ -253,7 +259,7 @@ export default function Home() {
                   <h3 className="text-2xl font-semibold text-orange-100">Prémios</h3>
                 </div>
                 {currentGameJam?.prizes_content ? (
-                  <div className="text-orange-200" dangerouslySetInnerHTML={{ __html: currentGameJam.prizes_content }} />
+                  <div className="text-orange-200" dangerouslySetInnerHTML={{ __html: nl2br(currentGameJam.prizes_content) }} />
                 ) : (
                   <div className="space-y-4">
                     <div className="bg-gradient-to-br from-yellow-500/20 to-yellow-600/20 border border-yellow-500/50 rounded-xl p-6">
