@@ -143,6 +143,11 @@ app.get('/admin/admin.css', (req, res) => {
   res.sendFile(path.join(__dirname, 'admin/dist/admin.css'));
 });
 
+// Serve favicon for admin panel
+app.get('/favicon.ico', (req, res) => {
+  res.sendFile(path.join(__dirname, '../src/app/favicon.ico'));
+});
+
 // API Routes (before static file serving)
 app.use('/api/auth', authRoutes);
 app.use('/api/gamejams', gameJamRoutes);
