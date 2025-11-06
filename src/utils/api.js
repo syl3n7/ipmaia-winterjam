@@ -140,3 +140,10 @@ export const sortGames = (games) => {
     return new Date(b.created_at) - new Date(a.created_at);
   });
 };
+
+// Rules API calls
+export const rulesApi = {
+  // Get active rulebook
+  getActive: () => 
+    fetch(`${API_BASE_URL}/rules/active`).then(handleResponse),
+};
