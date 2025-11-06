@@ -112,6 +112,32 @@ function runToggleFieldsMigration() {
   });
 }
 
+function runPdfFilenameMigration() {
+  return new Promise((resolve, reject) => {
+    console.log('🔄 Adding pdf_filename column to rules table...');
+    
+    const migration = spawn('node', ['migrations/add-pdf-filename-column.js'], {
+      cwd: __dirname + '/..',
+      stdio: 'inherit'
+    });
+    
+    migration.on('close', (code) => {
+      if (code === 0) {
+        console.log('✅ PDF filename column migration completed successfully!');
+        resolve();
+      } else {
+        console.error(`❌ PDF filename column migration failed with exit code ${code}`);
+        reject(new Error(`PDF filename column migration process exited with code ${code}`));
+      }
+    });
+    
+    migration.on('error', (error) => {
+      console.error('❌ Failed to start PDF filename column migration process:', error.message);
+      reject(error);
+    });
+  });
+}
+
 async function main() {
   console.log('🎯 Auto-migration starting...');
   console.log(`Configuration:
@@ -134,6 +160,9 @@ async function main() {
     
     // Run toggle fields migration (adds columns to existing tables)
     await runToggleFieldsMigration();
+    
+    // Run PDF filename column migration (adds pdf_filename to rules table)
+    await runPdfFilenameMigration();
     
     console.log('🎉 Auto-migration completed successfully!');
     process.exit(0);
@@ -160,4 +189,4 @@ if (require.main === module) {
   main();
 }
 
-module.exports = { waitForHealth, runMigration, runToggleFieldsMigration };
+module.exports = { waitForHealth, runMigration, runToggleFieldsMigration, runPdfFilenameMigration };

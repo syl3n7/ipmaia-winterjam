@@ -74,6 +74,15 @@ else
     echo "⚠️ Rules content fields migration failed (might already exist)"
 fi
 
+echo "🔄 Adding pdf_filename column to rules table..."
+
+# Add pdf_filename column to rules table
+if node migrations/add-pdf-filename-column.js; then
+    echo "✅ PDF filename column added successfully!"
+else
+    echo "⚠️ PDF filename column migration failed (might already exist)"
+fi
+
 echo "🌱 Seeding default rules content..."
 
 # Seed default rules content
