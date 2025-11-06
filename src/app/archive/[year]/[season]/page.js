@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Trophy } from 'lucide-react';
 import { getGameJam } from "../../../../data/gameJamData";
 import { notFound } from 'next/navigation';
@@ -9,6 +9,7 @@ import Link from "next/link";
 export default function GameJamPage({ params }) {
   const { year, season } = params;
   const jamData = getGameJam(year, season);
+  const [bannerImage, setBannerImage] = useState(jamData?.banner || '/images/IPMAIA_SiteBanner.png');
   
   // If jam data doesn't exist, show 404
   if (!jamData) {
@@ -17,6 +18,26 @@ export default function GameJamPage({ params }) {
   
   const [selectedGame, setSelectedGame] = useState(null);
   const games = jamData.games;
+  
+  // Fetch banner image from frontpage settings
+  useEffect(() => {
+    const fetchBanner = async () => {
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+        const response = await fetch(`${apiUrl}/frontpage/settings`);
+        if (response.ok) {
+          const settings = await response.json();
+          if (settings.hero_background_image) {
+            setBannerImage(settings.hero_background_image);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching banner image:', err);
+      }
+    };
+    
+    fetchBanner();
+  }, []);
   
   // Add ranking badge component
   const RankingBadge = ({ ranking }) => {
@@ -99,7 +120,7 @@ export default function GameJamPage({ params }) {
   return (
     <main className="min-h-screen">
       <Background
-        imageUrl={jamData.banner}
+        imageUrl={bannerImage}
         fallbackContent={
           <div className="text-gray-500 text-center">
             <p>Não foi possível carregar a imagem de fundo</p>
