@@ -27,11 +27,26 @@ export default function AllGames2025() {
   const [error, setError] = useState(null);
   const [selectedGame, setSelectedGame] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [bannerImage, setBannerImage] = useState('/images/IPMAIA_SiteBanner.png');
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const { gameJamApi, archiveApi, processGameData, sortGames } = await import('../../../../../utils/api');
+        
+        // Fetch banner image from frontpage settings
+        try {
+          const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+          const response = await fetch(`${apiUrl}/frontpage/settings`);
+          if (response.ok) {
+            const settings = await response.json();
+            if (settings.hero_background_image) {
+              setBannerImage(settings.hero_background_image);
+            }
+          }
+        } catch (err) {
+          console.error('Error fetching banner image:', err);
+        }
         
         // Fetch specific game jam for 2025 winter (not current)
         const specificGameJam = await archiveApi.getGameJamByYearAndSeason(2025, 'winter');
@@ -97,7 +112,7 @@ export default function AllGames2025() {
   return (
     <main className="min-h-screen">
       <Background
-        imageUrl="/images/IPMAIA_SiteBanner.png"
+        imageUrl={bannerImage}
         fallbackContent={
           <div className="text-gray-500 text-center">
             <p>Não foi possível carregar a imagem de fundo</p>

@@ -183,7 +183,7 @@ export default function Home() {
   return (
     <main className="min-h-screen">
       <Background
-        imageUrl="/images/IPMAIA_SiteBanner.png"
+        imageUrl={frontPageSettings.hero_background_image || "/images/IPMAIA_SiteBanner.png"}
         fallbackContent={
           <div className="text-center">
             <img 

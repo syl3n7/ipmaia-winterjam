@@ -24,11 +24,26 @@ export default function WinterJam2025() {
   const [gameJam, setGameJam] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [bannerImage, setBannerImage] = useState('/images/IPMAIA_SiteBanner.png');
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const { gameJamApi, archiveApi, processGameData, sortGames } = await import('../../../../utils/api');
+        
+        // Fetch banner image from frontpage settings
+        try {
+          const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+          const response = await fetch(`${apiUrl}/frontpage/settings`);
+          if (response.ok) {
+            const settings = await response.json();
+            if (settings.hero_background_image) {
+              setBannerImage(settings.hero_background_image);
+            }
+          }
+        } catch (err) {
+          console.error('Error fetching banner image:', err);
+        }
         
         // Fetch specific game jam for 2025 winter (not current)
         const specificGameJam = await archiveApi.getGameJamByYearAndSeason(2025, 'winter');
@@ -105,7 +120,7 @@ export default function WinterJam2025() {
     date: `${new Date(gameJam.start_date).toLocaleDateString('pt-PT')} - ${new Date(gameJam.end_date).toLocaleDateString('pt-PT')}`,
     participants: 32, // This could be calculated from games data
     teams: games.length,
-    banner: "/images/IPMAIA_SiteBanner.png",
+    banner: bannerImage,
   } : {
     year: 2025,
     season: "Winter",
@@ -115,7 +130,7 @@ export default function WinterJam2025() {
     date: "14-16 Fevereiro 2025",
     participants: 32,
     teams: 8,
-    banner: "/images/IPMAIA_SiteBanner.png",
+    banner: bannerImage,
   };
 
   if (isLoading) {
