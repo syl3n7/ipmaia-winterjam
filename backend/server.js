@@ -127,6 +127,22 @@ passport.deserializeUser(async (id, done) => {
 // Serve static files (uploaded images, etc.)
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+// Serve admin static assets (CSS, JS) - specific files only, not HTML
+app.get('/admin/styles.css', (req, res) => {
+  res.setHeader('Content-Type', 'text/css');
+  res.sendFile(path.join(__dirname, 'admin/dist/styles.css'));
+});
+
+app.get('/admin/admin.js', (req, res) => {
+  res.setHeader('Content-Type', 'application/javascript');
+  res.sendFile(path.join(__dirname, 'admin/dist/admin.js'));
+});
+
+app.get('/admin/admin.css', (req, res) => {
+  res.setHeader('Content-Type', 'text/css');
+  res.sendFile(path.join(__dirname, 'admin/dist/admin.css'));
+});
+
 // API Routes (before static file serving)
 app.use('/api/auth', authRoutes);
 app.use('/api/gamejams', gameJamRoutes);
