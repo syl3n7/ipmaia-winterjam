@@ -15,6 +15,12 @@ async function migrateRules() {
         pdf_url VARCHAR(512) NOT NULL,
         version VARCHAR(50) DEFAULT '1.0',
         is_active BOOLEAN DEFAULT true,
+        code_of_conduct TEXT,
+        guidelines TEXT,
+        prizes TEXT,
+        evaluation TEXT,
+        participation TEXT,
+        schedule TEXT,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
       )

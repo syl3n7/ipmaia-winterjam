@@ -43,7 +43,13 @@ class Rules {
       description = '',
       pdf_url,
       version = '1.0',
-      is_active = true
+      is_active = true,
+      code_of_conduct = null,
+      guidelines = null,
+      prizes = null,
+      evaluation = null,
+      participation = null,
+      schedule = null
     } = data;
 
     // If setting as active, deactivate all others first
@@ -52,8 +58,11 @@ class Rules {
     }
 
     const query = `
-      INSERT INTO rules (title, description, pdf_url, version, is_active)
-      VALUES ($1, $2, $3, $4, $5)
+      INSERT INTO rules (
+        title, description, pdf_url, version, is_active,
+        code_of_conduct, guidelines, prizes, evaluation, participation, schedule
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
       RETURNING *
     `;
 
@@ -62,7 +71,13 @@ class Rules {
       description,
       pdf_url,
       version,
-      is_active
+      is_active,
+      code_of_conduct,
+      guidelines,
+      prizes,
+      evaluation,
+      participation,
+      schedule
     ]);
 
     return result.rows[0];
@@ -75,7 +90,13 @@ class Rules {
       description,
       pdf_url,
       version,
-      is_active
+      is_active,
+      code_of_conduct,
+      guidelines,
+      prizes,
+      evaluation,
+      participation,
+      schedule
     } = data;
 
     // If setting as active, deactivate all others first
@@ -91,8 +112,14 @@ class Rules {
         pdf_url = COALESCE($3, pdf_url),
         version = COALESCE($4, version),
         is_active = COALESCE($5, is_active),
+        code_of_conduct = COALESCE($6, code_of_conduct),
+        guidelines = COALESCE($7, guidelines),
+        prizes = COALESCE($8, prizes),
+        evaluation = COALESCE($9, evaluation),
+        participation = COALESCE($10, participation),
+        schedule = COALESCE($11, schedule),
         updated_at = NOW()
-      WHERE id = $6
+      WHERE id = $12
       RETURNING *
     `;
 
@@ -102,6 +129,12 @@ class Rules {
       pdf_url,
       version,
       is_active,
+      code_of_conduct,
+      guidelines,
+      prizes,
+      evaluation,
+      participation,
+      schedule,
       id
     ]);
 
