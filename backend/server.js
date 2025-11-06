@@ -145,7 +145,8 @@ app.get('/admin/admin.css', (req, res) => {
 
 // Serve favicon for admin panel
 app.get('/favicon.ico', (req, res) => {
-  res.sendFile(path.join(__dirname, '../src/app/favicon.ico'));
+  // Send a 204 No Content response to suppress the error
+  res.status(204).end();
 });
 
 // API Routes (before static file serving)
