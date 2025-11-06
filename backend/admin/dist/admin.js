@@ -158,9 +158,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 section.classList.add('active');
             }
             
-            // Add active class to the clicked button
+            // Add active class to the button - either the one passed or find it by data-section attribute
             if (buttonElement) {
                 buttonElement.classList.add('active');
+            } else {
+                // When called programmatically, find the corresponding nav button
+                const navButton = document.querySelector(`[data-section="${sectionName}"]`);
+                if (navButton) {
+                    navButton.classList.add('active');
+                }
             }
             
             // Load data for the section
