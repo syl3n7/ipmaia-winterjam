@@ -15,6 +15,11 @@ const uploadLimiter = rateLimit({
   message: 'Too many upload attempts, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: (req) => {
+    // Extract IP without port (handles proxy IPs like "172.68.103.40:10934")
+    const ip = req.ip || req.connection.remoteAddress || '0.0.0.0';
+    return ip.split(':')[0];
+  }
 });
 
 // Configure multer for PDF uploads
