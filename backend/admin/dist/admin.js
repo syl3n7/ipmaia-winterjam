@@ -1,6 +1,7 @@
 // Admin Dashboard JavaScript
 console.log('🚀 Admin.js loaded!');
 document.addEventListener('DOMContentLoaded', function() {
+    try {
         console.log('🎯 DOMContentLoaded fired!');
         let currentEditingGameJam = null;
         let currentEditingGame = null;
@@ -1369,5 +1370,8 @@ document.addEventListener('DOMContentLoaded', function() {
             showStatus('🚀 System ready', 'success');
             console.log('🎮 Loading game jams...');
             loadGameJams();
-        });
+    } catch (error) {
+        console.error('❌ CRITICAL ERROR in DOMContentLoaded:', error);
+        console.error('Stack trace:', error.stack);
+    }
 });
