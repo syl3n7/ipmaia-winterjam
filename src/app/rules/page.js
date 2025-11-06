@@ -26,29 +26,38 @@ export default function Page() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-white py-16 px-4">
+    <div className="min-h-screen bg-white py-8 px-4">
       <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-gray-900 rounded-2xl mb-6 shadow-lg">
-            <FileText className="w-10 h-10 text-white" />
+        {/* Compact Header */}
+        <div className="mb-8">
+          <div className="flex flex-col gap-4 pb-6 border-b-2 border-gray-200">
+            {/* Title row with icon */}
+            <div className="flex items-start gap-3">
+              <div className="flex items-center justify-center w-12 h-12 md:w-14 md:h-14 bg-gray-900 rounded-xl shadow-md flex-shrink-0">
+                <FileText className="w-6 h-6 md:w-7 md:h-7 text-white" />
+              </div>
+              <div className="flex-1">
+                <h1 className="text-xl md:text-3xl font-bold text-gray-900 leading-tight">
+                  Livro de Regras WinterJam 2025
+                </h1>
+                <p className="text-xs md:text-sm text-gray-600 mt-1">
+                  Regras oficiais e diretrizes para participantes
+                </p>
+              </div>
+            </div>
+            
+            {/* Download button - full width on mobile */}
+            <a
+              href={pdfUrl}
+              download
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-2 px-5 py-3 md:py-2.5 bg-gray-900 hover:bg-gray-800 text-white font-semibold rounded-lg transition-all duration-300 shadow-md hover:shadow-lg w-full md:w-auto md:self-end"
+            >
+              <Download className="w-4 h-4" />
+              <span>Baixar PDF</span>
+            </a>
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-            Livro de Regras WinterJam 2025
-          </h1>
-          <p className="text-xl text-gray-700 mb-6">
-            Regras oficiais e diretrizes para participantes
-          </p>
-          <a
-            href={pdfUrl}
-            download
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-gray-900 hover:bg-gray-800 text-white font-semibold rounded-xl transition-all duration-300 shadow-lg hover:scale-105"
-          >
-            <Download className="w-5 h-5" />
-            <span>Baixar PDF</span>
-          </a>
         </div>
 
         {/* Rules Content */}
