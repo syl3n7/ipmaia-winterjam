@@ -1,117 +1,162 @@
 const express = require('express');
-const { pool } = require('../config/database');
+const Rules = require('../models/Rules');
 const { requireAdmin } = require('./auth');
 
 const router = express.Router();
 
-// Public route - Get all active rules content
-router.get('/content', async (req, res) => {
+// ==================== PUBLIC ROUTES ====================
+
+// Get active rulebook (public)
+router.get('/active', async (req, res) => {
   try {
-    const query = `
-      SELECT section_key, section_title, content, display_order
-      FROM rules_content
-      WHERE is_active = true
-      ORDER BY display_order ASC
-    `;
-    const result = await pool.query(query);
+    const rules = await Rules.getActive();
     
-    // Return array of rules content
-    res.json(result.rows);
+    if (!rules) {
+      return res.status(404).json({ 
+        error: 'No active rulebook found',
+        message: 'Nenhum livro de regras ativo encontrado'
+      });
+    }
+    
+    res.json(rules);
   } catch (error) {
-    console.error('Error fetching rules content:', error);
-    res.status(500).json({ error: 'Failed to fetch rules content' });
+    console.error('Error fetching active rules:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch rules',
+      message: 'Erro ao carregar regras'
+    });
   }
 });
 
-// Admin routes - require authentication
+// ==================== ADMIN ROUTES ====================
+
 router.use(requireAdmin);
 
-// Get all rules content (including inactive)
-router.get('/admin/content', async (req, res) => {
+// Get all rulebooks (admin)
+router.get('/admin/all', async (req, res) => {
   try {
-    const query = `
-      SELECT *
-      FROM rules_content
-      ORDER BY display_order ASC
-    `;
-    const result = await pool.query(query);
-    res.json(result.rows);
+    const rules = await Rules.getAll();
+    res.json(rules);
   } catch (error) {
-    console.error('Error fetching admin rules content:', error);
-    res.status(500).json({ error: 'Failed to fetch rules content' });
+    console.error('Error fetching all rules:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch rules',
+      message: 'Erro ao carregar regras'
+    });
   }
 });
 
-// Update specific rule section
-router.put('/admin/content/:sectionKey', async (req, res) => {
+// Get specific rulebook by ID (admin)
+router.get('/admin/:id', async (req, res) => {
   try {
-    const { sectionKey } = req.params;
-    const { section_title, content } = req.body;
+    const rules = await Rules.getById(req.params.id);
     
-    const query = `
-      UPDATE rules_content
-      SET section_title = $1,
-          content = $2,
-          updated_at = NOW()
-      WHERE section_key = $3
-      RETURNING *
-    `;
-    
-    const result = await pool.query(query, [section_title, content, sectionKey]);
-    
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Rule section not found' });
+    if (!rules) {
+      return res.status(404).json({ 
+        error: 'Rulebook not found',
+        message: 'Livro de regras não encontrado'
+      });
     }
     
-    res.json(result.rows[0]);
+    res.json(rules);
   } catch (error) {
-    console.error('Error updating rules content:', error);
-    res.status(500).json({ error: 'Failed to update rules content' });
+    console.error('Error fetching rules:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch rules',
+      message: 'Erro ao carregar regras'
+    });
   }
 });
 
-// Bulk update all sections
-router.put('/admin/content', async (req, res) => {
+// Create new rulebook (admin)
+router.post('/admin', async (req, res) => {
   try {
-    const { sections } = req.body;
-    
-    const client = await pool.connect();
-    try {
-      await client.query('BEGIN');
-      
-      const updatedSections = [];
-      for (const section of sections) {
-        const query = `
-          UPDATE rules_content
-          SET section_title = $1,
-              content = $2,
-              updated_at = NOW()
-          WHERE section_key = $3
-          RETURNING *
-        `;
-        
-        const result = await client.query(query, [
-          section.section_title,
-          section.content,
-          section.section_key
-        ]);
-        
-        if (result.rows.length > 0) {
-          updatedSections.push(result.rows[0]);
-        }
-      }
-      
-      await client.query('COMMIT');
-      res.json({ updated: updatedSections.length, sections: updatedSections });
-    } catch (error) {
-      await client.query('ROLLBACK');
-      throw error;
-    } finally {
-      client.release();
-    }
+    const rules = await Rules.create(req.body);
+    res.status(201).json({
+      message: 'Rulebook created successfully',
+      data: rules
+    });
   } catch (error) {
-    console.error('Error bulk updating rules content:', error);
-    res.status(500).json({ error: 'Failed to update rules content' });
+    console.error('Error creating rules:', error);
+    res.status(500).json({ 
+      error: 'Failed to create rules',
+      message: 'Erro ao criar regras'
+    });
+  }
+});
+
+// Update rulebook (admin)
+router.put('/admin/:id', async (req, res) => {
+  try {
+    const rules = await Rules.update(req.params.id, req.body);
+    
+    if (!rules) {
+      return res.status(404).json({ 
+        error: 'Rulebook not found',
+        message: 'Livro de regras não encontrado'
+      });
+    }
+    
+    res.json({
+      message: 'Rulebook updated successfully',
+      data: rules
+    });
+  } catch (error) {
+    console.error('Error updating rules:', error);
+    res.status(500).json({ 
+      error: 'Failed to update rules',
+      message: 'Erro ao atualizar regras'
+    });
+  }
+});
+
+// Set active rulebook (admin)
+router.patch('/admin/:id/activate', async (req, res) => {
+  try {
+    const rules = await Rules.setActive(req.params.id);
+    
+    if (!rules) {
+      return res.status(404).json({ 
+        error: 'Rulebook not found',
+        message: 'Livro de regras não encontrado'
+      });
+    }
+    
+    res.json({
+      message: 'Rulebook activated successfully',
+      data: rules
+    });
+  } catch (error) {
+    console.error('Error activating rules:', error);
+    res.status(500).json({ 
+      error: 'Failed to activate rules',
+      message: 'Erro ao ativar regras'
+    });
+  }
+});
+
+// Delete rulebook (admin)
+router.delete('/admin/:id', async (req, res) => {
+  try {
+    const rules = await Rules.delete(req.params.id);
+    
+    if (!rules) {
+      return res.status(404).json({ 
+        error: 'Rulebook not found',
+        message: 'Livro de regras não encontrado'
+      });
+    }
+    
+    res.json({
+      message: 'Rulebook deleted successfully',
+      data: rules
+    });
+  } catch (error) {
+    console.error('Error deleting rules:', error);
+    res.status(500).json({ 
+      error: 'Failed to delete rules',
+      message: 'Erro ao eliminar regras'
+    });
   }
 });
 

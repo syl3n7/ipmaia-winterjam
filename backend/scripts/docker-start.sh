@@ -56,13 +56,13 @@ else
     echo "⚠️ Toggle fields migration failed (might already exist)"
 fi
 
-echo "🔄 Adding rules content table..."
+echo "🔄 Setting up rules table..."
 
-# Run rules content migration
-if node scripts/add-rules-content.js; then
-    echo "✅ Rules content migration completed successfully!"
+# Run new rules migration
+if node scripts/migrate-rules.js; then
+    echo "✅ Rules table migration completed successfully!"
 else
-    echo "⚠️ Rules content migration failed (might already exist)"
+    echo "⚠️ Rules table migration failed (might already exist)"
 fi
 
 echo "🔄 Adding slug and archive_url fields..."
@@ -82,6 +82,15 @@ if node migrate_frontend_data.js; then
 else
     echo "❌ Frontend data migration failed!"
     exit 1
+fi
+
+echo "🔄 Adding December 2025 WinterJam..."
+
+# Add December 2025 jam
+if node scripts/add-december-2025-jam.js; then
+    echo "✅ December 2025 jam added successfully!"
+else
+    echo "⚠️ December 2025 jam addition failed (might already exist)"
 fi
 
 echo "🎉 Backend is ready with migrations and data applied!"

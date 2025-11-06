@@ -1030,50 +1030,63 @@
         <!-- Rules Section -->
         <div id="rules-section" class="card">
             <h2>📋 Gestão de Regras</h2>
-            <p style="margin-bottom: 20px; color: #6c757d;">Edite o conteúdo da página de regras. Pode usar HTML para formatação.</p>
+            <p style="margin-bottom: 20px; color: #6c757d;">
+                Gerencie o livro de regras da WinterJam. Carregue o PDF em <code>/public/WinterJam_Rulebook.pdf</code> 
+                e configure aqui os detalhes.
+            </p>
             
-            <div id="rules-status" class="status" style="display: none;"></div>
+            <div id="rules-list" style="margin-bottom: 30px;">
+                <h3>📚 Livros de Regras Existentes</h3>
+                <div id="rules-list-content">
+                    <p style="color: #6c757d;">A carregar...</p>
+                </div>
+            </div>
             
-            <div class="form-section">
-                <div class="form-group">
-                    <label for="pdf-url">📄 URL do PDF</label>
-                    <input type="text" id="pdf-url" placeholder="/WinterJam_Rulebook.pdf" />
-                </div>
-
-                <div class="form-group">
-                    <label for="conduct-content">1. Código de Conduta</label>
-                    <textarea id="conduct-content" rows="8" placeholder="Conteúdo HTML para a secção Código de Conduta..."></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label for="guidelines-content">2. Diretrizes para a Criação de Jogos</label>
-                    <textarea id="guidelines-content" rows="8" placeholder="Conteúdo HTML para a secção Diretrizes..."></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label for="prizes-content">3. Prémios</label>
-                    <textarea id="prizes-content" rows="6" placeholder="Conteúdo HTML para a secção Prémios..."></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label for="evaluation-content">4. Critérios de Avaliação</label>
-                    <textarea id="evaluation-content" rows="6" placeholder="Conteúdo HTML para a secção Avaliação..."></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label for="participation-content">5. Regras de Participação</label>
-                    <textarea id="participation-content" rows="8" placeholder="Conteúdo HTML para a secção Participação..."></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label for="schedule-content">6. Horário do Evento</label>
-                    <textarea id="schedule-content" rows="6" placeholder="Conteúdo HTML para a secção Horário..."></textarea>
-                </div>
-
-                <div style="display: flex; gap: 10px;">
-                    <button class="btn btn-primary" onclick="saveRulesContent()">💾 Guardar Regras</button>
-                    <button class="btn" onclick="loadRulesContent()">🔄 Recarregar</button>
-                </div>
+            <div id="rules-form" class="form-section" style="display: none;">
+                <h3>📝 Adicionar/Editar Livro de Regras</h3>
+                <form id="rules-form-element">
+                    <input type="hidden" id="rules-id" />
+                    
+                    <div class="form-group">
+                        <label for="rules-title">Título *</label>
+                        <input type="text" id="rules-title" name="title" placeholder="WinterJam 2025 Rulebook" required />
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="rules-description">Descrição</label>
+                        <textarea id="rules-description" name="description" rows="3" placeholder="Livro de regras oficial da WinterJam 2025"></textarea>
+                    </div>
+                    
+                    <div class="grid">
+                        <div class="form-group">
+                            <label for="rules-pdf-url">URL do PDF *</label>
+                            <input type="text" id="rules-pdf-url" name="pdf_url" placeholder="/WinterJam_Rulebook.pdf" required />
+                            <small>Caminho relativo ou URL absoluto. Ex: /WinterJam_Rulebook.pdf</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="rules-version">Versão</label>
+                            <input type="text" id="rules-version" name="version" placeholder="1.0" />
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                            <input type="checkbox" id="rules-active" name="is_active" checked />
+                            <span>Ativar este livro de regras</span>
+                        </label>
+                        <small>Apenas um livro de regras pode estar ativo de cada vez.</small>
+                    </div>
+                    
+                    <div class="form-actions" style="display: flex; gap: 10px; margin-top: 20px;">
+                        <button type="submit" class="btn btn-primary">💾 Guardar</button>
+                        <button type="button" class="btn" onclick="hideRulesForm()">❌ Cancelar</button>
+                    </div>
+                </form>
+            </div>
+            
+            <div style="margin-top: 20px;">
+                <button class="btn btn-success" id="add-rules-btn" onclick="showRulesForm()">+ Adicionar Novo Livro de Regras</button>
             </div>
         </div>
 
@@ -1283,7 +1296,7 @@
                     loadFrontPageSettings();
                     break;
                 case 'rules':
-                    loadRulesContent();
+                    loadRules();
                     break;
                 case 'system':
                     loadSystemInfo();
@@ -1857,6 +1870,111 @@
             }
         }
 
+        // Rules Management Functions
+        let currentEditingRules = null;
+
+        async function loadRules() {
+            try {
+                const rules = await apiCall('/api/rules/admin/all');
+                const container = document.getElementById('rules-list-content');
+                
+                if (!rules || rules.length === 0) {
+                    container.innerHTML = '<p style="color: #6c757d;">Nenhum livro de regras encontrado. Adicione um novo.</p>';
+                    return;
+                }
+                
+                container.innerHTML = rules.map(rule => `
+                    <div class="list-item" style="background: ${rule.is_active ? '#e8f5e9' : '#fff'}; border-left: 4px solid ${rule.is_active ? '#4caf50' : '#ddd'};">
+                        <div style="flex: 1;">
+                            <strong style="font-size: 1.1rem;">${rule.title}</strong>
+                            ${rule.is_active ? '<span class="badge" style="background: #4caf50; margin-left: 10px;">Ativo</span>' : ''}
+                            <div style="color: #666; margin-top: 5px;">${rule.description || ''}</div>
+                            <div style="color: #999; margin-top: 5px; font-size: 0.9rem;">
+                                📄 <a href="${rule.pdf_url}" target="_blank">${rule.pdf_url}</a> | 
+                                Versão: ${rule.version}
+                            </div>
+                        </div>
+                        <div class="list-item-actions">
+                            <button class="btn-sm btn-primary" onclick="editRules(${rule.id})">✏️ Editar</button>
+                            ${!rule.is_active ? `<button class="btn-sm btn-success" onclick="activateRules(${rule.id})">✅ Ativar</button>` : ''}
+                            <button class="btn-sm btn-danger" onclick="deleteRules(${rule.id})">🗑️ Eliminar</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Error loading rules:', error);
+                showStatus('❌ Erro ao carregar regras', 'error');
+            }
+        }
+
+        function showRulesForm() {
+            currentEditingRules = null;
+            document.getElementById('rules-form').style.display = 'block';
+            document.getElementById('add-rules-btn').style.display = 'none';
+            document.getElementById('rules-form-element').reset();
+            document.getElementById('rules-id').value = '';
+            document.getElementById('rules-active').checked = true;
+        }
+
+        function hideRulesForm() {
+            currentEditingRules = null;
+            document.getElementById('rules-form').style.display = 'none';
+            document.getElementById('add-rules-btn').style.display = 'block';
+            document.getElementById('rules-form-element').reset();
+        }
+
+        async function editRules(id) {
+            try {
+                const rules = await apiCall(`/api/rules/admin/${id}`);
+                currentEditingRules = id;
+                
+                document.getElementById('rules-id').value = rules.id;
+                document.getElementById('rules-title').value = rules.title;
+                document.getElementById('rules-description').value = rules.description || '';
+                document.getElementById('rules-pdf-url').value = rules.pdf_url;
+                document.getElementById('rules-version').value = rules.version;
+                document.getElementById('rules-active').checked = rules.is_active;
+                
+                document.getElementById('rules-form').style.display = 'block';
+                document.getElementById('add-rules-btn').style.display = 'none';
+            } catch (error) {
+                console.error('Error loading rules for edit:', error);
+                showStatus('❌ Erro ao carregar regras para edição', 'error');
+            }
+        }
+
+        async function activateRules(id) {
+            if (!confirm('Deseja ativar este livro de regras? Todos os outros serão desativados.')) {
+                return;
+            }
+            
+            try {
+                showStatus('⏳ Ativando livro de regras...', 'info');
+                await apiCall(`/api/rules/admin/${id}/activate`, 'PATCH');
+                showStatus('✅ Livro de regras ativado com sucesso!', 'success');
+                loadRules();
+            } catch (error) {
+                console.error('Error activating rules:', error);
+                showStatus('❌ Erro ao ativar livro de regras', 'error');
+            }
+        }
+
+        async function deleteRules(id) {
+            if (!confirm('Tem certeza que deseja eliminar este livro de regras?')) {
+                return;
+            }
+            
+            try {
+                showStatus('⏳ Eliminando livro de regras...', 'info');
+                await apiCall(`/api/rules/admin/${id}`, 'DELETE');
+                showStatus('✅ Livro de regras eliminado com sucesso!', 'success');
+                loadRules();
+            } catch (error) {
+                console.error('Error deleting rules:', error);
+                showStatus('❌ Erro ao eliminar livro de regras', 'error');
+            }
+        }
+
         // Front Page Settings Functions
         let frontPageSettings = {};
 
@@ -2001,80 +2119,7 @@
             }
         }
 
-        // Rules Content Functions
-        async function loadRulesContent() {
-            try {
-                const response = await fetch('/api/rules/admin/content');
-                if (!response.ok) throw new Error('Failed to load rules content');
-                
-                const sections = await response.json();
-                
-                // Map section keys to form field IDs
-                const fieldMapping = {
-                    'pdf_url': 'pdf-url',
-                    'conduct': 'conduct-content',
-                    'guidelines': 'guidelines-content',
-                    'prizes': 'prizes-content',
-                    'evaluation': 'evaluation-content',
-                    'participation': 'participation-content',
-                    'schedule': 'schedule-content'
-                };
-                
-                // Populate each section
-                sections.forEach(section => {
-                    const fieldId = fieldMapping[section.section_key];
-                    if (fieldId) {
-                        const element = document.getElementById(fieldId);
-                        if (element) {
-                            element.value = section.content || '';
-                        }
-                    }
-                });
-                
-                showRulesStatus('✅ Regras carregadas com sucesso', 'success');
-            } catch (error) {
-                console.error('Error loading rules content:', error);
-                showRulesStatus('❌ Erro ao carregar regras', 'error');
-            }
-        }
 
-        async function saveRulesContent() {
-            try {
-                const sections = [
-                    { section_key: 'pdf_url', content: document.getElementById('pdf-url').value },
-                    { section_key: 'conduct', content: document.getElementById('conduct-content').value },
-                    { section_key: 'guidelines', content: document.getElementById('guidelines-content').value },
-                    { section_key: 'prizes', content: document.getElementById('prizes-content').value },
-                    { section_key: 'evaluation', content: document.getElementById('evaluation-content').value },
-                    { section_key: 'participation', content: document.getElementById('participation-content').value },
-                    { section_key: 'schedule', content: document.getElementById('schedule-content').value }
-                ];
-                
-                const response = await fetch('/api/rules/admin/content', {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ sections })
-                });
-                
-                if (!response.ok) throw new Error('Failed to save rules content');
-                
-                showRulesStatus('✅ Regras guardadas com sucesso', 'success');
-            } catch (error) {
-                console.error('Error saving rules content:', error);
-                showRulesStatus('❌ Erro ao guardar regras', 'error');
-            }
-        }
-
-        function showRulesStatus(message, type) {
-            const statusEl = document.getElementById('rules-status');
-            statusEl.textContent = message;
-            statusEl.className = `status ${type}`;
-            statusEl.style.display = 'block';
-            
-            setTimeout(() => {
-                statusEl.style.display = 'none';
-            }, 5000);
-        }
 
         // Form Handlers
         document.addEventListener('DOMContentLoaded', function() {
@@ -2265,6 +2310,32 @@
                 
                 // Reset file input
                 e.target.value = '';
+            });
+            
+            // Rules Form Handler
+            document.getElementById('rules-form-element').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(this);
+                const data = Object.fromEntries(formData.entries());
+                data.is_active = formData.has('is_active');
+                
+                try {
+                    showStatus('💾 Guardando livro de regras...', 'info');
+                    
+                    const endpoint = currentEditingRules ? 
+                        `/api/rules/admin/${currentEditingRules}` : 
+                        '/api/rules/admin';
+                    const method = currentEditingRules ? 'PUT' : 'POST';
+                    
+                    await apiCall(endpoint, method, data);
+                    
+                    showStatus('✅ Livro de regras guardado com sucesso!', 'success');
+                    hideRulesForm();
+                    loadRules();
+                } catch (error) {
+                    showStatus(`❌ Erro ao guardar livro de regras: ${error.message}`, 'error');
+                }
             });
             
             // Front Page Settings event listeners
