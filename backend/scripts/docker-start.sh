@@ -65,6 +65,24 @@ else
     echo "⚠️ Rules table migration failed (might already exist)"
 fi
 
+echo "🔄 Adding content fields to rules table..."
+
+# Add content fields to rules table
+if node scripts/add-rules-content-fields.js; then
+    echo "✅ Rules content fields added successfully!"
+else
+    echo "⚠️ Rules content fields migration failed (might already exist)"
+fi
+
+echo "🌱 Seeding default rules content..."
+
+# Seed default rules content
+if node scripts/seed-rules-content.js; then
+    echo "✅ Rules content seeded successfully!"
+else
+    echo "⚠️ Rules content seeding failed (might already exist)"
+fi
+
 echo "🔄 Adding slug and archive_url fields..."
 
 # Run slug fields migration
