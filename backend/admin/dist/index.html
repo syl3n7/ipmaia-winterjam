@@ -1010,74 +1010,47 @@
 
         <!-- Front Page Section -->
         <div id="frontpage-section" class="card">
-            <h2>🏠 Configurações da Página Inicial</h2>
-            <p>Personalize o conteúdo e comportamento da página principal</p>
+            <h2>🏠 Página Inicial - Imagem de Banner</h2>
+            <p style="margin-bottom: 30px; color: #6c757d;">
+                Carregue e gerencie a imagem de fundo da página inicial.
+            </p>
             
             <div id="frontpage-loading" class="info status">A carregar configurações...</div>
             
             <div id="frontpage-content" style="display: none;">
                 <!-- Banner Image Upload Section -->
-                <div class="settings-section" style="background: #f8f9ff; border-left: 4px solid #667eea; margin-bottom: 30px;">
-                    <h3>🖼️ Imagem de Banner</h3>
-                    <p style="color: #6c757d; font-size: 0.9rem; margin-bottom: 15px;">
-                        Carregue a imagem de fundo que aparece na secção hero da página inicial.
-                    </p>
-                    
-                    <div id="current-banner-info" style="background: white; border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
-                        <h4 style="margin-bottom: 10px; color: #667eea; font-size: 1rem;">Imagem Atual</h4>
-                        <div id="banner-status">
-                            <p style="color: #6c757d;">A carregar...</p>
-                        </div>
+                <div id="current-banner-info" style="background: #f8f9ff; border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px; margin-bottom: 30px;">
+                    <h3 style="margin-bottom: 15px; color: #667eea;">Imagem Atual</h3>
+                    <div id="banner-status">
+                        <p style="color: #6c757d;">A carregar...</p>
                     </div>
-                    
-                    <form id="banner-upload-form" enctype="multipart/form-data">
-                        <div class="form-group">
-                            <label for="banner-image-file">Carregar Nova Imagem</label>
-                            <input type="file" id="banner-image-file" name="image" accept="image/jpeg,image/jpg,image/png,image/webp" required style="padding: 10px; border: 2px dashed #667eea; border-radius: 8px; background: white;" />
-                            <small style="color: #6c757d; font-size: 0.875rem;">Formatos permitidos: JPG, PNG, WebP. Tamanho máximo: 5MB</small>
-                        </div>
-                        
-                        <div class="form-actions" style="margin-top: 15px;">
-                            <button type="submit" class="btn btn-primary">📤 Carregar Imagem</button>
-                        </div>
-                    </form>
                 </div>
                 
-                <form id="frontpage-form">
-                    <!-- Hero Section -->
+                <form id="banner-upload-form" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label for="banner-image-file">Carregar Nova Imagem</label>
+                        <input type="file" id="banner-image-file" name="image" accept="image/jpeg,image/jpg,image/png,image/webp" required style="padding: 10px; border: 2px dashed #667eea; border-radius: 8px; background: #f8f9ff;" />
+                        <small>Formatos permitidos: JPG, PNG, WebP. Tamanho máximo: 5MB</small>
+                    </div>
+                    
+                    <div class="form-actions" style="margin-top: 20px;">
+                        <button type="submit" class="btn btn-primary">📤 Carregar Imagem</button>
+                    </div>
+                </form>
+                
+                <!-- Hidden form for backend compatibility - keeps existing settings functionality working -->
+                <form id="frontpage-form" style="display: none;">
                     <div class="settings-section">
-                        <h3>🎨 Secção Hero</h3>
                         <div id="hero-settings"></div>
                     </div>
-                    
-                    <!-- General Settings -->
                     <div class="settings-section">
-                        <h3>⚙️ Configurações Gerais</h3>
                         <div id="general-settings"></div>
                     </div>
-                    
-                    <!-- Button Configuration -->
                     <div class="settings-section">
-                        <h3>🔘 Configuração de Botões</h3>
-                        <p style="color: #6c757d; font-size: 0.9rem; margin-bottom: 15px;">
-                            Os botões mudam automaticamente baseado nas datas do evento ativo:<br>
-                            • <strong>ANTES</strong>: Mostrado antes do evento começar (ex: inscrições)<br>
-                            • <strong>DURANTE</strong>: Mostrado enquanto o evento está a decorrer (ex: regras)<br>
-                            • <strong>DEPOIS</strong>: Mostrado após o evento terminar (ex: ver jogos submetidos)
-                        </p>
                         <div id="buttons-settings"></div>
                     </div>
-                    
-                    <!-- Advanced Settings -->
                     <div class="settings-section">
-                        <h3>🔧 Configurações Avançadas</h3>
                         <div id="advanced-settings"></div>
-                    </div>
-                    
-                    <div class="form-actions">
-                        <button type="submit" class="btn btn-primary">💾 Guardar Todas as Configurações</button>
-                        <button type="button" class="btn btn-secondary" id="preview-frontpage">👁️ Pré-visualizar Alterações</button>
-                        <button type="button" class="btn btn-warning" id="reset-frontpage" style="margin-left: auto;">🔄 Repor Valores Padrão</button>
                     </div>
                 </form>
             </div>
