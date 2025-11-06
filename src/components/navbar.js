@@ -82,11 +82,11 @@ const MainNavbar = () => {
         </span>
       </NavbarBrand>
       <NavbarToggle className={toggleClassName} />
-      <NavbarCollapse className="flex md:items-center">
-        <div className="flex items-center space-x-4">
-          <div className="relative">
+      <NavbarCollapse>
+        <div className="flex flex-col md:flex-row md:items-center md:space-x-4 space-y-2 md:space-y-0">
+          <div className="relative w-full md:w-auto">
             <button 
-              className={`flex items-center gap-1 px-3 py-2 rounded ${linkClassName}`}
+              className={`flex items-center justify-between gap-1 px-3 py-2 rounded ${linkClassName} w-full`}
               onClick={() => setIsArchiveOpen(!isArchiveOpen)}
             >
               Arquivo
@@ -94,7 +94,7 @@ const MainNavbar = () => {
             </button>
             
             {isArchiveOpen && (
-              <div className={`absolute top-full left-0 mt-1 w-48 rounded-md shadow-lg border ${dropdownClassName} z-50`}>
+              <div className={`md:absolute static md:top-full md:left-0 md:mt-1 w-full md:w-48 rounded-md md:shadow-lg border ${dropdownClassName} md:z-50`}>
                 <div className="py-1">
                   {isLoadingArchive ? (
                     <div className="px-4 py-2 text-gray-400">A carregar...</div>
@@ -103,12 +103,12 @@ const MainNavbar = () => {
                       <Link 
                         key={item.id}
                         href={item.path}
-                        className={`block px-4 py-2 ${linkClassName} flex justify-between items-center`}
+                        className={`block px-4 py-2 ${linkClassName} flex justify-between items-center w-full`}
                         onClick={() => setIsArchiveOpen(false)}
                       >
                         <span>{item.name}</span>
                         {item.isCurrent && (
-                          <span className="bg-green-600 text-xs px-1.5 py-0.5 rounded text-white">Atual</span>
+                          <span className="bg-green-600 text-xs px-1.5 py-0.5 rounded text-white whitespace-nowrap">Atual</span>
                         )}
                       </Link>
                     ))
@@ -122,16 +122,26 @@ const MainNavbar = () => {
           
           <NavbarLink 
             href="/rules" 
-            className={`${linkClassName} flex items-center px-3 py-2`}
+            className={`${linkClassName} flex items-center px-3 py-2 w-full md:w-auto`}
           >
             Regras
           </NavbarLink>
           <NavbarLink 
             href="mailto:gamejam.at.ipmaia@gmail.com" 
-            className={`${linkClassName} flex items-center px-3 py-2`}
+            className={`${linkClassName} flex items-center px-3 py-2 w-full md:w-auto`}
           >
             Contacto
           </NavbarLink>
+          
+          {/* Inscrever Agora Button - Stands out on desktop and mobile */}
+          <div className="mt-2 md:mt-0 md:ml-2">
+            <Link 
+              href="/enlist-now"
+              className="block w-full md:inline-flex items-center justify-center gap-2 px-4 py-3 md:py-2 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white text-sm font-bold rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 border border-orange-400 text-center"
+            >
+              ✍️ Inscrever Agora
+            </Link>
+          </div>
         </div>
       </NavbarCollapse>
     </Navbar>
