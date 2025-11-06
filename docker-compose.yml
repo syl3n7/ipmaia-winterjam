@@ -59,6 +59,7 @@ services:
       - "3001:3001"
     volumes:
       - backend_uploads:/app/uploads
+      - shared_public:/app/public
     healthcheck:
       test: ["CMD", "node", "scripts/health-check.js"]
       interval: 30s
@@ -81,12 +82,15 @@ services:
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.ipmaia-winterjam.pt/api}
     ports:
       - "3000:3000"
+    volumes:
+      - shared_public:/app/public
     networks:
       - winterjam-network
 
 volumes:
   postgres_data:
   backend_uploads:
+  shared_public:
 
 networks:
   winterjam-network:
