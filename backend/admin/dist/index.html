@@ -661,27 +661,33 @@
                     
                     <!-- Homepage Content Section -->
                     <div style="border-top: 2px solid #667eea; margin-top: 30px; padding-top: 30px;">
-                        <h4 style="color: #667eea; margin-bottom: 20px;">🏠 Conteúdo da Homepage</h4>
+                        <h4 style="color: #667eea; margin-bottom: 20px;">Homepage Content</h4>
                         <p style="color: #6c757d; margin-bottom: 20px; font-size: 0.9rem;">
-                            Customize o conteúdo das secções da homepage (/dev-homepage). Deixe em branco para usar o conteúdo padrão.
+                            Customize the content for the homepage sections. Leave blank to use default content.
                         </p>
                         
                         <div class="form-group">
-                            <label for="jam-introduction">📝 Introdução (Texto)</label>
-                            <textarea id="jam-introduction" name="introduction" rows="4" placeholder="Uma game jam onde estudantes de desenvolvimento de jogos e entusiastas se juntam para criar experiências únicas em 45 horas..."></textarea>
-                            <small>Texto para a secção "O que é a WinterJam?" na homepage</small>
+                            <label for="jam-introduction">Introduction Text (optional)</label>
+                            <textarea id="jam-introduction" name="introduction" rows="4" placeholder="A game jam where game development students and enthusiasts come together to create unique experiences in 45 hours..."></textarea>
+                            <small>Plain text for the "What is WinterJam?" section on the homepage</small>
                         </div>
                         
-                        <div class="form-group">
-                            <label for="jam-prizes-content">🏆 Prémios (HTML)</label>
-                            <textarea id="jam-prizes-content" name="prizes_content" rows="8" placeholder="<div>...HTML com informação dos prémios...</div>"></textarea>
-                            <small>HTML formatado para a secção de prémios. Se vazio, usa o conteúdo padrão.</small>
+                        <div style="background: #f8f9ff; border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; margin: 20px 0;">
+                            <h5 style="color: #667eea; margin-bottom: 10px;">Preview: Prizes Section</h5>
+                            <p style="color: #6c757d; font-size: 0.9rem; margin-bottom: 10px;">This section is auto-generated from default content. It will display:</p>
+                            <div style="font-size: 0.85rem; color: #495057;">
+                                <strong>1st Place:</strong> InstantGaming 10€ gift card (per member) + Certificate<br>
+                                <strong>All Participants:</strong> Event lanyard/keychain + Certificate
+                            </div>
                         </div>
                         
-                        <div class="form-group">
-                            <label for="jam-schedule-content">📅 Horário Personalizado (HTML)</label>
-                            <textarea id="jam-schedule-content" name="schedule_content" rows="8" placeholder="<div>...HTML com horário customizado...</div>"></textarea>
-                            <small>HTML formatado para a secção de horário. Se vazio, gera automaticamente a partir das datas de início/fim.</small>
+                        <div style="background: #f8f9ff; border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; margin: 20px 0;">
+                            <h5 style="color: #667eea; margin-bottom: 10px;">Preview: Schedule Section</h5>
+                            <p style="color: #6c757d; font-size: 0.9rem; margin-bottom: 10px;">This section is auto-generated from the Start Date and End Date fields above. It will automatically show:</p>
+                            <div style="font-size: 0.85rem; color: #495057;">
+                                <strong>Day 1 (Start Date):</strong> Event start time + Theme reveal (15 min later)<br>
+                                <strong>Final Day (End Date):</strong> Event end time + Evaluation
+                            </div>
                         </div>
                     </div>
                     
@@ -1069,72 +1075,22 @@
             </div>
             
             <div id="rules-form" class="form-section" style="display: none;">
-                <h3>📝 Upload PDF e Conteúdo das Regras</h3>
+                <h3>� Substituir PDF das Regras</h3>
+                <p style="color: #6c757d; margin-bottom: 20px;">
+                    Carregue um novo PDF do livro de regras. O ficheiro anterior será substituído.
+                </p>
                 <form id="rules-form-element" enctype="multipart/form-data">
                     <input type="hidden" id="rules-id" />
                     
                     <div class="form-group">
                         <label for="rules-pdf-file">📄 Upload PDF *</label>
                         <input type="file" id="rules-pdf-file" name="pdf" accept=".pdf" required style="padding: 10px; border: 2px dashed #667eea; border-radius: 8px; background: #f8f9ff;" />
-                        <small>Carregue o PDF do livro de regras. Será guardado como /public/WinterJam_Rulebook.pdf</small>
+                        <small>O PDF ficará disponível em: <strong>https://ipmaia-winterjam.pt/WinterJam_Rulebook.pdf</strong></small>
                     </div>
                     
-                    <div class="form-group">
-                        <label for="rules-title">Título</label>
-                        <input type="text" id="rules-title" name="title" placeholder="WinterJam 2025 Rulebook" value="WinterJam 2025 Rulebook" />
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="rules-version">Versão</label>
-                        <input type="text" id="rules-version" name="version" placeholder="1.0" value="1.0" />
-                    </div>
-
-                    <hr style="margin: 30px 0; border: none; border-top: 2px solid #e9ecef;">
-                    
-                    <h4 style="color: #667eea; margin-bottom: 20px;">📝 Conteúdo das Secções (HTML)</h4>
-                    <p style="color: #6c757d; margin-bottom: 20px; font-size: 0.9rem;">
-                        Preencha o conteúdo HTML para cada secção das regras. Este conteúdo será exibido na página de regras.
-                    </p>
-                    
-                    <div class="form-group">
-                        <label for="rules-code-of-conduct">🤝 Código de Conduta</label>
-                        <textarea id="rules-code-of-conduct" name="code_of_conduct" rows="6" placeholder="<p>Conteúdo HTML...</p>"></textarea>
-                        <small>HTML formatado para a secção Código de Conduta</small>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="rules-guidelines">📐 Diretrizes</label>
-                        <textarea id="rules-guidelines" name="guidelines" rows="6" placeholder="<div><h3>Título</h3><p>Conteúdo...</p></div>"></textarea>
-                        <small>HTML formatado para a secção Diretrizes para Criação de Jogos</small>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="rules-prizes">🏆 Prémios</label>
-                        <textarea id="rules-prizes" name="prizes" rows="6" placeholder="<div>Conteúdo sobre prémios...</div>"></textarea>
-                        <small>HTML formatado para a secção Prémios</small>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="rules-evaluation">📊 Critérios de Avaliação</label>
-                        <textarea id="rules-evaluation" name="evaluation" rows="6" placeholder="<div>Critérios de avaliação...</div>"></textarea>
-                        <small>HTML formatado para a secção Avaliação</small>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="rules-participation">👥 Regras de Participação</label>
-                        <textarea id="rules-participation" name="participation" rows="6" placeholder="<div>Regras de participação...</div>"></textarea>
-                        <small>HTML formatado para a secção Participação</small>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="rules-schedule">📅 Horário do Evento</label>
-                        <textarea id="rules-schedule" name="schedule" rows="6" placeholder="<div>Horário detalhado...</div>"></textarea>
-                        <small>HTML formatado para a secção Horário</small>
-                    </div>
-                    
-                    <div class="form-actions" style="display: flex; gap: 10px; margin-top: 30px;">
-                        <button type="submit" class="btn btn-primary">� Upload PDF e Guardar Conteúdo</button>
-                        <button type="button" class="btn" onclick="hideRulesForm()">❌ Cancelar</button>
+                    <div class="form-actions" style="display: flex; gap: 10px; margin-top: 20px;">
+                        <button type="submit" class="btn btn-primary">Upload PDF</button>
+                        <button type="button" class="btn" onclick="hideRulesForm()">Cancel</button>
                     </div>
                 </form>
             </div>
