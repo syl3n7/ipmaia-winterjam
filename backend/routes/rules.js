@@ -25,7 +25,7 @@ const uploadLimiter = rateLimit({
 // Configure multer for PDF uploads
 const storage = multer.diskStorage({
   destination: async (req, file, cb) => {
-    const uploadDir = path.join(__dirname, '../../public');
+    const uploadDir = path.join(__dirname, '../uploads/pdfs');
     try {
       await fs.access(uploadDir);
     } catch {
@@ -34,8 +34,10 @@ const storage = multer.diskStorage({
     cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
-    // Always save as WinterJam_Rulebook.pdf to replace the existing file
-    cb(null, 'WinterJam_Rulebook.pdf');
+    // Generate unique filename with timestamp to avoid caching issues
+    const timestamp = Date.now();
+    const filename = `WinterJam_Rulebook_${timestamp}.pdf`;
+    cb(null, filename);
   }
 });
 
@@ -94,11 +96,66 @@ router.get('/active', async (req, res) => {
 });
 
 // Get current PDF URL (public)
-router.get('/pdf-url', (req, res) => {
-  res.json({ 
-    pdfUrl: '/WinterJam_Rulebook.pdf',
-    message: 'PDF URL retrieved successfully'
-  });
+router.get('/pdf-url', async (req, res) => {
+  try {
+    const rules = await Rules.getActive();
+    // Return API endpoint URL instead of direct file path
+    const apiUrl = process.env.API_URL || 'http://localhost:3001/api';
+    const pdfUrl = rules?.pdf_url || `${apiUrl}/rules/download`;
+    
+    res.json({ 
+      pdfUrl: pdfUrl,
+      message: 'PDF URL retrieved successfully'
+    });
+  } catch (error) {
+    console.error('Error fetching PDF URL:', error);
+    const apiUrl = process.env.API_URL || 'http://localhost:3001/api';
+    res.json({ 
+      pdfUrl: `${apiUrl}/rules/download`,
+      message: 'Using default PDF URL'
+    });
+  }
+});
+
+// Download/serve PDF file (public)
+router.get('/download', async (req, res) => {
+  try {
+    const rules = await Rules.getActive();
+    
+    if (!rules || !rules.pdf_filename) {
+      return res.status(404).json({ 
+        error: 'PDF not found',
+        message: 'Nenhum PDF foi carregado ainda'
+      });
+    }
+    
+    const filePath = path.join(__dirname, '../uploads/pdfs', rules.pdf_filename);
+    
+    // Check if file exists
+    try {
+      await fs.access(filePath);
+    } catch {
+      return res.status(404).json({ 
+        error: 'PDF file not found',
+        message: 'Ficheiro PDF não encontrado'
+      });
+    }
+    
+    // Set headers for PDF download
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename="WinterJam_Rulebook.pdf"');
+    
+    // Stream the file
+    const fileStream = require('fs').createReadStream(filePath);
+    fileStream.pipe(res);
+    
+  } catch (error) {
+    console.error('Error serving PDF:', error);
+    res.status(500).json({ 
+      error: 'Failed to serve PDF',
+      message: 'Erro ao carregar o PDF'
+    });
+  }
 });
 
 // ==================== ADMIN ROUTES ====================
@@ -167,6 +224,10 @@ router.post('/admin/upload-pdf', uploadLimiter, upload.single('pdf'), async (req
     // Process the rules content from form data
     const sections = processRulesContent(req.body);
     
+    // Generate the API URL for downloading
+    const apiUrl = process.env.API_URL || 'http://localhost:3001/api';
+    const pdfUrl = `${apiUrl}/rules/download`;
+    
     // Create or update rules in database
     let rulesRecord;
     
@@ -175,9 +236,16 @@ router.post('/admin/upload-pdf', uploadLimiter, upload.single('pdf'), async (req
       const activeRules = await Rules.getActive();
       
       if (activeRules) {
+        // Delete old PDF file if it exists
+        if (activeRules.pdf_filename) {
+          const oldFilePath = path.join(__dirname, '../uploads/pdfs', activeRules.pdf_filename);
+          await fs.unlink(oldFilePath).catch(console.error);
+        }
+        
         // Update existing active rules
         rulesRecord = await Rules.update(activeRules.id, {
-          pdf_url: '/WinterJam_Rulebook.pdf',
+          pdf_url: pdfUrl,
+          pdf_filename: req.file.filename,
           ...sections,
           updated_at: new Date()
         });
@@ -185,7 +253,8 @@ router.post('/admin/upload-pdf', uploadLimiter, upload.single('pdf'), async (req
       } else {
         // Create new rules record
         rulesRecord = await Rules.create({
-          pdf_url: '/WinterJam_Rulebook.pdf',
+          pdf_url: pdfUrl,
+          pdf_filename: req.file.filename,
           is_active: true,
           ...sections
         });
