@@ -74,6 +74,15 @@ else
     echo "⚠️ Rules content fields migration failed (might already exist)"
 fi
 
+echo "🔄 Adding homepage content fields to game_jams table..."
+
+# Add homepage content fields (introduction, prizes_content, schedule_content)
+if node migrations/add-homepage-content-fields.js; then
+    echo "✅ Homepage content fields added successfully!"
+else
+    echo "⚠️ Homepage content fields migration failed (might already exist)"
+fi
+
 echo "🔄 Adding pdf_filename column to rules table..."
 
 # Add pdf_filename column to rules table
