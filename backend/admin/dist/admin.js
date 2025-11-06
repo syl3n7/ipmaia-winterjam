@@ -140,7 +140,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // Navigation Functions
-        function showSection(sectionName) {
+        function showSection(sectionName, buttonElement) {
             console.log('Switching to section:', sectionName);
             
             // Hide all sections
@@ -154,8 +154,15 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             
             // Show selected section
-            document.getElementById(sectionName + '-section').classList.add('active');
-            event.target.classList.add('active');
+            const section = document.getElementById(sectionName + '-section');
+            if (section) {
+                section.classList.add('active');
+            }
+            
+            // Add active class to the clicked button
+            if (buttonElement) {
+                buttonElement.classList.add('active');
+            }
             
             // Load data for the section
             switch(sectionName) {
@@ -1099,7 +1106,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.querySelectorAll('[data-section]').forEach(button => {
                 button.addEventListener('click', function() {
                     const section = this.getAttribute('data-section');
-                    showSection(section);
+                    showSection(section, this);
                 });
             });
 
