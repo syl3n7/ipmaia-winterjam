@@ -13,6 +13,7 @@ async function migrateRules() {
         title VARCHAR(255) NOT NULL DEFAULT 'WinterJam Rulebook',
         description TEXT,
         pdf_url VARCHAR(512) NOT NULL,
+        pdf_filename VARCHAR(255),
         version VARCHAR(50) DEFAULT '1.0',
         is_active BOOLEAN DEFAULT true,
         code_of_conduct TEXT,
