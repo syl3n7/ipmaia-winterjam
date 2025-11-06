@@ -659,6 +659,32 @@
                         </label>
                     </div>
                     
+                    <!-- Homepage Content Section -->
+                    <div style="border-top: 2px solid #667eea; margin-top: 30px; padding-top: 30px;">
+                        <h4 style="color: #667eea; margin-bottom: 20px;">🏠 Conteúdo da Homepage</h4>
+                        <p style="color: #6c757d; margin-bottom: 20px; font-size: 0.9rem;">
+                            Customize o conteúdo das secções da homepage (/dev-homepage). Deixe em branco para usar o conteúdo padrão.
+                        </p>
+                        
+                        <div class="form-group">
+                            <label for="jam-introduction">📝 Introdução (Texto)</label>
+                            <textarea id="jam-introduction" name="introduction" rows="4" placeholder="Uma game jam onde estudantes de desenvolvimento de jogos e entusiastas se juntam para criar experiências únicas em 45 horas..."></textarea>
+                            <small>Texto para a secção "O que é a WinterJam?" na homepage</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="jam-prizes-content">🏆 Prémios (HTML)</label>
+                            <textarea id="jam-prizes-content" name="prizes_content" rows="8" placeholder="<div>...HTML com informação dos prémios...</div>"></textarea>
+                            <small>HTML formatado para a secção de prémios. Se vazio, usa o conteúdo padrão.</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="jam-schedule-content">📅 Horário Personalizado (HTML)</label>
+                            <textarea id="jam-schedule-content" name="schedule_content" rows="8" placeholder="<div>...HTML com horário customizado...</div>"></textarea>
+                            <small>HTML formatado para a secção de horário. Se vazio, gera automaticamente a partir das datas de início/fim.</small>
+                        </div>
+                    </div>
+                    
                     <!-- Toggle Controls Section -->
                     <div style="border-top: 2px solid #667eea; margin-top: 30px; padding-top: 30px;">
                         <h4 style="color: #667eea; margin-bottom: 20px;">👁️ Visibility Controls</h4>
