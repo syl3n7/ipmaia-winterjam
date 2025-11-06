@@ -92,6 +92,24 @@ else
     echo "⚠️ PDF filename column migration failed (might already exist)"
 fi
 
+echo "🔄 Adding background filename field to front_page_settings..."
+
+# Add background filename field to front_page_settings
+if node migrations/add-background-filename-field.js; then
+    echo "✅ Background filename field added successfully!"
+else
+    echo "⚠️ Background filename field migration failed (might already exist)"
+fi
+
+echo "🔄 Removing deprecated front page settings..."
+
+# Remove deprecated front page settings (now in Game Jam)
+if node migrations/remove-deprecated-frontpage-settings.js; then
+    echo "✅ Deprecated settings removed successfully!"
+else
+    echo "⚠️ Deprecated settings removal failed (might not exist)"
+fi
+
 echo "🌱 Seeding default rules content..."
 
 # Seed default rules content
