@@ -1,15 +1,41 @@
 'use client';
 
-import React from 'react';
-import { Download, FileText } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Download, FileText, AlertCircle } from 'lucide-react';
 
 export default function Page() {
-  // Hardcoded for now - can be made dynamic later if needed
-  const pdfUrl = '/WinterJam_Rulebook.pdf';
+  const [pdfUrl, setPdfUrl] = useState('/WinterJam_Rulebook.pdf');
+  const [pdfExists, setPdfExists] = useState(true);
+  const [rulesContent, setRulesContent] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Check if PDF exists
+    fetch('/WinterJam_Rulebook.pdf', { method: 'HEAD' })
+      .then(response => {
+        setPdfExists(response.ok);
+      })
+      .catch(() => {
+        setPdfExists(false);
+      });
+
+    // Fetch rules content from API
+    fetch('/api/rules/active')
+      .then(response => response.json())
+      .then(data => {
+        if (data.success && data.rules) {
+          setRulesContent(data.rules);
+        }
+        setIsLoading(false);
+      })
+      .catch(() => {
+        setIsLoading(false);
+      });
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900 py-16 px-4">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="text-center mb-12">
           <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl mb-6 shadow-lg shadow-purple-500/50">
@@ -21,177 +47,105 @@ export default function Page() {
           <p className="text-xl text-gray-300 mb-6">
             Regras oficiais e diretrizes para participantes
           </p>
-          <a
-            href={pdfUrl}
-            download
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold rounded-xl transition-all duration-300 shadow-lg shadow-purple-500/50 hover:shadow-purple-500/70 hover:scale-105"
-          >
-            <Download className="w-5 h-5" />
-            <span>Baixar PDF</span>
-          </a>
+          {pdfExists && (
+            <a
+              href={pdfUrl}
+              download
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold rounded-xl transition-all duration-300 shadow-lg shadow-purple-500/50 hover:shadow-purple-500/70 hover:scale-105"
+            >
+              <Download className="w-5 h-5" />
+              <span>Baixar PDF</span>
+            </a>
+          )}
         </div>
 
-        {/* Rules Content */}
-        <div className="space-y-8">
-          
-          {/* Section 1: Código de Conduta */}
-          <section className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20">
-            <h2 className="text-3xl font-bold text-white mb-6 flex items-center gap-3">
-              <span className="text-purple-400">1.</span> Código de Conduta
-            </h2>
-            <div className="space-y-4 text-gray-200">
-              <p>A WinterJam é um evento inclusivo e acolhedor para todos. Esperamos que todos os participantes:</p>
-              <ul className="list-disc list-inside space-y-2 ml-4">
-                <li>Sejam respeitosos com todos os participantes, organizadores e voluntários</li>
-                <li>Evitem qualquer forma de assédio, discriminação ou comportamento ofensivo</li>
-                <li>Respeitem o espaço e os materiais fornecidos</li>
-                <li>Mantenham um ambiente colaborativo e positivo</li>
-                <li>Sigam as instruções dos organizadores e da equipa de apoio</li>
-              </ul>
-              <p className="font-semibold text-yellow-300">
-                ⚠️ Violações do código de conduta podem resultar em desqualificação imediata do evento.
-              </p>
-            </div>
-          </section>
+        {/* Dynamic Rules Content */}
+        {!isLoading && rulesContent && (
+          <div className="space-y-8 mb-12">
+            {rulesContent.code_of_conduct && (
+              <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20">
+                <h2 className="text-3xl font-bold text-white mb-6">Código de Conduta</h2>
+                <div 
+                  className="prose prose-invert max-w-none text-gray-200"
+                  dangerouslySetInnerHTML={{ __html: rulesContent.code_of_conduct }}
+                />
+              </div>
+            )}
 
-          {/* Section 2: Diretrizes para Criação de Jogos */}
-          <section className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20">
-            <h2 className="text-3xl font-bold text-white mb-6 flex items-center gap-3">
-              <span className="text-purple-400">2.</span> Diretrizes para Criação de Jogos
-            </h2>
-            <div className="space-y-4 text-gray-200">
-                            <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
-                <h3 className="text-xl font-semibold text-white mb-3">Regras da Jam</h3>
-                <ul className="list-disc list-inside space-y-2 ml-4">
-                  <li>Duração: O jogo deve ser criado em 45 horas (de sexta-feira às 17h até domingo às 14h)</li>
-                  <li>Participação em Equipa: Equipas (máximo de 4 pessoas)</li>
-                </ul>
+            {rulesContent.guidelines && (
+              <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20">
+                <h2 className="text-3xl font-bold text-white mb-6">Diretrizes</h2>
+                <div 
+                  className="prose prose-invert max-w-none text-gray-200"
+                  dangerouslySetInnerHTML={{ __html: rulesContent.guidelines }}
+                />
               </div>
-              
-              <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4">
-                <h3 className="text-xl font-semibold text-white mb-3">Ferramentas e Ativos</h3>
-                <ul className="list-disc list-inside space-y-2 ml-4">
-                  <li>Pode utilizar qualquer ferramenta, motor, biblioteca ou código-base pré-existente</li>
-                  <li>É permitido o uso de ativos de arte, música ou áudio de terceiros, sejam gratuitos ou pagos</li>
-                  <li>Apenas utilize ativos sobre os quais detenha os direitos legais</li>
-                </ul>
-              </div>
-            </div>
-          </section>
+            )}
 
-          {/* Section 3: Prémios */}
-          <section className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20">
-            <h2 className="text-3xl font-bold text-white mb-6 flex items-center gap-3">
-              <span className="text-purple-400">3.</span> Prémios
-            </h2>
-            <div className="space-y-4 text-gray-200">
-              <div className="bg-gradient-to-br from-yellow-500/20 to-yellow-600/20 border border-yellow-500/50 rounded-xl p-6">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="text-4xl">🥇</div>
-                  <h3 className="text-2xl font-bold text-yellow-300">1º Lugar</h3>
-                </div>
-                <ul className="list-disc list-inside space-y-1">
-                  <li>Gift card InstantGaming de 10€ (por cada elemento)</li>
-                  <li>Certificado</li>
-                </ul>
+            {rulesContent.prizes && (
+              <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20">
+                <h2 className="text-3xl font-bold text-white mb-6">Prémios</h2>
+                <div 
+                  className="prose prose-invert max-w-none text-gray-200"
+                  dangerouslySetInnerHTML={{ __html: rulesContent.prizes }}
+                />
               </div>
-              
-              <div className="bg-gradient-to-br from-purple-500/20 to-purple-600/20 border border-purple-500/50 rounded-xl p-6">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="text-4xl">🎁</div>
-                  <h3 className="text-2xl font-bold text-purple-300">Ofertas para todos os participantes</h3>
-                </div>
-                <ul className="list-disc list-inside space-y-1">
-                  <li>Fita ou porta-chaves do evento</li>
-                  <li>Certificado</li>
-                </ul>
-              </div>
-            </div>
-          </section>
+            )}
 
-          {/* Section 4: Critérios de Avaliação */}
-          <section className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20">
-            <h2 className="text-3xl font-bold text-white mb-6 flex items-center gap-3">
-              <span className="text-purple-400">4.</span> Critérios de Avaliação
-            </h2>
-            <div className="space-y-3 text-gray-200">
-              <div className="bg-white/5 rounded-lg p-4 flex justify-between items-center">
-                <span className="font-semibold">Relação/Cumprimento do tema</span>
-                <span className="text-purple-300 font-bold">0/20 pontos</span>
+            {rulesContent.evaluation && (
+              <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20">
+                <h2 className="text-3xl font-bold text-white mb-6">Avaliação</h2>
+                <div 
+                  className="prose prose-invert max-w-none text-gray-200"
+                  dangerouslySetInnerHTML={{ __html: rulesContent.evaluation }}
+                />
               </div>
-              <div className="bg-white/5 rounded-lg p-4 flex justify-between items-center">
-                <span className="font-semibold">Criatividade/USP</span>
-                <span className="text-purple-300 font-bold">0/20 pontos</span>
-              </div>
-              <div className="bg-white/5 rounded-lg p-4 flex justify-between items-center">
-                <span className="font-semibold">Qualidade (diversão)</span>
-                <span className="text-purple-300 font-bold">0/20 pontos</span>
-              </div>
-              <div className="bg-white/5 rounded-lg p-4 flex justify-between items-center">
-                <span className="font-semibold">Cumprimento/Quebra das regras</span>
-                <span className="text-purple-300 font-bold">0/20 pontos</span>
-              </div>
-              <div className="bg-white/5 rounded-lg p-4 flex justify-between items-center">
-                <span className="font-semibold">Apresentação visual/estética</span>
-                <span className="text-purple-300 font-bold">0/20 pontos</span>
-              </div>
-            </div>
-          </section>
+            )}
 
-          {/* Section 5: Regras de Participação */}
-          <section className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20">
-            <h2 className="text-3xl font-bold text-white mb-6 flex items-center gap-3">
-              <span className="text-purple-400">5.</span> Regras de Participação
-            </h2>
-            <div className="space-y-4 text-gray-200">
-              <div className="bg-white/5 rounded-lg p-4">
-                <h3 className="text-xl font-semibold text-white mb-3">Submissão</h3>
-                <p>Os projetos devem ser submetidos ao Itch.io após o término das 45 horas e o link partilhado no canal de discord devido.</p>
+            {rulesContent.participation && (
+              <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20">
+                <h2 className="text-3xl font-bold text-white mb-6">Participação</h2>
+                <div 
+                  className="prose prose-invert max-w-none text-gray-200"
+                  dangerouslySetInnerHTML={{ __html: rulesContent.participation }}
+                />
               </div>
+            )}
 
-              <div className="bg-white/5 rounded-lg p-4">
-                <h3 className="text-xl font-semibold text-white mb-3">Entrada livre</h3>
-                <p>Para alunos e alumni do IPMAIA/UMAIA. A game jam será no formato online/presencial e será dirigido através do servidor de discord da gamejam. Caso o grupo queira estar a desenvolver presencialmente, devem manifestar o interesse aos organizadores da game jam.</p>
+            {rulesContent.schedule && (
+              <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20">
+                <h2 className="text-3xl font-bold text-white mb-6">Horário</h2>
+                <div 
+                  className="prose prose-invert max-w-none text-gray-200"
+                  dangerouslySetInnerHTML={{ __html: rulesContent.schedule }}
+                />
               </div>
+            )}
+          </div>
+        )}
 
-              <div className="bg-white/5 rounded-lg p-4">
-                <h3 className="text-xl font-semibold text-white mb-3">Direitos</h3>
-                <p>O jogo é propriedade sua. A organização da Game Jam não reivindica direitos sobre o seu jogo, mas pode utilizá-lo para fins de divulgação do evento.</p>
-              </div>
-            </div>
-          </section>
+        {/* PDF Viewer or Error Message */}
+        {pdfExists ? (
+          <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-4 border border-white/20">
+            <iframe
+              src={`${pdfUrl}#view=FitH`}
+              className="w-full h-[800px] rounded-lg"
+              title="WinterJam Rulebook"
+            />
+          </div>
+        ) : (
+          <div className="bg-red-500/10 backdrop-blur-lg rounded-2xl p-8 border border-red-500/20 text-center">
+            <AlertCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-white mb-2">PDF não encontrado</h2>
+            <p className="text-gray-300">
+              O ficheiro de regras não está disponível no momento. Por favor, contacte a organização.
+            </p>
+          </div>
+        )}
 
-          {/* Section 6: Horário */}
-          <section className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20">
-            <h2 className="text-3xl font-bold text-white mb-6 flex items-center gap-3">
-              <span className="text-purple-400">6.</span> Horário do Evento
-            </h2>
-            <div className="space-y-4 text-gray-200">
-              <div className="bg-white/5 rounded-lg p-4">
-                <h3 className="text-xl font-semibold text-white mb-3 flex items-center gap-2">
-                  📅 Dia 14 - Início
-                </h3>
-                <ul className="list-disc list-inside space-y-2 ml-4">
-                  <li><span className="font-mono text-purple-300">17:00</span> - Início do Jam</li>
-                  <li><span className="font-mono text-purple-300">17:15</span> - Divulgação do tema</li>
-                </ul>
-              </div>
 
-              <div className="bg-white/5 rounded-lg p-4">
-                <h3 className="text-xl font-semibold text-white mb-3 flex items-center gap-2">
-                  📅 Dia 16 - Fim
-                </h3>
-                <ul className="list-disc list-inside space-y-2 ml-4">
-                  <li><span className="font-mono text-purple-300">14:00</span> - Fim do Jam</li>
-                  <li>Avaliação a cargo do júri após as 14:00</li>
-                </ul>
-              </div>
-            </div>
-          </section>
-
-        </div>
 
         {/* Footer CTA */}
         <div className="mt-12 text-center bg-gradient-to-r from-purple-600/20 to-pink-600/20 border border-purple-500/30 rounded-2xl p-8">
