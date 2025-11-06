@@ -1,4 +1,8 @@
+console.log('🚀 Admin.js file loaded!');
+
 document.addEventListener('DOMContentLoaded', function() {
+        console.log('📋 DOMContentLoaded event fired!');
+        
         let currentEditingGameJam = null;
         let currentEditingGame = null;
         let gameJams = [];
