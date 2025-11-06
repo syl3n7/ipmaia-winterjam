@@ -42,6 +42,7 @@ class Rules {
       title = 'WinterJam Rulebook',
       description = '',
       pdf_url,
+      pdf_filename = null,
       version = '1.0',
       is_active = true,
       code_of_conduct = null,
@@ -59,10 +60,10 @@ class Rules {
 
     const query = `
       INSERT INTO rules (
-        title, description, pdf_url, version, is_active,
+        title, description, pdf_url, pdf_filename, version, is_active,
         code_of_conduct, guidelines, prizes, evaluation, participation, schedule
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
       RETURNING *
     `;
 
@@ -70,6 +71,7 @@ class Rules {
       title,
       description,
       pdf_url,
+      pdf_filename,
       version,
       is_active,
       code_of_conduct,
@@ -89,6 +91,7 @@ class Rules {
       title,
       description,
       pdf_url,
+      pdf_filename,
       version,
       is_active,
       code_of_conduct,
@@ -110,16 +113,17 @@ class Rules {
         title = COALESCE($1, title),
         description = COALESCE($2, description),
         pdf_url = COALESCE($3, pdf_url),
-        version = COALESCE($4, version),
-        is_active = COALESCE($5, is_active),
-        code_of_conduct = COALESCE($6, code_of_conduct),
-        guidelines = COALESCE($7, guidelines),
-        prizes = COALESCE($8, prizes),
-        evaluation = COALESCE($9, evaluation),
-        participation = COALESCE($10, participation),
-        schedule = COALESCE($11, schedule),
+        pdf_filename = COALESCE($4, pdf_filename),
+        version = COALESCE($5, version),
+        is_active = COALESCE($6, is_active),
+        code_of_conduct = COALESCE($7, code_of_conduct),
+        guidelines = COALESCE($8, guidelines),
+        prizes = COALESCE($9, prizes),
+        evaluation = COALESCE($10, evaluation),
+        participation = COALESCE($11, participation),
+        schedule = COALESCE($12, schedule),
         updated_at = NOW()
-      WHERE id = $12
+      WHERE id = $13
       RETURNING *
     `;
 
@@ -127,6 +131,7 @@ class Rules {
       title,
       description,
       pdf_url,
+      pdf_filename,
       version,
       is_active,
       code_of_conduct,

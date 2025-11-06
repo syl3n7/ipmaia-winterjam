@@ -672,13 +672,10 @@
                             <small>Plain text for the "What is WinterJam?" section on the homepage</small>
                         </div>
                         
-                        <div style="background: #f8f9ff; border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; margin: 20px 0;">
-                            <h5 style="color: #667eea; margin-bottom: 10px;">Preview: Prizes Section</h5>
-                            <p style="color: #6c757d; font-size: 0.9rem; margin-bottom: 10px;">This section is auto-generated from default content. It will display:</p>
-                            <div style="font-size: 0.85rem; color: #495057;">
-                                <strong>1st Place:</strong> InstantGaming 10€ gift card (per member) + Certificate<br>
-                                <strong>All Participants:</strong> Event lanyard/keychain + Certificate
-                            </div>
+                        <div class="form-group">
+                            <label for="jam-prizes">Prizes Text (optional)</label>
+                            <textarea id="jam-prizes" name="prizes_content" rows="6" placeholder="1st Place: InstantGaming 10€ gift card (per member) + Certificate&#10;2nd Place: TBD&#10;&#10;All Participants: Event lanyard/keychain + Certificate"></textarea>
+                            <small>Text content for the "Prizes" section on the homepage. Leave blank to use default prizes.</small>
                         </div>
                         
                         <div style="background: #f8f9ff; border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; margin: 20px 0;">
@@ -1447,6 +1444,15 @@
                 console.log('✅ Active field found:', activeField, 'Setting to:', jam.is_active);
                 if (activeField) activeField.checked = jam.is_active;
                 
+                // Homepage content fields
+                const introductionField = document.getElementById('jam-introduction');
+                console.log('📝 Introduction field found:', introductionField, 'Setting to:', jam.introduction || '');
+                if (introductionField) introductionField.value = jam.introduction || '';
+                
+                const prizesField = document.getElementById('jam-prizes');
+                console.log('🏆 Prizes field found:', prizesField, 'Setting to:', jam.prizes_content || '');
+                if (prizesField) prizesField.value = jam.prizes_content || '';
+                
                 // Toggle fields
                 const showThemeField = document.getElementById('show-theme');
                 if (showThemeField) showThemeField.checked = jam.show_theme !== false;
@@ -1498,6 +1504,9 @@
                     if (rulesPdfField) rulesPdfField.value = jam.rules_pdf_url || '';
                     if (bannerField) bannerField.value = jam.banner_image_url || '';
                     if (activeField) activeField.checked = jam.is_active;
+                    // Re-populate homepage content fields
+                    if (introductionField) introductionField.value = jam.introduction || '';
+                    if (prizesField) prizesField.value = jam.prizes_content || '';
                     // Re-populate toggle fields
                     if (showThemeField) showThemeField.checked = jam.show_theme !== false;
                     if (showDescField) showDescField.checked = jam.show_description !== false;
