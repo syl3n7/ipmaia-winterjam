@@ -18,6 +18,21 @@ router.get('/gamejams', async (req, res) => {
   }
 });
 
+// Get only inactive game jams (for archive)
+router.get('/gamejams/inactive', async (req, res) => {
+  try {
+    console.log('🔍 Fetching inactive game jams...');
+    const allGameJams = await GameJam.findAll(true); // Get all
+    const inactiveGameJams = allGameJams.filter(jam => !jam.is_active);
+    console.log(`📊 Found ${inactiveGameJams.length} inactive game jams`);
+    res.json(inactiveGameJams);
+  } catch (error) {
+    console.error('❌ Error fetching inactive game jams:', error);
+    console.error('❌ Stack trace:', error.stack);
+    res.status(500).json({ error: 'Failed to fetch inactive game jams' });
+  }
+});
+
 // Get game jam by ID
 router.get('/gamejams/:id', async (req, res) => {
   try {

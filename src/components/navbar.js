@@ -38,33 +38,26 @@ const MainNavbar = () => {
     const fetchGameJams = async () => {
       try {
         const { gameJamApi } = await import('../utils/api');
-        const gameJams = await gameJamApi.getAll();
+        const allGameJams = await gameJamApi.getAll();
+        
+        // Filter only inactive game jams for archive
+        const inactiveJams = allGameJams.filter(jam => !jam.is_active);
         
         // Convert to navbar format
-        const archiveItemsFromAPI = gameJams.map(jam => {
-          // Extract year from start_date
-          const year = new Date(jam.start_date).getFullYear();
-          
-          // Determine season from name (you might want to improve this logic)
-          let season = 'winter'; // default
-          if (jam.name.toLowerCase().includes('summer')) season = 'summer';
-          if (jam.name.toLowerCase().includes('spring')) season = 'spring';
-          if (jam.name.toLowerCase().includes('fall') || jam.name.toLowerCase().includes('autumn')) season = 'fall';
-          
+        const archiveItemsFromAPI = inactiveJams.map(jam => {
           return {
             id: jam.id,
             name: jam.name,
-            path: `/archive/${year}/${season}`,
-            isCurrent: jam.is_active // Use is_active to determine current
+            path: `/archive/${jam.id}`,
+            isCurrent: false // These are all inactive
           };
         });
         
         setArchiveItems(archiveItemsFromAPI);
       } catch (error) {
         console.error('Error fetching game jams for navbar:', error);
-        // Fallback to hardcoded data
-        const fallbackItems = getAllGameJams();
-        setArchiveItems(fallbackItems);
+        // Set empty array on error
+        setArchiveItems([]);
       } finally {
         setIsLoadingArchive(false);
       }
@@ -103,17 +96,14 @@ const MainNavbar = () => {
                       <Link 
                         key={item.id}
                         href={item.path}
-                        className={`block px-4 py-2 ${linkClassName} flex justify-between items-center w-full`}
+                        className={`block px-4 py-2 ${linkClassName} w-full`}
                         onClick={() => setIsArchiveOpen(false)}
                       >
                         <span>{item.name}</span>
-                        {item.isCurrent && (
-                          <span className="bg-green-600 text-xs px-1.5 py-0.5 rounded text-white whitespace-nowrap">Atual</span>
-                        )}
                       </Link>
                     ))
                   ) : (
-                    <div className="px-4 py-2 text-gray-400">Nenhum evento encontrado</div>
+                    <div className="px-4 py-2 text-gray-400">Nenhum arquivo disponível</div>
                   )}
                 </div>
               </div>
