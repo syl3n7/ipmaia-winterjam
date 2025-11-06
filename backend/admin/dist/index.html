@@ -1061,42 +1061,30 @@
 
         <!-- Rules Section -->
         <div id="rules-section" class="card">
-            <h2>📋 Gestão de Regras</h2>
-            <p style="margin-bottom: 20px; color: #6c757d;">
-                Gerencie o livro de regras da WinterJam. Carregue o PDF em <code>/public/WinterJam_Rulebook.pdf</code> 
-                e configure aqui os detalhes.
+            <h2>Rules Management</h2>
+            <p style="margin-bottom: 30px; color: #6c757d;">
+                Upload or replace the WinterJam rulebook PDF. Only one rulebook is stored at a time.
             </p>
             
-            <div id="rules-list" style="margin-bottom: 30px;">
-                <h3>📚 Livros de Regras Existentes</h3>
-                <div id="rules-list-content">
-                    <p style="color: #6c757d;">A carregar...</p>
+            <div id="current-rules-info" style="background: #f8f9ff; border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px; margin-bottom: 30px;">
+                <h3 style="margin-bottom: 15px; color: #667eea;">Current Rulebook</h3>
+                <div id="rules-status">
+                    <p style="color: #6c757d;">Loading...</p>
                 </div>
             </div>
             
-            <div id="rules-form" class="form-section" style="display: none;">
-                <h3>� Substituir PDF das Regras</h3>
-                <p style="color: #6c757d; margin-bottom: 20px;">
-                    Carregue um novo PDF do livro de regras. O ficheiro anterior será substituído.
-                </p>
-                <form id="rules-form-element" enctype="multipart/form-data">
-                    <input type="hidden" id="rules-id" />
-                    
-                    <div class="form-group">
-                        <label for="rules-pdf-file">📄 Upload PDF *</label>
-                        <input type="file" id="rules-pdf-file" name="pdf" accept=".pdf" required style="padding: 10px; border: 2px dashed #667eea; border-radius: 8px; background: #f8f9ff;" />
-                        <small>O PDF ficará disponível em: <strong>https://ipmaia-winterjam.pt/WinterJam_Rulebook.pdf</strong></small>
-                    </div>
-                    
-                    <div class="form-actions" style="display: flex; gap: 10px; margin-top: 20px;">
-                        <button type="submit" class="btn btn-primary">Upload PDF</button>
-                        <button type="button" class="btn" onclick="hideRulesForm()">Cancel</button>
-                    </div>
-                </form>
-            </div>
-            
-            <div style="margin-top: 20px;">
-                <button class="btn btn-success" id="add-rules-btn" onclick="showRulesForm()">+ Adicionar Novo Livro de Regras</button>
+            <form id="rules-form-element" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="rules-pdf-file">Upload New PDF</label>
+                    <input type="file" id="rules-pdf-file" name="pdf" accept=".pdf" required style="padding: 10px; border: 2px dashed #667eea; border-radius: 8px; background: #f8f9ff;" />
+                    <small>The PDF will be available at: <strong>https://ipmaia-winterjam.pt/WinterJam_Rulebook.pdf</strong></small>
+                </div>
+                
+                <div class="form-actions" style="margin-top: 20px;">
+                    <button type="submit" class="btn btn-primary">Upload PDF</button>
+                </div>
+            </form>
+        </div>
             </div>
         </div>
 
@@ -1881,109 +1869,52 @@
         }
 
         // Rules Management Functions
-        let currentEditingRules = null;
 
         async function loadRules() {
             try {
-                const rules = await apiCall('/api/rules/admin/all');
-                const container = document.getElementById('rules-list-content');
+                const response = await fetch('/api/rules/active', { credentials: 'include' });
+                const container = document.getElementById('rules-status');
                 
-                if (!rules || rules.length === 0) {
-                    container.innerHTML = '<p style="color: #6c757d;">Nenhum livro de regras encontrado. Adicione um novo.</p>';
+                if (!response.ok || !response.headers.get('content-type')?.includes('application/json')) {
+                    container.innerHTML = `
+                        <p style="color: #999;">No rulebook uploaded yet.</p>
+                        <p style="font-size: 0.9rem; margin-top: 10px;">
+                            <strong>PDF URL:</strong> /WinterJam_Rulebook.pdf
+                        </p>
+                    `;
                     return;
                 }
                 
-                container.innerHTML = rules.map(rule => `
-                    <div class="list-item" style="background: ${rule.is_active ? '#e8f5e9' : '#fff'}; border-left: 4px solid ${rule.is_active ? '#4caf50' : '#ddd'};">
-                        <div style="flex: 1;">
-                            <strong style="font-size: 1.1rem;">${rule.title}</strong>
-                            ${rule.is_active ? '<span class="badge" style="background: #4caf50; margin-left: 10px;">Ativo</span>' : ''}
-                            <div style="color: #666; margin-top: 5px;">${rule.description || ''}</div>
-                            <div style="color: #999; margin-top: 5px; font-size: 0.9rem;">
-                                📄 <a href="${rule.pdf_url}" target="_blank">${rule.pdf_url}</a> | 
-                                Versão: ${rule.version}
-                            </div>
-                        </div>
-                        <div class="list-item-actions">
-                            <button class="btn-sm btn-primary" onclick="editRules(${rule.id})">✏️ Editar</button>
-                            ${!rule.is_active ? `<button class="btn-sm btn-success" onclick="activateRules(${rule.id})">✅ Ativar</button>` : ''}
-                            <button class="btn-sm btn-danger" onclick="deleteRules(${rule.id})">🗑️ Eliminar</button>
-                        </div>
-                    </div>
-                `).join('');
+                const rules = await response.json();
+                
+                if (rules && rules.pdf_url) {
+                    const uploadDate = new Date(rules.created_at).toLocaleString('en-GB');
+                    const updateDate = new Date(rules.updated_at).toLocaleString('en-GB');
+                    
+                    container.innerHTML = `
+                        <p style="color: #4caf50; font-weight: 600; margin-bottom: 10px;">✓ Rulebook Active</p>
+                        <p style="font-size: 0.9rem; margin-bottom: 5px;">
+                            <strong>PDF URL:</strong> <a href="${rules.pdf_url}" target="_blank" style="color: #667eea;">${rules.pdf_url}</a>
+                        </p>
+                        <p style="font-size: 0.85rem; color: #666;">
+                            Uploaded: ${uploadDate}${rules.updated_at !== rules.created_at ? ` | Updated: ${updateDate}` : ''}
+                        </p>
+                    `;
+                } else {
+                    container.innerHTML = `
+                        <p style="color: #999;">No rulebook uploaded yet.</p>
+                        <p style="font-size: 0.9rem; margin-top: 10px;">
+                            <strong>PDF URL:</strong> /WinterJam_Rulebook.pdf
+                        </p>
+                    `;
+                }
             } catch (error) {
                 console.error('Error loading rules:', error);
-                showStatus('❌ Erro ao carregar regras', 'error');
+                document.getElementById('rules-status').innerHTML = '<p style="color: #999;">Unable to load rulebook status.</p>';
             }
         }
 
-        function showRulesForm() {
-            currentEditingRules = null;
-            document.getElementById('rules-form').style.display = 'block';
-            document.getElementById('add-rules-btn').style.display = 'none';
-            document.getElementById('rules-form-element').reset();
-            document.getElementById('rules-id').value = '';
-            document.getElementById('rules-active').checked = true;
-        }
-
-        function hideRulesForm() {
-            currentEditingRules = null;
-            document.getElementById('rules-form').style.display = 'none';
-            document.getElementById('add-rules-btn').style.display = 'block';
-            document.getElementById('rules-form-element').reset();
-        }
-
-        async function editRules(id) {
-            try {
-                const rules = await apiCall(`/api/rules/admin/${id}`);
-                currentEditingRules = id;
-                
-                document.getElementById('rules-id').value = rules.id;
-                document.getElementById('rules-title').value = rules.title;
-                document.getElementById('rules-description').value = rules.description || '';
-                document.getElementById('rules-pdf-url').value = rules.pdf_url;
-                document.getElementById('rules-version').value = rules.version;
-                document.getElementById('rules-active').checked = rules.is_active;
-                
-                document.getElementById('rules-form').style.display = 'block';
-                document.getElementById('add-rules-btn').style.display = 'none';
-            } catch (error) {
-                console.error('Error loading rules for edit:', error);
-                showStatus('❌ Erro ao carregar regras para edição', 'error');
-            }
-        }
-
-        async function activateRules(id) {
-            if (!confirm('Deseja ativar este livro de regras? Todos os outros serão desativados.')) {
-                return;
-            }
-            
-            try {
-                showStatus('⏳ Ativando livro de regras...', 'info');
-                await apiCall(`/api/rules/admin/${id}/activate`, 'PATCH');
-                showStatus('✅ Livro de regras ativado com sucesso!', 'success');
-                loadRules();
-            } catch (error) {
-                console.error('Error activating rules:', error);
-                showStatus('❌ Erro ao ativar livro de regras', 'error');
-            }
-        }
-
-        async function deleteRules(id) {
-            if (!confirm('Tem certeza que deseja eliminar este livro de regras?')) {
-                return;
-            }
-            
-            try {
-                showStatus('⏳ Eliminando livro de regras...', 'info');
-                await apiCall(`/api/rules/admin/${id}`, 'DELETE');
-                showStatus('✅ Livro de regras eliminado com sucesso!', 'success');
-                loadRules();
-            } catch (error) {
-                console.error('Error deleting rules:', error);
-                showStatus('❌ Erro ao eliminar livro de regras', 'error');
-            }
-        }
+        // Rules functions removed - single rulebook only, no edit/delete needed
 
         // Front Page Settings Functions
         let frontPageSettings = {};
@@ -2356,7 +2287,6 @@
                     const result = await response.json();
                     
                     showStatus('✅ PDF carregado e conteúdo guardado com sucesso!', 'success');
-                    hideRulesForm();
                     loadRules();
                     
                     // Reset form
