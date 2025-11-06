@@ -1,161 +1,109 @@
 const express = require('express');
-const Rules = require('../models/Rules');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs').promises;
 const { requireAdmin } = require('./auth');
 
 const router = express.Router();
 
+// Configure multer for PDF uploads
+const storage = multer.diskStorage({
+  destination: async (req, file, cb) => {
+    const uploadDir = path.join(__dirname, '../../public');
+    try {
+      await fs.access(uploadDir);
+    } catch {
+      await fs.mkdir(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    // Always save as WinterJam_Rulebook.pdf to replace the existing file
+    cb(null, 'WinterJam_Rulebook.pdf');
+  }
+});
+
+const upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 10 * 1024 * 1024 // 10MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype === 'application/pdf') {
+      cb(null, true);
+    } else {
+      cb(new Error('Only PDF files are allowed'));
+    }
+  }
+});
+
 // ==================== PUBLIC ROUTES ====================
 
-// Get active rulebook (public)
-router.get('/active', async (req, res) => {
-  try {
-    const rules = await Rules.getActive();
-    
-    if (!rules) {
-      return res.status(404).json({ 
-        error: 'No active rulebook found',
-        message: 'Nenhum livro de regras ativo encontrado'
-      });
-    }
-    
-    res.json(rules);
-  } catch (error) {
-    console.error('Error fetching active rules:', error);
-    res.status(500).json({ 
-      error: 'Failed to fetch rules',
-      message: 'Erro ao carregar regras'
-    });
-  }
+// Get current PDF URL (public)
+router.get('/pdf-url', (req, res) => {
+  res.json({ 
+    pdfUrl: '/WinterJam_Rulebook.pdf',
+    message: 'PDF URL retrieved successfully'
+  });
 });
 
 // ==================== ADMIN ROUTES ====================
 
 router.use(requireAdmin);
 
-// Get all rulebooks (admin)
-router.get('/admin/all', async (req, res) => {
+// Upload/Replace PDF (admin only)
+router.post('/admin/upload-pdf', upload.single('pdf'), async (req, res) => {
   try {
-    const rules = await Rules.getAll();
-    res.json(rules);
-  } catch (error) {
-    console.error('Error fetching all rules:', error);
-    res.status(500).json({ 
-      error: 'Failed to fetch rules',
-      message: 'Erro ao carregar regras'
-    });
-  }
-});
-
-// Get specific rulebook by ID (admin)
-router.get('/admin/:id', async (req, res) => {
-  try {
-    const rules = await Rules.getById(req.params.id);
-    
-    if (!rules) {
-      return res.status(404).json({ 
-        error: 'Rulebook not found',
-        message: 'Livro de regras não encontrado'
+    if (!req.file) {
+      return res.status(400).json({ 
+        error: 'No file uploaded',
+        message: 'Nenhum ficheiro foi enviado'
       });
     }
-    
-    res.json(rules);
+
+    console.log('📄 PDF uploaded successfully:', req.file.filename);
+
+    res.json({
+      message: 'PDF uploaded successfully',
+      filename: req.file.filename,
+      pdfUrl: `/WinterJam_Rulebook.pdf`,
+      size: req.file.size
+    });
   } catch (error) {
-    console.error('Error fetching rules:', error);
+    console.error('Error uploading PDF:', error);
     res.status(500).json({ 
-      error: 'Failed to fetch rules',
-      message: 'Erro ao carregar regras'
+      error: 'Failed to upload PDF',
+      message: 'Erro ao carregar PDF',
+      details: error.message
     });
   }
 });
 
-// Create new rulebook (admin)
-router.post('/admin', async (req, res) => {
+// Get current PDF info (admin)
+router.get('/admin/pdf-info', async (req, res) => {
   try {
-    const rules = await Rules.create(req.body);
-    res.status(201).json({
-      message: 'Rulebook created successfully',
-      data: rules
-    });
-  } catch (error) {
-    console.error('Error creating rules:', error);
-    res.status(500).json({ 
-      error: 'Failed to create rules',
-      message: 'Erro ao criar regras'
-    });
-  }
-});
-
-// Update rulebook (admin)
-router.put('/admin/:id', async (req, res) => {
-  try {
-    const rules = await Rules.update(req.params.id, req.body);
-    
-    if (!rules) {
-      return res.status(404).json({ 
-        error: 'Rulebook not found',
-        message: 'Livro de regras não encontrado'
-      });
-    }
+    const pdfPath = path.join(__dirname, '../../public/WinterJam_Rulebook.pdf');
+    const stats = await fs.stat(pdfPath);
     
     res.json({
-      message: 'Rulebook updated successfully',
-      data: rules
+      exists: true,
+      filename: 'WinterJam_Rulebook.pdf',
+      size: stats.size,
+      lastModified: stats.mtime,
+      url: '/WinterJam_Rulebook.pdf'
     });
   } catch (error) {
-    console.error('Error updating rules:', error);
-    res.status(500).json({ 
-      error: 'Failed to update rules',
-      message: 'Erro ao atualizar regras'
-    });
-  }
-});
-
-// Set active rulebook (admin)
-router.patch('/admin/:id/activate', async (req, res) => {
-  try {
-    const rules = await Rules.setActive(req.params.id);
-    
-    if (!rules) {
-      return res.status(404).json({ 
-        error: 'Rulebook not found',
-        message: 'Livro de regras não encontrado'
+    if (error.code === 'ENOENT') {
+      return res.json({
+        exists: false,
+        message: 'No PDF file found'
       });
     }
     
-    res.json({
-      message: 'Rulebook activated successfully',
-      data: rules
-    });
-  } catch (error) {
-    console.error('Error activating rules:', error);
+    console.error('Error getting PDF info:', error);
     res.status(500).json({ 
-      error: 'Failed to activate rules',
-      message: 'Erro ao ativar regras'
-    });
-  }
-});
-
-// Delete rulebook (admin)
-router.delete('/admin/:id', async (req, res) => {
-  try {
-    const rules = await Rules.delete(req.params.id);
-    
-    if (!rules) {
-      return res.status(404).json({ 
-        error: 'Rulebook not found',
-        message: 'Livro de regras não encontrado'
-      });
-    }
-    
-    res.json({
-      message: 'Rulebook deleted successfully',
-      data: rules
-    });
-  } catch (error) {
-    console.error('Error deleting rules:', error);
-    res.status(500).json({ 
-      error: 'Failed to delete rules',
-      message: 'Erro ao eliminar regras'
+      error: 'Failed to get PDF info',
+      message: 'Erro ao obter informação do PDF'
     });
   }
 });
