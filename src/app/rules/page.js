@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Download, FileText, AlertCircle } from 'lucide-react';
+import { rulesApi } from '@/utils/api';
 
 export default function Page() {
   const [rules, setRules] = useState(null);
@@ -11,13 +12,7 @@ export default function Page() {
   useEffect(() => {
     async function fetchRules() {
       try {
-        const response = await fetch('/api/rules/active');
-        
-        if (!response.ok) {
-          throw new Error('Nenhum livro de regras ativo encontrado');
-        }
-        
-        const data = await response.json();
+        const data = await rulesApi.getActive();
         setRules(data);
       } catch (error) {
         console.error('Error fetching rules:', error);
