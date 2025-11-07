@@ -255,6 +255,14 @@ router.post('/admin/upload-background', requireAdmin, uploadLimiter, upload.sing
   }
 });
 
+// Handle OPTIONS preflight for background image
+router.options('/background', (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.status(204).send();
+});
+
 // Download/serve background image (public)
 router.get('/background', async (req, res) => {
   try {
