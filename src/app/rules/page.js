@@ -330,7 +330,7 @@ export default function Page() {
               ✍️ Inscrever-me Agora
             </a>
             <a
-              href="mailto:gamejam.at.ipmaia@gmail.com"
+              href="/contact"
               className="inline-flex items-center gap-2 px-8 py-4 bg-white text-gray-900 font-semibold rounded-xl hover:bg-gray-50 transition-all duration-300 border-2 border-gray-300"
             >
               ✉️ Contactar Organização
