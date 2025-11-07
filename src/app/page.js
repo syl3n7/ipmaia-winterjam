@@ -310,7 +310,7 @@ export default function Home() {
                                 {new Date(currentGameJam.reception_datetime).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}
                               </span>
                               <div>
-                                <strong className="text-orange-100">🚪 Receção</strong>
+                                <strong className="text-orange-100">� Receção</strong>
                                 <p className="text-sm text-orange-300/70">Chegada e check-in dos participantes</p>
                               </div>
                             </div>
