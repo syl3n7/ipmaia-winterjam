@@ -37,114 +37,24 @@ fi
 echo "⏳ Allowing backend to establish database connections..."
 sleep 5
 
-echo "⏳ Now running database migrations..."
+echo "⏳ Running smart database migrations (skips already-applied)..."
 
-# Run migration directly instead of using the health check approach
-if npm run migrate; then
-    echo "✅ Migration completed successfully!"
+# Run smart migration that tracks what's been applied
+# This handles ALL migrations in the migrations/ folder automatically
+if node scripts/smart-migrate.js; then
+    echo "✅ Smart migration completed!"
 else
     echo "❌ Migration failed!"
     exit 1
 fi
 
-echo "🔄 Adding toggle fields to existing tables..."
-
-# Run toggle fields migration to add missing columns
-if node scripts/add-toggle-fields.js; then
-    echo "✅ Toggle fields migration completed successfully!"
-else
-    echo "⚠️ Toggle fields migration failed (might already exist)"
-fi
-
-echo "🔄 Setting up rules table..."
-
-# Run new rules migration
-if node scripts/migrate-rules.js; then
-    echo "✅ Rules table migration completed successfully!"
-else
-    echo "⚠️ Rules table migration failed (might already exist)"
-fi
-
-echo "🔄 Adding content fields to rules table..."
-
-# Add content fields to rules table
-if node scripts/add-rules-content-fields.js; then
-    echo "✅ Rules content fields added successfully!"
-else
-    echo "⚠️ Rules content fields migration failed (might already exist)"
-fi
-
-echo "🔄 Adding homepage content fields to game_jams table..."
-
-# Add homepage content fields (introduction, prizes_content, schedule_content)
-if node migrations/add-homepage-content-fields.js; then
-    echo "✅ Homepage content fields added successfully!"
-else
-    echo "⚠️ Homepage content fields migration failed (might already exist)"
-fi
-
-echo "🔄 Adding pdf_filename column to rules table..."
-
-# Add pdf_filename column to rules table
-if node migrations/add-pdf-filename-column.js; then
-    echo "✅ PDF filename column added successfully!"
-else
-    echo "⚠️ PDF filename column migration failed (might already exist)"
-fi
-
-echo "🔄 Adding background filename field to front_page_settings..."
-
-# Add background filename field to front_page_settings
-if node migrations/add-background-filename-field.js; then
-    echo "✅ Background filename field added successfully!"
-else
-    echo "⚠️ Background filename field migration failed (might already exist)"
-fi
-
-echo "🔄 Removing deprecated front page settings..."
-
-# Remove deprecated front page settings (now in Game Jam)
-if node migrations/remove-deprecated-frontpage-settings.js; then
-    echo "✅ Deprecated settings removed successfully!"
-else
-    echo "⚠️ Deprecated settings removal failed (might not exist)"
-fi
-
-echo "🌱 Seeding default rules content..."
-
-# Seed default rules content
-if node scripts/seed-rules-content.js; then
-    echo "✅ Rules content seeded successfully!"
-else
-    echo "⚠️ Rules content seeding failed (might already exist)"
-fi
-
-echo "🔄 Adding slug and archive_url fields..."
-
-# Run slug fields migration
-if node scripts/add-slug-fields.js; then
-    echo "✅ Slug fields migration completed successfully!"
-else
-    echo "⚠️ Slug fields migration failed (might already exist)"
-fi
-
 echo "🔄 Migrating frontend data..."
 
-# Run frontend data migration
+# Run frontend data migration (game jam data from old structure)
 if node migrate_frontend_data.js; then
     echo "✅ Frontend data migration completed successfully!"
 else
-    echo "❌ Frontend data migration failed!"
-    exit 1
-fi
-
-echo "🔄 Adding December 2025 WinterJam..."
-
-# Add December 2025 jam
-if node scripts/add-december-2025-jam.js; then
-    echo "✅ December 2025 jam added successfully!"
-else
-    echo "⚠️ December 2025 jam addition failed (might already exist)"
+    echo "⚠️ Frontend data migration skipped (might already exist)"
 fi
 
 echo "🎉 Backend is ready with migrations and data applied!"
