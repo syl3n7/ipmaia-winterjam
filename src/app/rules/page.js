@@ -46,23 +46,25 @@ export default function Page() {
       
       <div className="relative z-10 py-8 px-4">
         <div className="max-w-4xl mx-auto">
-        {/* Compact Header */}
-        <div className="mb-8">
-          <div className="flex flex-col gap-4 pb-6 border-b-2 border-gray-200">
-            {/* Title row with icon */}
-            <div className="flex items-start gap-3">
-              <div className="flex items-center justify-center w-12 h-12 md:w-14 md:h-14 bg-gray-900 rounded-xl shadow-md flex-shrink-0">
-                <FileText className="w-6 h-6 md:w-7 md:h-7 text-white" />
-              </div>
-              <div className="flex-1">
-                <h1 className="text-xl md:text-3xl font-bold text-gray-900 leading-tight">
-                  Livro de Regras WinterJam 2025
-                </h1>
-                <p className="text-xs md:text-sm text-gray-600 mt-1">
-                  Regras oficiais e diretrizes para participantes
-                </p>
-              </div>
-            </div>
+          {/* Blurred container for better readability */}
+          <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-white/20 p-6 md:p-8">
+            {/* Compact Header */}
+            <div className="mb-8">
+              <div className="flex flex-col gap-4 pb-6 border-b-2 border-gray-200">
+                {/* Title row with icon */}
+                <div className="flex items-start gap-3">
+                  <div className="flex items-center justify-center w-12 h-12 md:w-14 md:h-14 bg-gray-900 rounded-xl shadow-md flex-shrink-0">
+                    <FileText className="w-6 h-6 md:w-7 md:h-7 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <h1 className="text-xl md:text-3xl font-bold text-gray-900 leading-tight">
+                      Livro de Regras WinterJam 2025
+                    </h1>
+                    <p className="text-xs md:text-sm text-gray-600 mt-1">
+                      Regras oficiais e diretrizes para participantes
+                    </p>
+                  </div>
+                </div>
             
             {/* Download button - full width on mobile */}
             <a
@@ -325,7 +327,8 @@ export default function Page() {
             </a>
           </div>
         </div>
-      </div>
+          </div>
+        </div>
       </div>
     </div>
   );
