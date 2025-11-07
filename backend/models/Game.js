@@ -123,7 +123,16 @@ class Game {
     const values = [];
     let index = 1;
 
+    // Read-only fields that should not be in UPDATE queries (they're from JOINs)
+    const readOnlyFields = ['game_jam_name', 'game_jam_theme'];
+
     Object.keys(data).forEach(key => {
+      // Skip read-only fields
+      if (readOnlyFields.includes(key)) {
+        console.log(`⏭️ Skipping read-only field: ${key}`);
+        return;
+      }
+      
       if (data[key] !== undefined) {
         let value = data[key];
         
