@@ -91,25 +91,56 @@
                         <textarea id="jam-description" name="description" placeholder="Describe the game jam..."></textarea>
                     </div>
                     
-                    <div class="grid">
-                        <div class="form-group">
-                            <label for="jam-start">Start Date & Time *</label>
-                            <input type="datetime-local" id="jam-start" name="start_date" required>
+                    <!-- Schedule Section -->
+                    <div style="background: #f8f9ff; border: 2px solid #667eea; border-radius: 8px; padding: 20px; margin: 20px 0;">
+                        <h4 style="color: #667eea; margin-bottom: 20px;">📅 Event Schedule</h4>
+                        
+                        <div class="grid">
+                            <div class="form-group">
+                                <label for="jam-start">🎮 Start Date & Time *</label>
+                                <input type="datetime-local" id="jam-start" name="start_date" required>
+                                <small>When the jam officially starts</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="jam-end">🏁 End Date & Time *</label>
+                                <input type="datetime-local" id="jam-end" name="end_date" required>
+                                <small>When the jam officially ends</small>
+                            </div>
                         </div>
+                        
+                        <div class="grid">
+                            <div class="form-group">
+                                <label for="jam-reception">🚪 Reception Time</label>
+                                <input type="datetime-local" id="jam-reception" name="reception_datetime">
+                                <small>Example: 17:00 Receção</small>
+                            </div>
+                            <div class="form-group">
+                                <label for="jam-theme-announcement">🎨 Theme Announcement Time</label>
+                                <input type="datetime-local" id="jam-theme-announcement" name="theme_announcement_datetime">
+                                <small>Example: 17:30 Anúncio do Tema</small>
+                            </div>
+                        </div>
+                        
                         <div class="form-group">
-                            <label for="jam-end">End Date & Time *</label>
-                            <input type="datetime-local" id="jam-end" name="end_date" required>
+                            <label for="jam-awards">🏆 Awards Ceremony Time</label>
+                            <input type="datetime-local" id="jam-awards" name="awards_ceremony_datetime">
+                            <small>Example: 16:30 Cerimónia de Entrega de Prémios</small>
                         </div>
                     </div>
                     
-                    <div class="grid">
-                        <div class="form-group">
-                            <label for="jam-reg-start">Registration Start</label>
-                            <input type="datetime-local" id="jam-reg-start" name="registration_start_date">
-                        </div>
-                        <div class="form-group">
-                            <label for="jam-reg-end">Registration End</label>
-                            <input type="datetime-local" id="jam-reg-end" name="registration_end_date">
+                    <!-- Registration Dates Section -->
+                    <div style="background: #fff8f0; border: 2px solid #f59e0b; border-radius: 8px; padding: 20px; margin: 20px 0;">
+                        <h4 style="color: #f59e0b; margin-bottom: 20px;">📝 Registration Period</h4>
+                        
+                        <div class="grid">
+                            <div class="form-group">
+                                <label for="jam-reg-start">Registration Start</label>
+                                <input type="datetime-local" id="jam-reg-start" name="registration_start_date">
+                            </div>
+                            <div class="form-group">
+                                <label for="jam-reg-end">Registration End</label>
+                                <input type="datetime-local" id="jam-reg-end" name="registration_end_date">
+                            </div>
                         </div>
                     </div>
                     
@@ -153,30 +184,6 @@
                             <label for="jam-prizes">Prizes Text (optional)</label>
                             <textarea id="jam-prizes" name="prizes_content" rows="6" placeholder="1st Place: InstantGaming 10€ gift card (per member) + Certificate&#10;2nd Place: TBD&#10;&#10;All Participants: Event lanyard/keychain + Certificate"></textarea>
                             <small>Text content for the "Prizes" section on the homepage. Leave blank to use default prizes.</small>
-                        </div>
-                        
-                        <div style="background: #f8f9ff; border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; margin: 20px 0;">
-                            <h5 style="color: #667eea; margin-bottom: 15px;">📅 Event Schedule Times</h5>
-                            <p style="color: #6c757d; font-size: 0.9rem; margin-bottom: 15px;">Optional specific times for key schedule events. Leave blank to use default times from Start/End dates.</p>
-                            
-                            <div class="grid">
-                                <div class="form-group">
-                                    <label for="jam-reception">🚪 Reception Time</label>
-                                    <input type="datetime-local" id="jam-reception" name="reception_datetime">
-                                    <small>Example: 17:00 Receção</small>
-                                </div>
-                                <div class="form-group">
-                                    <label for="jam-theme-announcement">🎨 Theme Announcement Time</label>
-                                    <input type="datetime-local" id="jam-theme-announcement" name="theme_announcement_datetime">
-                                    <small>Example: 17:30 Anúncio do Tema</small>
-                                </div>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="jam-awards">🏆 Awards Ceremony Time</label>
-                                <input type="datetime-local" id="jam-awards" name="awards_ceremony_datetime">
-                                <small>Example: 16:30 Cerimónia de Entrega de Prémios</small>
-                            </div>
                         </div>
                     </div>
                     
