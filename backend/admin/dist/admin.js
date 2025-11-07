@@ -342,6 +342,27 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log('📅 Reg end field found:', regEndField, 'Setting to:', regEndValue);
                 if (regEndField) regEndField.value = regEndValue;
                 
+                // Schedule datetime fields
+                const receptionField = document.getElementById('jam-reception');
+                const receptionValue = jam.reception_datetime ? new Date(jam.reception_datetime).toISOString().slice(0, 16) : '';
+                console.log('🚪 Reception field found:', receptionField, 'Setting to:', receptionValue);
+                if (receptionField) receptionField.value = receptionValue;
+                
+                const themeAnnouncementField = document.getElementById('jam-theme-announcement');
+                const themeAnnouncementValue = jam.theme_announcement_datetime ? new Date(jam.theme_announcement_datetime).toISOString().slice(0, 16) : '';
+                console.log('🎨 Theme announcement field found:', themeAnnouncementField, 'Setting to:', themeAnnouncementValue);
+                if (themeAnnouncementField) themeAnnouncementField.value = themeAnnouncementValue;
+                
+                const evaluationField = document.getElementById('jam-evaluation');
+                const evaluationValue = jam.evaluation_datetime ? new Date(jam.evaluation_datetime).toISOString().slice(0, 16) : '';
+                console.log('📊 Evaluation field found:', evaluationField, 'Setting to:', evaluationValue);
+                if (evaluationField) evaluationField.value = evaluationValue;
+                
+                const awardsCeremonyField = document.getElementById('jam-awards-ceremony');
+                const awardsCeremonyValue = jam.awards_ceremony_datetime ? new Date(jam.awards_ceremony_datetime).toISOString().slice(0, 16) : '';
+                console.log('🏆 Awards ceremony field found:', awardsCeremonyField, 'Setting to:', awardsCeremonyValue);
+                if (awardsCeremonyField) awardsCeremonyField.value = awardsCeremonyValue;
+                
                 const regUrlField = document.getElementById('jam-reg-url');
                 console.log('🔗 Reg URL field found:', regUrlField, 'Setting to:', jam.registration_url || '');
                 if (regUrlField) regUrlField.value = jam.registration_url || '';
@@ -414,6 +435,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (endField) endField.value = endValue;
                     if (regStartField) regStartField.value = regStartValue;
                     if (regEndField) regEndField.value = regEndValue;
+                    // Re-populate schedule datetime fields
+                    if (receptionField) receptionField.value = receptionValue;
+                    if (themeAnnouncementField) themeAnnouncementField.value = themeAnnouncementValue;
+                    if (evaluationField) evaluationField.value = evaluationValue;
+                    if (awardsCeremonyField) awardsCeremonyField.value = awardsCeremonyValue;
                     if (regUrlField) regUrlField.value = jam.registration_url || '';
                     if (rulesPdfField) rulesPdfField.value = jam.rules_pdf_url || '';
                     if (bannerField) bannerField.value = jam.banner_image_url || '';
