@@ -228,6 +228,7 @@ async function updateGameJam(jam) {
     registration_start_date, registration_end_date, registration_url,
     rules_pdf_url, is_active, banner_image_url,
     introduction, prizes_content, schedule_content,
+    reception_datetime, theme_announcement_datetime, awards_ceremony_datetime,
     show_theme, show_description, show_start_date, show_end_date,
     date_fallback, show_registration_dates, registration_date_fallback,
     show_registration_url, show_rules_pdf_url, show_banner_image,
@@ -235,12 +236,13 @@ async function updateGameJam(jam) {
     slug, archive_url
   } = jam;
 
-  const query = `
+    const query = `
     INSERT INTO game_jams (
       id, name, theme, description, start_date, end_date,
       registration_start_date, registration_end_date, registration_url,
       rules_pdf_url, is_active, banner_image_url,
       introduction, prizes_content, schedule_content,
+      reception_datetime, theme_announcement_datetime, awards_ceremony_datetime,
       show_theme, show_description, show_start_date, show_end_date,
       date_fallback, show_registration_dates, registration_date_fallback,
       show_registration_url, show_rules_pdf_url, show_banner_image,
@@ -248,8 +250,8 @@ async function updateGameJam(jam) {
       slug, archive_url,
       created_at, updated_at
     ) VALUES (
-      $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15,
-      $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30,
+      $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17,
+      $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33,
       NOW(), NOW()
     )
     ON CONFLICT (id) DO UPDATE SET
@@ -267,6 +269,9 @@ async function updateGameJam(jam) {
       introduction = EXCLUDED.introduction,
       prizes_content = EXCLUDED.prizes_content,
       schedule_content = EXCLUDED.schedule_content,
+      reception_datetime = EXCLUDED.reception_datetime,
+      theme_announcement_datetime = EXCLUDED.theme_announcement_datetime,
+      awards_ceremony_datetime = EXCLUDED.awards_ceremony_datetime,
       show_theme = EXCLUDED.show_theme,
       show_description = EXCLUDED.show_description,
       show_start_date = EXCLUDED.show_start_date,
@@ -290,14 +295,13 @@ async function updateGameJam(jam) {
     registration_start_date, registration_end_date, registration_url,
     rules_pdf_url, is_active, banner_image_url,
     introduction, prizes_content, schedule_content,
+    reception_datetime || null, theme_announcement_datetime || null, awards_ceremony_datetime || null,
     show_theme, show_description, show_start_date, show_end_date,
     date_fallback, show_registration_dates, registration_date_fallback,
     show_registration_url, show_rules_pdf_url, show_banner_image,
     banner_fallback, JSON.stringify(custom_fields), JSON.stringify(custom_fields_visibility),
     slug || null, archive_url || null
-  ];
-
-  await pool.query(query, values);
+  ];  await pool.query(query, values);
   console.log(`✅ Updated Game Jam: ${name} (ID: ${id})`);
 }
 
