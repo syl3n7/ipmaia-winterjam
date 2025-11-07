@@ -7,10 +7,11 @@ import { useBackground } from "../../contexts/BackgroundContext";
 
 export default function Page() {
   const [pdfUrl, setPdfUrl] = useState('/WinterJam_Rulebook.pdf');
+  const [currentGameJam, setCurrentGameJam] = useState(null);
   const { bannerImage } = useBackground();
 
   useEffect(() => {
-    // Fetch PDF URL from API
+    // Fetch PDF URL and current game jam from API
     const fetchData = async () => {
       try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
@@ -21,6 +22,11 @@ export default function Page() {
         if (pdfData.pdfUrl) {
           setPdfUrl(pdfData.pdfUrl);
         }
+
+        // Fetch current game jam data
+        const { gameJamApi } = await import('../../utils/api');
+        const gameJam = await gameJamApi.getCurrent();
+        setCurrentGameJam(gameJam);
       } catch (error) {
         console.error('Error fetching data:', error);
         // Keep default values on error
@@ -240,65 +246,167 @@ export default function Page() {
               <span className="text-gray-500">6.</span> Horário do Evento
             </h2>
             <div className="space-y-6 text-gray-800">
-              <p className="text-gray-700 mb-4">Cronograma do evento (5-7 de Dezembro)</p>
-              
-              <div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                  📅 Dia 1 (5/12)
-                </h3>
-                <div className="space-y-2 ml-4">
-                  <div className="flex items-start gap-3">
-                    <span className="font-mono text-gray-700 font-semibold min-w-[80px]">17:00</span>
-                    <div>
-                      <strong>Receção</strong>
-                      <p className="text-sm text-gray-600">Check-in dos participantes</p>
+              {currentGameJam ? (
+                <>
+                  <p className="text-gray-700 mb-4">
+                    Cronograma do evento ({new Date(currentGameJam.start_date).toLocaleDateString('pt-PT', { day: 'numeric', month: 'numeric' })} - {new Date(currentGameJam.end_date).toLocaleDateString('pt-PT', { day: 'numeric', month: 'numeric' })})
+                  </p>
+                  
+                  {/* Day 1 - Start */}
+                  <div>
+                    <h3 className="text-xl font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                      📅 Dia 1 ({new Date(currentGameJam.start_date).toLocaleDateString('pt-PT', { day: 'numeric', month: 'numeric' })})
+                    </h3>
+                    <div className="space-y-2 ml-4">
+                      {/* Reception */}
+                      {currentGameJam.reception_datetime && (
+                        <div className="flex items-start gap-3">
+                          <span className="font-mono text-gray-700 font-semibold min-w-[80px]">
+                            {new Date(currentGameJam.reception_datetime).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                          <div>
+                            <strong>Receção</strong>
+                            <p className="text-sm text-gray-600">Check-in dos participantes</p>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Theme Announcement */}
+                      {currentGameJam.theme_announcement_datetime ? (
+                        <div className="flex items-start gap-3">
+                          <span className="font-mono text-gray-700 font-semibold min-w-[80px]">
+                            {new Date(currentGameJam.theme_announcement_datetime).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                          <div>
+                            <strong>Anúncio do Tema</strong>
+                            <p className="text-sm text-gray-600">Revelação do tema da jam</p>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-start gap-3">
+                          <span className="font-mono text-gray-700 font-semibold min-w-[80px]">
+                            {new Date(new Date(currentGameJam.start_date).getTime() + 15*60000).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                          <div>
+                            <strong>Anúncio do Tema</strong>
+                            <p className="text-sm text-gray-600">Revelação do tema da jam</p>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Jam Start */}
+                      <div className="flex items-start gap-3 bg-green-100 border-l-4 border-green-500 pl-3 py-2 -ml-4">
+                        <span className="font-mono text-green-700 font-bold min-w-[80px]">
+                          {new Date(currentGameJam.start_date).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                        <div>
+                          <strong className="text-green-700">🚀 INÍCIO DA JAM!</strong>
+                          <p className="text-sm text-green-600">Começa a contagem das 45 horas</p>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                  <div className="flex items-start gap-3">
-                    <span className="font-mono text-gray-700 font-semibold min-w-[80px]">17:30</span>
-                    <div>
-                      <strong>Anúncio do Tema</strong>
-                      <p className="text-sm text-gray-600">Revelação do tema da jam</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3 bg-green-100 border-l-4 border-green-500 pl-3 py-2 -ml-4">
-                    <span className="font-mono text-green-700 font-bold min-w-[80px]">18:00</span>
-                    <div>
-                      <strong className="text-green-700">🚀 INÍCIO DA JAM!</strong>
-                      <p className="text-sm text-green-600">Começa a contagem das 45 horas</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
 
-              <div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                  📅 Dia 3 (7/12)
-                </h3>
-                <div className="space-y-2 ml-4">
-                  <div className="flex items-start gap-3 bg-red-100 border-l-4 border-red-500 pl-3 py-2 -ml-4">
-                    <span className="font-mono text-red-700 font-bold min-w-[80px]">15:00</span>
-                    <div>
-                      <strong className="text-red-700">⏰ FIM DA JAM!</strong>
-                      <p className="text-sm text-red-600">Submissão obrigatória dos projetos</p>
+                  {/* Day 2 - Middle day(s) if applicable */}
+                  {(() => {
+                    const start = new Date(currentGameJam.start_date);
+                    const end = new Date(currentGameJam.end_date);
+                    const daysDiff = Math.floor((end - start) / (1000 * 60 * 60 * 24));
+                    
+                    if (daysDiff >= 2) {
+                      const middleDay = new Date(start.getTime() + (1000 * 60 * 60 * 24));
+                      return (
+                        <div>
+                          <h3 className="text-xl font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                            📅 Dia 2 ({middleDay.toLocaleDateString('pt-PT', { day: 'numeric', month: 'numeric' })})
+                          </h3>
+                          <div className="space-y-2 ml-4">
+                            <div className="flex items-start gap-3">
+                              <span className="font-mono text-gray-700 font-semibold min-w-[80px]">Todo o dia</span>
+                              <div>
+                                <strong>Desenvolvimento Contínuo</strong>
+                                <p className="text-sm text-gray-600">Dia completo de criação</p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
+
+                  {/* Day 3 - End */}
+                  <div>
+                    <h3 className="text-xl font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                      📅 Dia {(() => {
+                        const start = new Date(currentGameJam.start_date);
+                        const end = new Date(currentGameJam.end_date);
+                        const daysDiff = Math.floor((end - start) / (1000 * 60 * 60 * 24));
+                        return daysDiff >= 2 ? '3' : '2';
+                      })()} ({new Date(currentGameJam.end_date).toLocaleDateString('pt-PT', { day: 'numeric', month: 'numeric' })})
+                    </h3>
+                    <div className="space-y-2 ml-4">
+                      {/* Jam End */}
+                      <div className="flex items-start gap-3 bg-red-100 border-l-4 border-red-500 pl-3 py-2 -ml-4">
+                        <span className="font-mono text-red-700 font-bold min-w-[80px]">
+                          {new Date(currentGameJam.end_date).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                        <div>
+                          <strong className="text-red-700">⏰ FIM DA JAM!</strong>
+                          <p className="text-sm text-red-600">Submissão obrigatória dos projetos</p>
+                        </div>
+                      </div>
+                      
+                      {/* Awards Ceremony */}
+                      {currentGameJam.awards_ceremony_datetime ? (
+                        <>
+                          <div className="flex items-start gap-3">
+                            <span className="font-mono text-gray-700 font-semibold min-w-[80px]">
+                              {new Date(new Date(currentGameJam.awards_ceremony_datetime).getTime() - 30*60000).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                            <div>
+                              <strong>📊 Avaliação dos Projetos</strong>
+                              <p className="text-sm text-gray-600">Júri avalia os jogos submetidos</p>
+                            </div>
+                          </div>
+                          <div className="flex items-start gap-3">
+                            <span className="font-mono text-gray-700 font-semibold min-w-[80px]">
+                              {new Date(currentGameJam.awards_ceremony_datetime).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                            <div>
+                              <strong>🏆 Cerimónia de Entrega de Prémios</strong>
+                              <p className="text-sm text-gray-600">Anúncio dos vencedores e entrega de prémios</p>
+                            </div>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="flex items-start gap-3">
+                            <span className="font-mono text-gray-700 font-semibold min-w-[80px]">
+                              {new Date(new Date(currentGameJam.end_date).getTime() + 60*60000).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                            <div>
+                              <strong>📊 Avaliação dos Projetos</strong>
+                              <p className="text-sm text-gray-600">Júri avalia os jogos submetidos</p>
+                            </div>
+                          </div>
+                          <div className="flex items-start gap-3">
+                            <span className="font-mono text-gray-700 font-semibold min-w-[80px]">
+                              {new Date(new Date(currentGameJam.end_date).getTime() + 90*60000).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                            <div>
+                              <strong>🏆 Cerimónia de Entrega de Prémios</strong>
+                              <p className="text-sm text-gray-600">Anúncio dos vencedores e entrega de prémios</p>
+                            </div>
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
-                  <div className="flex items-start gap-3">
-                    <span className="font-mono text-gray-700 font-semibold min-w-[80px]">16:00</span>
-                    <div>
-                      <strong>📊 Avaliação dos Projetos</strong>
-                      <p className="text-sm text-gray-600">Júri avalia os jogos submetidos</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3">
-                    <span className="font-mono text-gray-700 font-semibold min-w-[80px]">16:30</span>
-                    <div>
-                      <strong>🏆 Cerimónia de Entrega de Prémios</strong>
-                      <p className="text-sm text-gray-600">Anúncio dos vencedores e entrega de prémios</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
+                </>
+              ) : (
+                <p className="text-gray-600 text-center">A carregar horário...</p>
+              )}
 
               <div className="bg-blue-100 border-l-4 border-blue-500 p-4 mt-6">
                 <p className="text-blue-800">
