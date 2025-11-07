@@ -30,13 +30,9 @@ export default function GameJamArchivePage({ params }) {
         const jam = await jamResponse.json();
         setJamData(jam);
         
-        // Fetch background image from API (same as homepage)
-        try {
-          const bgImageUrl = `${apiUrl}/frontpage/background`;
-          setBannerImage(bgImageUrl);
-        } catch (bgError) {
-          console.warn('Failed to load background image, using fallback');
-          // Keep default fallback
+        // Set banner if available
+        if (jam.banner_image_url) {
+          setBannerImage(jam.banner_image_url);
         }
         
         // Fetch games for this jam
