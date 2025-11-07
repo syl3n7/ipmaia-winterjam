@@ -3,11 +3,10 @@ console.log('🚀 Admin.js file loaded!');
 document.addEventListener('DOMContentLoaded', function() {
         console.log('📋 DOMContentLoaded event fired!');
         
-        try {
-            let currentEditingGameJam = null;
-            let currentEditingGame = null;
-            let gameJams = [];
-            let currentUser = null;
+        let currentEditingGameJam = null;
+        let currentEditingGame = null;
+        let gameJams = [];
+        let currentUser = null;
 
         // Authentication Functions
         async function checkAuthentication() {
@@ -1387,9 +1386,4 @@ document.addEventListener('DOMContentLoaded', function() {
             // Initial load - checkAuthentication handles showing dashboard and loading data
             console.log('🎬 Initializing admin dashboard...');
             checkAuthentication();
-        } catch (error) {
-            console.error('💥 FATAL ERROR in DOMContentLoaded:', error);
-            console.error('Stack trace:', error.stack);
-            document.getElementById('status').innerHTML = '❌ JavaScript error: ' + error.message;
-        }
-});
+        });
