@@ -315,15 +315,6 @@ export default function Home() {
                               </div>
                             </div>
                           )}
-                          <div className="flex items-start gap-3">
-                            <span className="font-mono text-orange-300 min-w-[80px]">
-                              {new Date(currentGameJam.start_date).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}
-                            </span>
-                            <div>
-                              <strong className="text-orange-100">🚀 Início do Jam</strong>
-                              <p className="text-sm text-orange-300/70">Começa a contagem das 45 horas</p>
-                            </div>
-                          </div>
                           {/* Theme Announcement - Use theme_announcement_datetime if available */}
                           {currentGameJam.theme_announcement_datetime ? (
                             <div className="flex items-start gap-3">
@@ -346,6 +337,15 @@ export default function Home() {
                               </div>
                             </div>
                           )}
+                          <div className="flex items-start gap-3">
+                            <span className="font-mono text-orange-300 min-w-[80px]">
+                              {new Date(currentGameJam.start_date).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                            <div>
+                              <strong className="text-orange-100">🚀 Início do Jam</strong>
+                              <p className="text-sm text-orange-300/70">Começa a contagem das 45 horas</p>
+                            </div>
+                          </div>
                         </div>
                       </div>
 
