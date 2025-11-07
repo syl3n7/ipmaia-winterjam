@@ -223,45 +223,86 @@ router.post('/import', async (req, res) => {
 
     // Import Game Jams
     if (gamejams && Array.isArray(gamejams)) {
+      const { pool } = require('../config/database');
+      
       for (const jam of gamejams) {
         try {
           // Remove system fields
           const jamData = { ...jam };
           delete jamData.created_at;
           delete jamData.updated_at;
+          delete jamData.id; // Remove ID to let it match by name or create new
           
-          // Check if already exists
-          const existing = await GameJam.findById(jam.id);
-          if (existing) {
-            await GameJam.update(jam.id, jamData);
+          // Check if already exists by name (more reliable than ID)
+          const existingResult = await pool.query(
+            'SELECT id FROM game_jams WHERE name = $1',
+            [jam.name]
+          );
+          
+          if (existingResult.rows.length > 0) {
+            // Update existing by name
+            const existingId = existingResult.rows[0].id;
+            await GameJam.update(existingId, jamData);
+            console.log(`✅ Updated existing Game Jam: ${jam.name} (ID: ${existingId})`);
           } else {
+            // Create new
             await GameJam.create(jamData);
+            console.log(`✅ Created new Game Jam: ${jam.name}`);
           }
           results.gamejams_imported++;
         } catch (error) {
-          results.errors.push(`Failed to import game jam ${jam.id || 'unknown'}: ${error.message}`);
+          console.error(`❌ Failed to import game jam ${jam.name || 'unknown'}:`, error);
+          results.errors.push(`Failed to import game jam ${jam.name || 'unknown'}: ${error.message}`);
         }
       }
     }
 
     // Import Games
     if (games && Array.isArray(games)) {
+      const { pool } = require('../config/database');
+      
       for (const game of games) {
         try {
           // Remove system fields
           const gameData = { ...game };
           delete gameData.created_at;
           delete gameData.updated_at;
+          delete gameData.id; // Remove ID to let it match by title+jam or create new
           
-          const existing = await Game.findById(game.id);
-          if (existing) {
-            await Game.update(game.id, gameData);
+          // Check if already exists by title and game_jam_id
+          // First, find the actual game_jam_id by name since IDs might differ
+          const jamResult = await pool.query(
+            'SELECT id FROM game_jams WHERE name = $1',
+            [game.game_jam_name || 'WinterJam 2025']
+          );
+          
+          if (jamResult.rows.length > 0) {
+            const actualJamId = jamResult.rows[0].id;
+            gameData.game_jam_id = actualJamId;
+            
+            // Check if game already exists by title and jam
+            const existingResult = await pool.query(
+              'SELECT id FROM games WHERE title = $1 AND game_jam_id = $2',
+              [game.title, actualJamId]
+            );
+            
+            if (existingResult.rows.length > 0) {
+              // Update existing by title+jam
+              const existingId = existingResult.rows[0].id;
+              await Game.update(existingId, gameData);
+              console.log(`✅ Updated existing Game: ${game.title} (ID: ${existingId})`);
+            } else {
+              // Create new
+              await Game.create(gameData);
+              console.log(`✅ Created new Game: ${game.title}`);
+            }
+            results.games_imported++;
           } else {
-            await Game.create(gameData);
+            results.errors.push(`Game jam not found for game: ${game.title}`);
           }
-          results.games_imported++;
         } catch (error) {
-          results.errors.push(`Failed to import game ${game.id || 'unknown'}: ${error.message}`);
+          console.error(`❌ Failed to import game ${game.title || 'unknown'}:`, error);
+          results.errors.push(`Failed to import game ${game.title || 'unknown'}: ${error.message}`);
         }
       }
     }
