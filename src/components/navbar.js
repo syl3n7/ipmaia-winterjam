@@ -118,7 +118,7 @@ const MainNavbar = () => {
             Regras
           </NavbarLink>
           <NavbarLink 
-            href="mailto:gamejam.at.ipmaia@gmail.com" 
+            href="/contact" 
             className={`${linkClassName} flex items-center px-3 py-2 w-full md:w-auto`}
           >
             Contacto
