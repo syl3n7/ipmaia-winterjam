@@ -4,6 +4,7 @@ import React from "react";
 import Footer from "../components/footer";
 import MainNavbar from "../components/navbar";
 import Script from "next/script";
+import { BackgroundProvider } from "../contexts/BackgroundContext";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -47,11 +48,13 @@ export default function RootLayout({ children }) {
           data-cf-beacon='{"token": "288377c903af4e4187b8b239e29790e9"}'
           strategy="afterInteractive"
         />
-        <MainNavbar />
-        <main className="flex-1 flex flex-col overflow-auto">
-          {children}
-        </main>
-        <Footer />
+        <BackgroundProvider>
+          <MainNavbar />
+          <main className="flex-1 flex flex-col overflow-auto">
+            {children}
+          </main>
+          <Footer />
+        </BackgroundProvider>
       </body>
     </html>
   );
