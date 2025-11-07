@@ -241,10 +241,18 @@ async function migrateFromFrontend() {
         // Tables should already exist from smart-migrate system
         console.log('🗄️ Database tables should already exist from migrations');
         
-        // Clear existing data first
-        console.log('🗑️ Clearing existing data...');
-        await pool.query('DELETE FROM games WHERE 1=1');
-        await pool.query('DELETE FROM game_jams WHERE 1=1');
+        // Check if data already exists (to avoid wiping admin changes)
+        const existingDataCheck = await pool.query('SELECT COUNT(*) FROM game_jams');
+        const existingCount = parseInt(existingDataCheck.rows[0].count);
+        
+        if (existingCount > 0) {
+            console.log('⏭️ Skipping frontend data migration - data already exists in database');
+            console.log(`   Found ${existingCount} game jam(s) in database`);
+            console.log('   To force re-import, manually clear the game_jams table');
+            return;
+        }
+        
+        console.log('📦 No existing data found - importing initial data...');
         
         // Import each year and season
         for (const [year, seasons] of Object.entries(frontendData)) {
