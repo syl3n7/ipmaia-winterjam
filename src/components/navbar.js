@@ -14,24 +14,24 @@ const MainNavbar = () => {
   const [isLoadingArchive, setIsLoadingArchive] = useState(true);
 
   const navbarClassName = isGamesPage
-    ? "bg-transparent bg-gradient-to-b from-orange-950/90 to-transparent sticky top-0 z-50 backdrop-blur-sm"
-    : "bg-gray-900 sticky top-0 z-50 backdrop-blur-sm";
+    ? "bg-black/30 backdrop-blur-md border-b border-white/10 sticky top-0 z-50 shadow-lg"
+    : "bg-black/30 backdrop-blur-md border-b border-white/10 sticky top-0 z-50 shadow-lg";
 
   const linkClassName = isGamesPage
-    ? "text-orange-200/80 hover:text-orange-100 hover:bg-orange-900/20"
-    : "text-gray-200 hover:text-white hover:bg-gray-800";
+    ? "text-orange-200/90 hover:text-orange-100 hover:bg-orange-900/30"
+    : "text-gray-200 hover:text-white hover:bg-white/10";
 
   const brandTextClassName = isGamesPage
     ? "text-orange-100"
     : "text-white";
 
   const toggleClassName = isGamesPage
-    ? "text-orange-100 hover:bg-orange-900/20"
-    : "text-white hover:bg-gray-800";
+    ? "text-orange-100 hover:bg-orange-900/30"
+    : "text-white hover:bg-white/10";
 
   const dropdownClassName = isGamesPage
-    ? "bg-orange-950/80 backdrop-blur-sm border-orange-900"
-    : "bg-gray-800/90 backdrop-blur-sm border-gray-700";
+    ? "bg-black/40 backdrop-blur-md border-orange-900/50 shadow-xl"
+    : "bg-black/40 backdrop-blur-md border-white/20 shadow-xl";
 
   // Fetch game jams from backend API
   useEffect(() => {
