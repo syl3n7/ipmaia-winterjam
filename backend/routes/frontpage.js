@@ -293,6 +293,9 @@ router.get('/background', async (req, res) => {
       '.webp': 'image/webp'
     };
     
+    // Set CORS headers to allow cross-origin image loading
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET');
     res.setHeader('Content-Type', contentTypes[ext] || 'image/jpeg');
     res.setHeader('Cache-Control', 'public, max-age=31536000'); // Cache for 1 year
     
