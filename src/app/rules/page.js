@@ -357,49 +357,50 @@ export default function Page() {
                         </div>
                       </div>
                       
+                      {/* Project Evaluation */}
+                      {currentGameJam.evaluation_datetime ? (
+                        <div className="flex items-start gap-3">
+                          <span className="font-mono text-gray-700 font-semibold min-w-[80px]">
+                            {new Date(currentGameJam.evaluation_datetime).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                          <div>
+                            <strong>📊 Avaliação dos Projetos</strong>
+                            <p className="text-sm text-gray-600">Júri avalia os jogos submetidos</p>
+                          </div>
+                        </div>
+                      ) : currentGameJam.awards_ceremony_datetime && (
+                        <div className="flex items-start gap-3">
+                          <span className="font-mono text-gray-700 font-semibold min-w-[80px]">
+                            {new Date(new Date(currentGameJam.awards_ceremony_datetime).getTime() - 30*60000).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                          <div>
+                            <strong>📊 Avaliação dos Projetos</strong>
+                            <p className="text-sm text-gray-600">Júri avalia os jogos submetidos</p>
+                          </div>
+                        </div>
+                      )}
+                      
                       {/* Awards Ceremony */}
                       {currentGameJam.awards_ceremony_datetime ? (
-                        <>
-                          <div className="flex items-start gap-3">
-                            <span className="font-mono text-gray-700 font-semibold min-w-[80px]">
-                              {new Date(new Date(currentGameJam.awards_ceremony_datetime).getTime() - 30*60000).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}
-                            </span>
-                            <div>
-                              <strong>📊 Avaliação dos Projetos</strong>
-                              <p className="text-sm text-gray-600">Júri avalia os jogos submetidos</p>
-                            </div>
+                        <div className="flex items-start gap-3">
+                          <span className="font-mono text-gray-700 font-semibold min-w-[80px]">
+                            {new Date(currentGameJam.awards_ceremony_datetime).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                          <div>
+                            <strong>🏆 Cerimónia de Entrega de Prémios</strong>
+                            <p className="text-sm text-gray-600">Anúncio dos vencedores e entrega de prémios</p>
                           </div>
-                          <div className="flex items-start gap-3">
-                            <span className="font-mono text-gray-700 font-semibold min-w-[80px]">
-                              {new Date(currentGameJam.awards_ceremony_datetime).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}
-                            </span>
-                            <div>
-                              <strong>🏆 Cerimónia de Entrega de Prémios</strong>
-                              <p className="text-sm text-gray-600">Anúncio dos vencedores e entrega de prémios</p>
-                            </div>
-                          </div>
-                        </>
+                        </div>
                       ) : (
-                        <>
-                          <div className="flex items-start gap-3">
-                            <span className="font-mono text-gray-700 font-semibold min-w-[80px]">
-                              {new Date(new Date(currentGameJam.end_date).getTime() + 60*60000).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}
-                            </span>
-                            <div>
-                              <strong>📊 Avaliação dos Projetos</strong>
-                              <p className="text-sm text-gray-600">Júri avalia os jogos submetidos</p>
-                            </div>
+                        <div className="flex items-start gap-3">
+                          <span className="font-mono text-gray-700 font-semibold min-w-[80px]">
+                            {new Date(new Date(currentGameJam.end_date).getTime() + 90*60000).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                          <div>
+                            <strong>🏆 Cerimónia de Entrega de Prémios</strong>
+                            <p className="text-sm text-gray-600">Anúncio dos vencedores e entrega de prémios</p>
                           </div>
-                          <div className="flex items-start gap-3">
-                            <span className="font-mono text-gray-700 font-semibold min-w-[80px]">
-                              {new Date(new Date(currentGameJam.end_date).getTime() + 90*60000).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}
-                            </span>
-                            <div>
-                              <strong>🏆 Cerimónia de Entrega de Prémios</strong>
-                              <p className="text-sm text-gray-600">Anúncio dos vencedores e entrega de prémios</p>
-                            </div>
-                          </div>
-                        </>
+                        </div>
                       )}
                     </div>
                   </div>
