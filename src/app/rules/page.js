@@ -2,32 +2,50 @@
 
 import React, { useState, useEffect } from 'react';
 import { Download, FileText } from 'lucide-react';
+import Background from "../../components/Background";
 
 export default function Page() {
   const [pdfUrl, setPdfUrl] = useState('/WinterJam_Rulebook.pdf');
+  const [bannerImage, setBannerImage] = useState('/images/IPMAIA_SiteBanner.png');
 
   useEffect(() => {
-    // Fetch PDF URL from API
-    const fetchPdfUrl = async () => {
+    // Fetch PDF URL and background image from API
+    const fetchData = async () => {
       try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
-        const response = await fetch(`${apiUrl}/rules/pdf-url`);
-        const data = await response.json();
-        if (data.pdfUrl) {
-          setPdfUrl(data.pdfUrl);
+        
+        // Fetch PDF URL
+        const pdfResponse = await fetch(`${apiUrl}/rules/pdf-url`);
+        const pdfData = await pdfResponse.json();
+        if (pdfData.pdfUrl) {
+          setPdfUrl(pdfData.pdfUrl);
         }
+        
+        // Fetch background image
+        const bgImageUrl = `${apiUrl}/frontpage/background`;
+        setBannerImage(bgImageUrl);
       } catch (error) {
-        console.error('Error fetching PDF URL:', error);
-        // Keep default URL on error
+        console.error('Error fetching data:', error);
+        // Keep default values on error
       }
     };
     
-    fetchPdfUrl();
+    fetchData();
   }, []);
 
   return (
-    <div className="min-h-screen bg-white py-8 px-4">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen">
+      <Background
+        imageUrl={bannerImage}
+        fallbackContent={
+          <div className="text-gray-500 text-center">
+            <p>Não foi possível carregar a imagem de fundo</p>
+          </div>
+        }
+      />
+      
+      <div className="relative z-10 py-8 px-4">
+        <div className="max-w-4xl mx-auto">
         {/* Compact Header */}
         <div className="mb-8">
           <div className="flex flex-col gap-4 pb-6 border-b-2 border-gray-200">
@@ -307,6 +325,7 @@ export default function Page() {
             </a>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );
