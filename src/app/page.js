@@ -303,6 +303,18 @@ export default function Home() {
                           📅 {new Date(currentGameJam.start_date).toLocaleDateString('pt-PT', { day: 'numeric', month: 'long', weekday: 'long' })}
                         </h4>
                         <div className="space-y-2 ml-4">
+                          {/* Reception - Use reception_datetime if available */}
+                          {currentGameJam.reception_datetime && (
+                            <div className="flex items-start gap-3">
+                              <span className="font-mono text-orange-300 min-w-[80px]">
+                                {new Date(currentGameJam.reception_datetime).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                              <div>
+                                <strong className="text-orange-100">🚪 Receção</strong>
+                                <p className="text-sm text-orange-300/70">Chegada e check-in dos participantes</p>
+                              </div>
+                            </div>
+                          )}
                           <div className="flex items-start gap-3">
                             <span className="font-mono text-orange-300 min-w-[80px]">
                               {new Date(currentGameJam.start_date).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}
@@ -312,15 +324,28 @@ export default function Home() {
                               <p className="text-sm text-orange-300/70">Começa a contagem das 45 horas</p>
                             </div>
                           </div>
-                          <div className="flex items-start gap-3">
-                            <span className="font-mono text-orange-300 min-w-[80px]">
-                              {new Date(new Date(currentGameJam.start_date).getTime() + 15*60000).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}
-                            </span>
-                            <div>
-                              <strong className="text-orange-100">Divulgação do tema</strong>
-                              <p className="text-sm text-orange-300/70">Tema revelado aos participantes</p>
+                          {/* Theme Announcement - Use theme_announcement_datetime if available */}
+                          {currentGameJam.theme_announcement_datetime ? (
+                            <div className="flex items-start gap-3">
+                              <span className="font-mono text-orange-300 min-w-[80px]">
+                                {new Date(currentGameJam.theme_announcement_datetime).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                              <div>
+                                <strong className="text-orange-100">🎨 Divulgação do tema</strong>
+                                <p className="text-sm text-orange-300/70">Tema revelado aos participantes</p>
+                              </div>
                             </div>
-                          </div>
+                          ) : (
+                            <div className="flex items-start gap-3">
+                              <span className="font-mono text-orange-300 min-w-[80px]">
+                                {new Date(new Date(currentGameJam.start_date).getTime() + 15*60000).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                              <div>
+                                <strong className="text-orange-100">🎨 Divulgação do tema</strong>
+                                <p className="text-sm text-orange-300/70">Tema revelado aos participantes</p>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
 
@@ -367,15 +392,28 @@ export default function Home() {
                               <p className="text-sm text-orange-300/70">Término das 45 horas</p>
                             </div>
                           </div>
-                          <div className="flex items-start gap-3">
-                            <span className="font-mono text-orange-300 min-w-[80px]">
-                              {new Date(currentGameJam.end_date).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}+
-                            </span>
-                            <div>
-                              <strong className="text-orange-100">🏆 Avaliação</strong>
-                              <p className="text-sm text-orange-300/70">Avaliação a cargo do júri</p>
+                          {/* Awards Ceremony - Use awards_ceremony_datetime if available */}
+                          {currentGameJam.awards_ceremony_datetime ? (
+                            <div className="flex items-start gap-3">
+                              <span className="font-mono text-orange-300 min-w-[80px]">
+                                {new Date(currentGameJam.awards_ceremony_datetime).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                              <div>
+                                <strong className="text-orange-100">🏆 Cerimónia de Entrega de Prémios</strong>
+                                <p className="text-sm text-orange-300/70">Anúncio dos vencedores e entrega de prémios</p>
+                              </div>
                             </div>
-                          </div>
+                          ) : (
+                            <div className="flex items-start gap-3">
+                              <span className="font-mono text-orange-300 min-w-[80px]">
+                                {new Date(currentGameJam.end_date).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}+
+                              </span>
+                              <div>
+                                <strong className="text-orange-100">🏆 Cerimónia de Entrega de Prémios</strong>
+                                <p className="text-sm text-orange-300/70">Anúncio dos vencedores e entrega de prémios</p>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </>
