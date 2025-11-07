@@ -18,6 +18,10 @@ class GameJam {
       introduction = 'Uma game jam onde estudantes de desenvolvimento de jogos e entusiastas se juntam para criar experiências únicas em 45 horas. É um evento presencial no IPMAIA com mentores disponíveis, workshops, e muita colaboração. Todos os níveis de experiência são bem-vindos!',
       prizes_content = null,
       schedule_content = null,
+      // Schedule fields
+      reception_datetime = null,
+      theme_announcement_datetime = null,
+      awards_ceremony_datetime = null,
       // Toggle fields
       show_theme = true,
       show_description = true,
@@ -40,12 +44,13 @@ class GameJam {
         registration_start_date, registration_end_date, registration_url,
         rules_pdf_url, is_active, banner_image_url,
         introduction, prizes_content, schedule_content,
+        reception_datetime, theme_announcement_datetime, awards_ceremony_datetime,
         show_theme, show_description, show_start_date, show_end_date,
         date_fallback, show_registration_dates, registration_date_fallback,
         show_registration_url, show_rules_pdf_url, show_banner_image,
         banner_fallback, custom_fields, custom_fields_visibility,
         created_at, updated_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, NOW(), NOW())
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, NOW(), NOW())
       RETURNING *
     `;
 
@@ -54,6 +59,7 @@ class GameJam {
       registration_start_date, registration_end_date, registration_url,
       rules_pdf_url, is_active, banner_image_url,
       introduction, prizes_content, schedule_content,
+      reception_datetime, theme_announcement_datetime, awards_ceremony_datetime,
       show_theme, show_description, show_start_date, show_end_date,
       date_fallback, show_registration_dates, registration_date_fallback,
       show_registration_url, show_rules_pdf_url, show_banner_image,

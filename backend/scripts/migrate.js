@@ -52,6 +52,10 @@ async function createTables() {
         introduction TEXT DEFAULT 'Uma game jam onde estudantes de desenvolvimento de jogos e entusiastas se juntam para criar experiências únicas em 45 horas. É um evento presencial no IPMAIA com mentores disponíveis, workshops, e muita colaboração. Todos os níveis de experiência são bem-vindos!',
         prizes_content TEXT,
         schedule_content TEXT,
+        -- Schedule datetime fields
+        reception_datetime TIMESTAMP,
+        theme_announcement_datetime TIMESTAMP,
+        awards_ceremony_datetime TIMESTAMP,
         -- Toggle fields for visibility control
         show_theme BOOLEAN DEFAULT true,
         show_description BOOLEAN DEFAULT true,
