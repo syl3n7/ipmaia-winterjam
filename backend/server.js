@@ -55,6 +55,7 @@ app.use(helmet({
       connectSrc: ["'self'", "https://cloudflareinsights.com"],
     },
   },
+  crossOriginResourcePolicy: { policy: "cross-origin" }, // Allow cross-origin images
 }));
 
 // Rate limiting
