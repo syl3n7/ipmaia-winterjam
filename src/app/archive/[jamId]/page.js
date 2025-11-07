@@ -232,7 +232,7 @@ export default function GameJamArchivePage({ params }) {
         {/* Hero Section with blurred background */}
         <div className="mb-16 text-center space-y-6 bg-black/40 backdrop-blur-md rounded-2xl p-8 md:p-12 shadow-2xl border border-white/10">
           <h1 className="text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-300 to-orange-500">
-            {jamData.name}
+            {jamData.name === 'WinterJam 2025' ? '1ª edição WinterJam 2025' : jamData.name}
           </h1>
           
           <div className="flex flex-col items-center justify-center space-y-4">
