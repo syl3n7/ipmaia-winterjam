@@ -46,8 +46,11 @@ export default function Page() {
       
       <div className="relative z-10 py-8 px-4">
         <div className="max-w-4xl mx-auto">
-          {/* Blurred container for better readability */}
-          <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-white/20 p-6 md:p-8">
+          {/* Ice effect container - WinterJam themed */}
+          <div className="bg-gradient-to-br from-blue-50/80 via-cyan-50/70 to-blue-100/80 backdrop-blur-xl rounded-2xl shadow-2xl border-2 border-cyan-200/60 p-6 md:p-8"
+               style={{
+                 boxShadow: '0 8px 32px rgba(59, 130, 246, 0.15), inset 0 2px 4px rgba(255, 255, 255, 0.8), 0 0 40px rgba(59, 130, 246, 0.1)'
+               }}>
             {/* Compact Header */}
             <div className="mb-8">
               <div className="flex flex-col gap-4 pb-6 border-b-2 border-gray-200">

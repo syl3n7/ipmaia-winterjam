@@ -33,6 +33,7 @@ const MainNavbar = () => {
     ? "bg-black/40 backdrop-blur-md border-orange-900/50 shadow-xl"
     : "bg-black/40 backdrop-blur-md border-white/20 shadow-xl";
 
+
   // Fetch game jams from backend API
   useEffect(() => {
     const fetchGameJams = async () => {
