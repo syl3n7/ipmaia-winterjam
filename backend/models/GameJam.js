@@ -117,7 +117,8 @@ class GameJam {
     // Date field names that should convert empty strings to null
     const dateFields = [
       'start_date', 'end_date', 
-      'registration_start_date', 'registration_end_date'
+      'registration_start_date', 'registration_end_date',
+      'reception_datetime', 'theme_announcement_datetime', 'awards_ceremony_datetime'
     ];
 
     Object.keys(data).forEach(key => {
