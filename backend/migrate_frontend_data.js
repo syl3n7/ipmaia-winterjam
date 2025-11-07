@@ -1,6 +1,6 @@
 require('dotenv').config();
 const { pool } = require('./config/database');
-const { createTables } = require('./scripts/migrate');
+// Note: Base tables should already exist from smart-migrate system
 
 // Frontend data to import
 const frontendData = {
@@ -238,9 +238,8 @@ async function migrateFromFrontend() {
     try {
         console.log('🚀 Starting migration from frontend data...');
         
-        // First create tables if they don't exist
-        console.log('🗄️ Creating database tables...');
-        await createTables();
+        // Tables should already exist from smart-migrate system
+        console.log('🗄️ Database tables should already exist from migrations');
         
         // Clear existing data first
         console.log('🗑️ Clearing existing data...');
