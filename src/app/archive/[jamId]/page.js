@@ -229,8 +229,8 @@ export default function GameJamArchivePage({ params }) {
       />
       
       <div className="relative z-10 max-w-7xl mx-auto px-4 py-16">
-        {/* Hero Section */}
-        <div className="mb-16 text-center space-y-6">
+        {/* Hero Section with blurred background */}
+        <div className="mb-16 text-center space-y-6 bg-black/40 backdrop-blur-md rounded-2xl p-8 md:p-12 shadow-2xl border border-white/10">
           <h1 className="text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-orange-300 to-orange-500">
             {jamData.name}
           </h1>
@@ -250,7 +250,7 @@ export default function GameJamArchivePage({ params }) {
             </div>
             
             {jamData.description && (
-              <p className="max-w-2xl mx-auto text-orange-100/80 text-lg">
+              <p className="max-w-2xl mx-auto text-orange-100/90 text-lg leading-relaxed">
                 {jamData.description}
               </p>
             )}
