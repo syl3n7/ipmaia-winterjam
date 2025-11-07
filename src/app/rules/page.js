@@ -287,6 +287,13 @@ export default function Page() {
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
+                    <span className="font-mono text-gray-700 font-semibold min-w-[80px]">16:00</span>
+                    <div>
+                      <strong>📊 Avaliação dos Projetos</strong>
+                      <p className="text-sm text-gray-600">Júri avalia os jogos submetidos</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
                     <span className="font-mono text-gray-700 font-semibold min-w-[80px]">16:30</span>
                     <div>
                       <strong>🏆 Cerimónia de Entrega de Prémios</strong>
