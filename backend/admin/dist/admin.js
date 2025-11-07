@@ -1031,12 +1031,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
-
-
         // Form Handlers
-        document.addEventListener('DOMContentLoaded', function() {
-            // Game Jam Form Handler
-            document.getElementById('gamejam-form-element').addEventListener('submit', async function(e) {
+        // Game Jam Form Handler
+        document.getElementById('gamejam-form-element').addEventListener('submit', async function(e) {
                 e.preventDefault();
                 
                 const formData = new FormData(this);
@@ -1383,7 +1380,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
             
-            // Initial load - checkAuthentication handles showing dashboard and loading data
-            console.log('🎬 Initializing admin dashboard...');
-            checkAuthentication();
-        });
+        // Initial load - checkAuthentication handles showing dashboard and loading data
+        console.log('🎬 Initializing admin dashboard...');
+        checkAuthentication();
+});
