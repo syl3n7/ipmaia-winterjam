@@ -156,11 +156,26 @@
                         </div>
                         
                         <div style="background: #f8f9ff; border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; margin: 20px 0;">
-                            <h5 style="color: #667eea; margin-bottom: 10px;">Preview: Schedule Section</h5>
-                            <p style="color: #6c757d; font-size: 0.9rem; margin-bottom: 10px;">This section is auto-generated from the Start Date and End Date fields above. It will automatically show:</p>
-                            <div style="font-size: 0.85rem; color: #495057;">
-                                <strong>Day 1 (Start Date):</strong> Event start time + Theme reveal (15 min later)<br>
-                                <strong>Final Day (End Date):</strong> Event end time + Evaluation
+                            <h5 style="color: #667eea; margin-bottom: 15px;">📅 Event Schedule Times</h5>
+                            <p style="color: #6c757d; font-size: 0.9rem; margin-bottom: 15px;">Optional specific times for key schedule events. Leave blank to use default times from Start/End dates.</p>
+                            
+                            <div class="grid">
+                                <div class="form-group">
+                                    <label for="jam-reception">🚪 Reception Time</label>
+                                    <input type="datetime-local" id="jam-reception" name="reception_datetime">
+                                    <small>Example: 17:00 Receção</small>
+                                </div>
+                                <div class="form-group">
+                                    <label for="jam-theme-announcement">🎨 Theme Announcement Time</label>
+                                    <input type="datetime-local" id="jam-theme-announcement" name="theme_announcement_datetime">
+                                    <small>Example: 17:30 Anúncio do Tema</small>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="jam-awards">🏆 Awards Ceremony Time</label>
+                                <input type="datetime-local" id="jam-awards" name="awards_ceremony_datetime">
+                                <small>Example: 16:30 Cerimónia de Entrega de Prémios</small>
                             </div>
                         </div>
                     </div>
