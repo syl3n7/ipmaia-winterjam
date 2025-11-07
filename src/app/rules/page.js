@@ -3,13 +3,14 @@
 import React, { useState, useEffect } from 'react';
 import { Download, FileText } from 'lucide-react';
 import Background from "../../components/Background";
+import { useBackground } from "../../contexts/BackgroundContext";
 
 export default function Page() {
   const [pdfUrl, setPdfUrl] = useState('/WinterJam_Rulebook.pdf');
-  const [bannerImage, setBannerImage] = useState('/images/IPMAIA_SiteBanner.png');
+  const { bannerImage } = useBackground();
 
   useEffect(() => {
-    // Fetch PDF URL and background image from API
+    // Fetch PDF URL from API
     const fetchData = async () => {
       try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
@@ -20,10 +21,6 @@ export default function Page() {
         if (pdfData.pdfUrl) {
           setPdfUrl(pdfData.pdfUrl);
         }
-        
-        // Fetch background image
-        const bgImageUrl = `${apiUrl}/frontpage/background`;
-        setBannerImage(bgImageUrl);
       } catch (error) {
         console.error('Error fetching data:', error);
         // Keep default values on error

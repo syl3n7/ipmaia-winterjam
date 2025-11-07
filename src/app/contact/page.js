@@ -1,26 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Mail, Instagram, Music } from 'lucide-react';
 import Background from "../../components/Background";
+import { useBackground } from "../../contexts/BackgroundContext";
 
 export default function ContactPage() {
-  const [bannerImage, setBannerImage] = useState('/images/IPMAIA_SiteBanner.png');
-
-  React.useEffect(() => {
-    // Fetch background image
-    const fetchBackground = async () => {
-      try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
-        const bgImageUrl = `${apiUrl}/frontpage/background`;
-        setBannerImage(bgImageUrl);
-      } catch (error) {
-        console.error('Error fetching background:', error);
-      }
-    };
-    
-    fetchBackground();
-  }, []);
+  const { bannerImage } = useBackground();
 
   return (
     <div className="min-h-screen">
@@ -36,11 +22,14 @@ export default function ContactPage() {
       <div className="relative z-10 py-12 px-4">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
-          <div className="text-center mb-12">
-            <h1 className="text-5xl md:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-300 to-orange-500 mb-4">
+          <div className="text-center mb-12 bg-gradient-to-br from-blue-50/90 via-cyan-50/80 to-blue-100/90 backdrop-blur-xl rounded-2xl shadow-2xl border-2 border-cyan-200/60 p-8"
+               style={{
+                 boxShadow: '0 8px 32px rgba(59, 130, 246, 0.15), inset 0 2px 4px rgba(255, 255, 255, 0.8), 0 0 40px rgba(59, 130, 246, 0.1)'
+               }}>
+            <h1 className="text-5xl md:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-orange-600 mb-4">
               Contacta-nos
             </h1>
-            <p className="text-xl text-white/90">
+            <p className="text-xl text-gray-800 font-medium">
               Encontra-nos nas redes sociais ou envia-nos um email
             </p>
           </div>

@@ -1,29 +1,15 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { ExternalLink } from "lucide-react";
 import Background from "./Background";
+import { useBackground } from "../contexts/BackgroundContext";
 
 const GOOGLE_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSf1hArF0viK70xle_THiDwf6pEgPpKRW4G2YLJD-VlJtXD03A/viewform?embedded=true";
 
 const ResponsiveForm = () => {
   const [iframeError, setIframeError] = useState(false);
-  const [bannerImage, setBannerImage] = useState('/images/IPMAIA_SiteBanner.png');
-
-  useEffect(() => {
-    // Fetch background image
-    const fetchBackground = async () => {
-      try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
-        const bgImageUrl = `${apiUrl}/frontpage/background`;
-        setBannerImage(bgImageUrl);
-      } catch (error) {
-        console.error('Error fetching background:', error);
-      }
-    };
-    
-    fetchBackground();
-  }, []);
+  const { bannerImage } = useBackground();
 
   const handleIframeError = () => {
     setIframeError(true);
