@@ -187,8 +187,13 @@ router.post('/admin/settings/reset', requireAdmin, async (req, res) => {
 
 // Upload background image (admin only)
 router.post('/admin/upload-background', requireAdmin, uploadLimiter, upload.single('image'), async (req, res) => {
+  console.log('📤 Upload background endpoint hit');
+  console.log('👤 User session:', req.session?.userId, req.session?.email);
+  console.log('📁 File received:', req.file ? 'Yes' : 'No');
+  
   try {
     if (!req.file) {
+      console.error('❌ No file in request');
       return res.status(400).json({ 
         error: 'No file uploaded',
         message: 'Nenhum ficheiro foi enviado'
@@ -236,10 +241,16 @@ router.post('/admin/upload-background', requireAdmin, uploadLimiter, upload.sing
       size: req.file.size
     });
   } catch (error) {
-    console.error('Error uploading background image:', error);
+    console.error('❌ Error uploading background image:', error);
+    console.error('Error details:', {
+      name: error.name,
+      message: error.message,
+      stack: error.stack
+    });
     res.status(500).json({ 
       error: 'Failed to upload background image',
-      message: 'Erro ao carregar imagem'
+      message: 'Erro ao carregar imagem',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });
