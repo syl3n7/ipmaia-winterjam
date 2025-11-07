@@ -99,7 +99,9 @@ app.use(session({
 // CSRF Protection middleware - skip for admin API routes
 app.use((req, res, next) => {
   // Skip CSRF for admin API routes (already protected by session auth)
-  if (req.path.startsWith('/api/admin') || req.path.startsWith('/api/rules/admin')) {
+  if (req.path.startsWith('/api/admin') || 
+      req.path.startsWith('/api/rules/admin') || 
+      req.path.startsWith('/api/frontpage/admin')) {
     return next();
   }
   // Apply CSRF for other routes
