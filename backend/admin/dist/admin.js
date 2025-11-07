@@ -358,7 +358,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log('📊 Evaluation field found:', evaluationField, 'Setting to:', evaluationValue);
                 if (evaluationField) evaluationField.value = evaluationValue;
                 
-                const awardsCeremonyField = document.getElementById('jam-awards-ceremony');
+                const awardsCeremonyField = document.getElementById('jam-awards');
                 const awardsCeremonyValue = jam.awards_ceremony_datetime ? new Date(jam.awards_ceremony_datetime).toISOString().slice(0, 16) : '';
                 console.log('🏆 Awards ceremony field found:', awardsCeremonyField, 'Setting to:', awardsCeremonyValue);
                 if (awardsCeremonyField) awardsCeremonyField.value = awardsCeremonyValue;
