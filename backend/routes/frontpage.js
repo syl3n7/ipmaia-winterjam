@@ -216,10 +216,9 @@ router.post('/admin/upload-background', requireAdmin, uploadLimiter, upload.sing
       await fs.unlink(oldFilePath).catch(console.error);
     }
 
-    // Construct the API URL for downloading
-    const protocol = req.protocol || 'https';
-    const host = req.get('host') || 'ipmaia-winterjam.pt';
-    const imageUrl = `${protocol}://${host}/api/frontpage/background`;
+    // Store relative path instead of full URL to avoid CORS issues
+    // Frontend will construct the full URL based on its own domain
+    const imageUrl = '/api/frontpage/background';
 
     // Update database with new filename and URL
     await pool.query(`
