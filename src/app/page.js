@@ -4,10 +4,18 @@ import Link from 'next/link';
 import Background from '../components/Background';
 import { Clock, ArrowRight, Calendar, Target, Trophy, Users, Info, Lightbulb } from 'lucide-react';
 
-// Helper function to convert line breaks to HTML
+// Helper function to convert line breaks to HTML (with HTML escaping for XSS protection)
 const nl2br = (text) => {
   if (!text) return '';
-  return text.replace(/\n/g, '<br />');
+  // Escape HTML special characters to prevent XSS
+  const escaped = text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+  // Convert newlines to <br /> tags
+  return escaped.replace(/\n/g, '<br />');
 };
 
 export default function Home() {
