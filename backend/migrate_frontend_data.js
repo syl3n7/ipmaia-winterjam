@@ -14,7 +14,7 @@ const frontendData = {
       date: "14-16 Fevereiro 2025",
       participants: 32,
       teams: 8,
-      banner: "/images/IPMAIA_SiteBanner.png",
+      banner: null, // Only use API images, no hardcoded banner
       games: [
         {
           id: 1,
@@ -288,7 +288,7 @@ async function migrateFromFrontend() {
                     null,                           // registration_url
                     '/WinterJam_Rulebook.pdf',      // rules_pdf_url
                     false,                          // is_active (set to false by default)
-                    jamData.banner                  // banner_image_url
+                    null                            // Only use API images, no hardcoded banner
                 ];
                 
                 const gameJamResult = await pool.query(gameJamQuery, gameJamValues);

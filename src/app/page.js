@@ -41,7 +41,7 @@ export default function Home() {
       return {
         hero_title: 'IPMAIA WinterJam 2025',
         hero_description: 'Uma game jam onde estudantes de desenvolvimento de jogos criam experiências únicas em 45 horas.',
-        hero_background_image: '/images/IPMAIA_SiteBanner.png',
+        hero_background_image: null, // Only use API images, no fallback to old image
         show_event_dates: true,
         show_theme: true,
         show_required_object: true,
@@ -157,7 +157,7 @@ export default function Home() {
   return (
     <main className="min-h-screen">
       <Background
-        imageUrl={frontPageSettings.hero_background_image || "/images/IPMAIA_SiteBanner.png"}
+        imageUrl={frontPageSettings.hero_background_image}
         fallbackContent={
           <div className="text-center">
             <img 
