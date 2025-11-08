@@ -94,39 +94,13 @@ export default function Home() {
     }
   }, []);
 
-  // Fetch current time (optimized for production)
-  const fetchCurrentTime = async () => {
-    // Don't use external APIs in development to avoid unnecessary errors
-    if (process.env.NODE_ENV === 'development') {
-      return new Date();
-    }
-
-    // In production, use a faster, more reliable time source
-    try {
-      // Try a fast, reliable time API first
-      const response = await fetch('https://worldtimeapi.org/api/timezone/Europe/Lisbon', {
-        signal: AbortSignal.timeout(3000), // 3 second timeout
-        cache: 'no-store'
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        return new Date(data.datetime);
-      }
-    } catch (error) {
-      // Fast time API failed, using local time
-    }
-
-    // Fallback to local system time if external APIs are slow/unavailable
-    return new Date();
-  };
-
   useEffect(() => {
     const checkEventStatus = async () => {
       if (!isLoading) return; // Skip if we're already using cached data
       
       try {
-        const now = await fetchCurrentTime();
+        // Use local browser time
+        const now = new Date();
         
         // Fetch front page settings and current game jam data in parallel
         const [settings, gameJam] = await Promise.all([
