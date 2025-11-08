@@ -33,7 +33,6 @@ class ApiClient {
 
       return await response.json();
     } catch (error) {
-      console.error(`API Request failed: ${endpoint}`, error);
       throw error;
     }
   }
@@ -80,7 +79,6 @@ class ApiClient {
     try {
       return await this.getGameJams();
     } catch (error) {
-      console.warn('Backend not available, using static data:', error.message);
       // Return static data from your current gameJamData.js
       const { gameJamData } = await import('../data/gameJamData');
       return [gameJamData[2025]?.winter].filter(Boolean);
@@ -91,7 +89,6 @@ class ApiClient {
     try {
       return await this.getActiveGameJam();
     } catch (error) {
-      console.warn('Backend not available, using static data:', error.message);
       const { gameJamData } = await import('../data/gameJamData');
       return gameJamData[2025]?.winter || null;
     }

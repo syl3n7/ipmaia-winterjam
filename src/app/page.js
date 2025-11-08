@@ -27,11 +27,8 @@ export default function Home() {
       if (!response.ok) throw new Error('Failed to fetch front page settings');
       const settings = await response.json();
       setFrontPageSettings(settings);
-      console.log('Front page settings loaded:', settings);
-      console.log('Hero background image:', settings.hero_background_image);
       return settings;
     } catch (error) {
-      console.error('Error fetching front page settings:', error);
       // Return fallback settings if API fails
       return {
         hero_title: 'IPMAIA WinterJam 2025',
@@ -60,7 +57,6 @@ export default function Home() {
       setCurrentGameJam(gameJam);
       return gameJam;
     } catch (error) {
-      console.error('Error fetching current game jam:', error);
       return null;
     }
   };
@@ -81,11 +77,11 @@ export default function Home() {
               setIsLoading(false); // Use cached status without waiting for API
             }
           } catch (error) {
-            console.error('Error parsing cached event status:', error);
+            // Error parsing cached event status
           }
         }
       } catch (error) {
-        console.error('Error accessing localStorage:', error);
+        // Error accessing localStorage
       }
     }
   }, []);
@@ -94,7 +90,6 @@ export default function Home() {
   const fetchCurrentTime = async () => {
     // Don't use external APIs in development to avoid unnecessary errors
     if (process.env.NODE_ENV === 'development') {
-      console.log('Using local time in development mode');
       return new Date();
     }
 
@@ -111,11 +106,10 @@ export default function Home() {
         return new Date(data.datetime);
       }
     } catch (error) {
-      console.warn('Fast time API failed, using local time:', error);
+      // Fast time API failed, using local time
     }
 
     // Fallback to local system time if external APIs are slow/unavailable
-    console.log('Using local system time as fallback');
     return new Date();
   };
 
@@ -140,7 +134,6 @@ export default function Home() {
           eventEnd = new Date(gameJam.end_date);
         } else {
           // Fallback to hardcoded dates if backend data unavailable
-          console.warn('Using fallback event dates');
           eventStart = new Date('2025-02-14T17:00:00Z');
           eventEnd = new Date('2025-02-16T14:00:00Z');
         }
@@ -157,7 +150,7 @@ export default function Home() {
               timestamp: Date.now()
             }));
           } catch (error) {
-            console.warn('Could not store event status in localStorage:', error);
+            // Could not store event status in localStorage
           }
         }
         
@@ -165,7 +158,6 @@ export default function Home() {
         setHasEventStarted(hasStarted);
         setHasEventEnded(hasEnded);
       } catch (error) {
-        console.error('Failed to check event status:', error);
         setFetchError(true);
       } finally {
         setIsLoading(false);
