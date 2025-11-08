@@ -5,7 +5,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 const BackgroundContext = createContext();
 
 export function BackgroundProvider({ children }) {
-  const [bannerImage, setBannerImage] = useState('/images/IPMAIA_SiteBanner.png');
+  const [bannerImage, setBannerImage] = useState(null); // Only use API images, no default
   const [isLoading, setIsLoading] = useState(true);
   const [isLoaded, setIsLoaded] = useState(false);
 

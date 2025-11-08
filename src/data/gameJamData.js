@@ -9,7 +9,7 @@ export const gameJams = {
       date: "14-16 Fevereiro 2025",
       participants: 32,
       teams: 8,
-      banner: "/images/IPMAIA_SiteBanner.png",
+      banner: null, // Only use API images, no hardcoded banner
       games: [
         {
           id: 1,

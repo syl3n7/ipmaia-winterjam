@@ -13,7 +13,7 @@ export default function GameJamArchivePage({ params }) {
   const [selectedGame, setSelectedGame] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [bannerImage, setBannerImage] = useState('/images/IPMAIA_SiteBanner.png');
+  const [bannerImage, setBannerImage] = useState(null); // Only use API images, no default
   
   // Fetch jam data and games
   useEffect(() => {
