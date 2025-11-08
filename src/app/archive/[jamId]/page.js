@@ -46,7 +46,7 @@ export default function GameJamArchivePage({ params }) {
             try {
               tags = typeof game.tags === 'string' ? JSON.parse(game.tags) : game.tags || [];
             } catch (e) {
-              console.warn('Error parsing tags for game:', game.id);
+              // Error parsing tags
             }
             
             // Determine ranking from tags
@@ -62,7 +62,7 @@ export default function GameJamArchivePage({ params }) {
                 ? JSON.parse(game.team_members) 
                 : game.team_members || [];
             } catch (e) {
-              console.warn('Error parsing team_members for game:', game.id);
+              // Error parsing team_members
             }
             
             // Parse screenshot URLs
@@ -72,7 +72,7 @@ export default function GameJamArchivePage({ params }) {
                 ? JSON.parse(game.screenshot_urls)
                 : game.screenshot_urls || [];
             } catch (e) {
-              console.warn('Error parsing screenshot_urls for game:', game.id);
+              // Error parsing screenshot_urls
             }
             
             return {
@@ -90,7 +90,6 @@ export default function GameJamArchivePage({ params }) {
         
         setError(null);
       } catch (err) {
-        console.error('Error fetching archive data:', err);
         setError(err.message);
       } finally {
         setLoading(false);

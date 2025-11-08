@@ -19,7 +19,7 @@ export function BackgroundProvider({ children }) {
           setBannerImage(bgImageUrl);
           setIsLoaded(true);
         } catch (error) {
-          console.error('Error fetching background:', error);
+          // Error fetching background
         } finally {
           setIsLoading(false);
         }

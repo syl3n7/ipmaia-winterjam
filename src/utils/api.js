@@ -81,7 +81,7 @@ export const processGameData = (game) => {
       ? JSON.parse(game.team_members) 
       : game.team_members || [];
   } catch (e) {
-    console.warn('Error parsing team_members for game:', game.id);
+    // Error parsing team_members
   }
   
   try {
@@ -89,7 +89,7 @@ export const processGameData = (game) => {
       ? JSON.parse(game.tags) 
       : game.tags || [];
   } catch (e) {
-    console.warn('Error parsing tags for game:', game.id);
+    // Error parsing tags
   }
   
   // Determine ranking from tags

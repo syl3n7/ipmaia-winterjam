@@ -56,7 +56,6 @@ const MainNavbar = () => {
         
         setArchiveItems(archiveItemsFromAPI);
       } catch (error) {
-        console.error('Error fetching game jams for navbar:', error);
         // Set empty array on error
         setArchiveItems([]);
       } finally {

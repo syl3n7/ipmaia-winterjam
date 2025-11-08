@@ -28,7 +28,6 @@ export default function Page() {
         const gameJam = await gameJamApi.getCurrent();
         setCurrentGameJam(gameJam);
       } catch (error) {
-        console.error('Error fetching data:', error);
         // Keep default values on error
       }
     };
