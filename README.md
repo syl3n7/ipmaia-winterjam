@@ -260,105 +260,157 @@ ipmaia-winterjam/
 
 ## 🚢 Production Deployment
 
-### Quick Production Setup
+### Docker Production Setup (Recommended)
+
+This setup runs everything in Docker containers, including Nginx as a reverse proxy, so only ports 80 and 443 are exposed on your host.
+
+#### Prerequisites
+- Ubuntu 22.04 LTS or similar Linux distribution
+- Docker and Docker Compose installed
+- Git for cloning the repository
+
+#### Quick Docker Deployment
 ```bash
 # 1. Clone repository
 git clone https://github.com/syl3n7/ipmaia-winterjam.git
 cd ipmaia-winterjam
 
 # 2. Configure environment
-cp .env.example .env
-nano .env  # Edit with your production values
+cp .env.production.example .env.production
+nano .env.production  # Edit with your production values
 
-# 3. Deploy with auto-migration
-docker-compose up -d
+# 3. Set up SSL certificates
+./setup-ssl.sh  # Choose option 1 for Let's Encrypt
 
-# 4. Verify deployment
-docker-compose ps
-docker-compose logs backend | grep "Migration completed"
+# 4. Deploy with Docker
+./deploy-docker.sh
+
+# 5. Verify deployment
+docker-compose -f docker-compose.prod.yml ps
+docker-compose -f docker-compose.prod.yml logs nginx
 ```
 
-### SSL Configuration (Production)
-For HTTPS setup with reverse proxy (Nginx/Traefik/Zoraxy):
+#### Domain Configuration
+Point both domains to your server's IP address:
+- `ipmaia-winterjam.pt` → Your_Server_IP
+- `api.ipmaia-winterjam.pt` → Your_Server_IP
+
+#### SSL Certificate Options
+
+**Option 1: Let's Encrypt (Recommended)**
+```bash
+./setup-ssl.sh
+# Choose option 1 - automatic SSL with Let's Encrypt
+```
+
+**Option 2: Existing Certificates**
+```bash
+./setup-ssl.sh
+# Choose option 2, then place certificates in ssl/ directory:
+# - ssl/fullchain.pem (certificate chain)
+# - ssl/privkey.pem (private key)
+```
+
+**Option 3: Self-Signed (Development Only)**
+```bash
+./setup-ssl.sh
+# Choose option 3 for testing purposes
+```
+
+### Docker Services Architecture
+
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   PostgreSQL    │◄──►│   Backend API   │◄──►│   Frontend      │
+│   Database      │    │   (Port 3001)   │    │   (Port 3000)   │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+         ▲                       ▲                       ▲
+         │                       │                       │
+         └───────────────────────┼───────────────────────┘
+                                 ▼
+                    ┌─────────────────┐
+                    │   Nginx Proxy   │
+                    │ (Ports 80,443)  │
+                    └─────────────────┘
+```
+
+### Environment Configuration
+
+Create `.env.production` with your production values:
 
 ```bash
-# Update environment for HTTPS
-FRONTEND_URL=https://your-domain.com
-NEXT_PUBLIC_API_URL=https://api.your-domain.com/api
-OIDC_REDIRECT_URI=https://api.your-domain.com/api/auth/oidc/callback
+# Database
+DB_NAME=winterjam
+DB_USER=postgres
+DB_PASSWORD=your-secure-db-password
+
+# Security (Generate strong random strings)
+JWT_SECRET=your-256-bit-jwt-secret
+SESSION_SECRET=your-256-bit-session-secret
+
+# URLs
+FRONTEND_URL=https://ipmaia-winterjam.pt
+NEXT_PUBLIC_API_URL=https://api.ipmaia-winterjam.pt/api
+
+# OIDC (PocketID)
+OIDC_ISSUER_URL=https://your-pocketid-domain.com
+OIDC_CLIENT_ID=your-client-id
+OIDC_CLIENT_SECRET=your-client-secret
+OIDC_REDIRECT_URI=https://api.ipmaia-winterjam.pt/api/auth/oidc/callback
+OIDC_ADMIN_EMAIL=admin@ipmaia-winterjam.pt
+```
+
+### SSL Certificate Renewal
+
+**Let's Encrypt certificates auto-renew** via cron job (set up automatically).
+
+**Manual renewal:**
+```bash
+# Stop nginx temporarily
+docker-compose -f docker-compose.prod.yml down nginx
+
+# Renew certificates
+sudo certbot renew
+
+# Copy renewed certificates
+sudo cp /etc/letsencrypt/live/ipmaia-winterjam.pt/fullchain.pem ssl/
+sudo cp /etc/letsencrypt/live/ipmaia-winterjam.pt/privkey.pem ssl/
+sudo chown $(whoami):$(whoami) ssl/*.pem
+
+# Restart nginx
+docker-compose -f docker-compose.prod.yml up -d nginx
 ```
 
 ### Monitoring & Maintenance
+
 ```bash
 # Check service health
-docker-compose exec backend npm run health
+docker-compose -f docker-compose.prod.yml exec backend curl -f http://localhost:3001/health
 
 # View logs
-docker-compose logs -f
+docker-compose -f docker-compose.prod.yml logs -f
 
 # Database backup
-docker-compose exec db pg_dump -U postgres winterjam > backup.sql
+docker-compose -f docker-compose.prod.yml exec db pg_dump -U postgres winterjam > backup_$(date +%Y%m%d).sql
 
-# Manual migration (if needed)
-docker-compose exec backend npm run migrate
+# Update deployment
+git pull origin main
+docker-compose -f docker-compose.prod.yml up -d --build
+
+# Restart specific service
+docker-compose -f docker-compose.prod.yml restart frontend
+
+# Check resource usage
+docker stats
 ```
 
-## 🔍 Troubleshooting
+### Security Features
 
-### Common Issues
-
-**Backend won't start:**
-- Check database connection in logs
-- Verify environment variables
-- Ensure database is healthy: `docker-compose ps`
-
-**Migration fails:**
-- Check database connectivity
-- Run manual migration: `docker-compose exec backend npm run migrate`
-- Review migration logs for specific errors
-
-**OIDC authentication issues:**
-- Verify OIDC configuration in `.env`
-- Check PocketID application settings
-- Ensure redirect URI matches exactly
-- Review proxy headers if using reverse proxy
-
-**Frontend can't connect to API:**
-- Verify `NEXT_PUBLIC_API_URL` in `.env`
-- Check backend health: `curl http://localhost:3001/health`
-- Ensure services are on same Docker network
-
-**Game modals not opening:**
-- Check browser console for JavaScript errors
-- Verify game data is loading properly
-- Ensure modal state is updating correctly
-
-**Team members showing as "[object Object]":**
-- This was fixed in recent updates - team members now display properly
-- If issue persists, check database migration status
-
-**CSP blocking resources:**
-- Cloudflare Insights and other external scripts are now allowed
-- Check browser console for CSP violation messages
-- Update CSP directives in `backend/server.js` if needed
-
-**Sitemap not generating:**
-- Run `npm run build` to trigger next-sitemap
-- Check `next-sitemap.config.js` configuration
-- Verify `public/sitemap.xml` and `public/robots.txt` exist
-
-## 📞 Contact & Support
-
-- **Event Email**: gamejam.at.ipmaia@gmail.com
-- **IPMAIA Social**:
-  - Instagram: @ipmaiaoficial  
-  - Facebook: @ipmaiaoficial
-  - Website: https://ipmaia.pt
-- **Technical Issues**: Create an issue on GitHub
-
-## 📄 License
-
-This project is developed for IPMAIA's educational purposes. See the repository for specific licensing terms.
+- **Rate Limiting**: Different limits for frontend (30r/s), API (10r/s), and admin (5r/s)
+- **Security Headers**: X-Frame-Options, X-Content-Type-Options, X-XSS-Protection
+- **HTTPS Only**: HTTP automatically redirects to HTTPS
+- **Isolated Networks**: Docker containers communicate via private networks
+- **Minimal Exposed Ports**: Only 80 and 443 exposed on host
 
 ---
 
