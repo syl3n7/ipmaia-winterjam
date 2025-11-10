@@ -110,22 +110,50 @@ async function createBaseSchema() {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS games (
         id SERIAL PRIMARY KEY,
-        gamejam_id INTEGER REFERENCES game_jams(id) ON DELETE CASCADE,
+        game_jam_id INTEGER REFERENCES game_jams(id) ON DELETE CASCADE,
         title VARCHAR(255) NOT NULL,
         description TEXT,
         team_name VARCHAR(255),
-        team_members TEXT[],
-        itch_url TEXT,
-        screenshots TEXT[],
-        video_url TEXT,
+        team_members JSONB,
         github_url TEXT,
-        technologies TEXT[],
-        genre VARCHAR(100),
-        rating DECIMAL(3,2),
-        comments TEXT,
+        itch_url TEXT,
+        screenshot_urls JSONB,
+        tags JSONB,
+        is_featured BOOLEAN DEFAULT false,
+        thumbnail_url TEXT,
+        instructions TEXT,
+        lore TEXT,
+        ranking INTEGER,
+        show_title BOOLEAN DEFAULT true,
+        show_description BOOLEAN DEFAULT true,
+        show_team_name BOOLEAN DEFAULT true,
+        show_team_members BOOLEAN DEFAULT true,
+        show_github_url BOOLEAN DEFAULT true,
+        show_itch_url BOOLEAN DEFAULT true,
+        show_screenshots BOOLEAN DEFAULT true,
+        screenshot_fallback VARCHAR(255) DEFAULT 'placeholder',
+        show_tags BOOLEAN DEFAULT true,
+        show_thumbnail BOOLEAN DEFAULT true,
+        thumbnail_fallback VARCHAR(255) DEFAULT 'placeholder',
+        show_instructions BOOLEAN DEFAULT true,
+        show_lore BOOLEAN DEFAULT true,
+        show_ranking BOOLEAN DEFAULT true,
+        custom_fields JSONB DEFAULT '{}',
+        custom_fields_visibility JSONB DEFAULT '{}',
         created_at TIMESTAMP DEFAULT NOW(),
         updated_at TIMESTAMP DEFAULT NOW()
       );
+    `);
+
+    // Create user_sessions table (required for session storage)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS user_sessions (
+        sid VARCHAR NOT NULL COLLATE "default",
+        sess JSON NOT NULL,
+        expire TIMESTAMP(6) NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS IDX_user_sessions_expire ON user_sessions(expire);
+      ALTER TABLE user_sessions ADD CONSTRAINT user_sessions_pkey PRIMARY KEY (sid) NOT DEFERRABLE INITIALLY IMMEDIATE;
     `);
 
     console.log('✅ Base database schema created successfully!');
