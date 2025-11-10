@@ -32,7 +32,7 @@ chmod +x backend/scripts/*.js 2>/dev/null || true
 
 # Stop existing containers (if any)
 echo -e "${YELLOW}🛑 Stopping existing containers...${NC}"
-docker-compose -f docker-compose.prod.yml down --volumes --remove-orphans 2>/dev/null || true
+docker compose -f docker-compose.prod.yml down --volumes --remove-orphans 2>/dev/null || true
 
 # Remove old images (optional - uncomment to clean up)
 # echo -e "${YELLOW}🧹 Cleaning up old images...${NC}"
@@ -56,7 +56,7 @@ fi
 
 # Build and start services
 echo -e "${BLUE}🏗️  Building and starting services...${NC}"
-docker-compose -f docker-compose.prod.yml up -d --build
+docker compose -f docker-compose.prod.yml up -d --build
 
 # Wait for services to be healthy
 echo -e "${BLUE}⏳ Waiting for services to be ready...${NC}"
@@ -66,14 +66,14 @@ interval=10
 
 while [ $elapsed -lt $timeout ]; do
     # Check if all services are running
-    if docker-compose -f docker-compose.prod.yml ps | grep -q "Up"; then
+    if docker compose -f docker-compose.prod.yml ps | grep -q "Up"; then
         echo -e "${GREEN}✅ Services are starting up!${NC}"
 
         # Wait a bit more for full initialization
         sleep 20
 
         # Try to check backend health
-        if docker-compose -f docker-compose.prod.yml exec -T backend curl -f http://localhost:3001/health &>/dev/null; then
+        if docker compose -f docker-compose.prod.yml exec -T backend curl -f http://localhost:3001/health &>/dev/null; then
             echo -e "${GREEN}✅ Backend is healthy!${NC}"
             break
         fi
@@ -81,7 +81,7 @@ while [ $elapsed -lt $timeout ]; do
 
     if [ $((elapsed % 30)) -eq 0 ]; then
         echo -e "${YELLOW}⏳ Still waiting for services... (${elapsed}s/${timeout}s)${NC}"
-        docker-compose -f docker-compose.prod.yml ps
+        docker compose -f docker-compose.prod.yml ps
     fi
 
     sleep $interval
@@ -91,16 +91,16 @@ done
 if [ $elapsed -ge $timeout ]; then
     echo -e "${RED}❌ Timeout waiting for services to be ready${NC}"
     echo -e "${YELLOW}📋 Service status:${NC}"
-    docker-compose -f docker-compose.prod.yml ps
+    docker compose -f docker-compose.prod.yml ps
     echo -e "${YELLOW}📋 Recent logs:${NC}"
-    docker-compose -f docker-compose.prod.yml logs --tail=20
+    docker compose -f docker-compose.prod.yml logs --tail=20
     exit 1
 fi
 
 # Run database migrations
 echo -e "${BLUE}🗄️  Running database migrations...${NC}"
 sleep 5  # Give DB more time to be ready
-docker-compose -f docker-compose.prod.yml exec -T backend npm run migrate 2>/dev/null || {
+docker compose -f docker-compose.prod.yml exec -T backend npm run migrate 2>/dev/null || {
     echo -e "${YELLOW}⚠️  Migration script not available, database should auto-initialize${NC}"
 }
 
@@ -109,7 +109,7 @@ echo ""
 echo -e "${GREEN}🎉 Deployment completed successfully!${NC}"
 echo ""
 echo -e "${BLUE}📊 Service Status:${NC}"
-docker-compose -f docker-compose.prod.yml ps
+docker compose -f docker-compose.prod.yml ps
 
 echo ""
 echo -e "${GREEN}🌐 Your application is now running at:${NC}"
@@ -126,17 +126,17 @@ fi
 
 echo ""
 echo -e "${YELLOW}📝 Useful commands:${NC}"
-echo "   📋 View logs: docker-compose -f docker-compose.prod.yml logs -f [service-name]"
-echo "   🔄 Restart: docker-compose -f docker-compose.prod.yml restart [service-name]"
-echo "   🛑 Stop all: docker-compose -f docker-compose.prod.yml down"
-echo "   🗄️  Database shell: docker-compose -f docker-compose.prod.yml exec db psql -U postgres winterjam"
+echo "   📋 View logs: docker compose -f docker-compose.prod.yml logs -f [service-name]"
+echo "   🔄 Restart: docker compose -f docker-compose.prod.yml restart [service-name]"
+echo "   🛑 Stop all: docker compose -f docker-compose.prod.yml down"
+echo "   🗄️  Database shell: docker compose -f docker-compose.prod.yml exec db psql -U postgres winterjam"
 echo ""
 
 # Health checks
 echo -e "${BLUE}🏥 Performing health checks...${NC}"
 sleep 2
 
-if docker-compose -f docker-compose.prod.yml exec -T backend curl -f http://localhost:3001/health &>/dev/null; then
+if docker compose -f docker-compose.prod.yml exec -T backend curl -f http://localhost:3001/health &>/dev/null; then
     echo -e "${GREEN}✅ Backend health check passed${NC}"
 else
     echo -e "${YELLOW}⚠️  Backend health check failed - service might still be starting${NC}"
