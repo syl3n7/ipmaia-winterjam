@@ -228,9 +228,9 @@ router.post('/admin/upload-background', requireAdmin, uploadLimiter, upload.sing
     `, [req.file.filename]);
 
     await pool.query(`
-      UPDATE front_page_settings 
-      SET setting_value = $1, updated_at = CURRENT_TIMESTAMP 
-      WHERE setting_key = 'hero_background_image'
+      INSERT INTO front_page_settings (setting_key, setting_value, setting_type, display_name, section, display_order)
+      VALUES ('hero_background_image', $1, 'url', 'Background Image URL', 'hero', 98)
+      ON CONFLICT (setting_key) DO UPDATE SET setting_value = $1, updated_at = CURRENT_TIMESTAMP
     `, [imageUrl]);
 
     res.json({
