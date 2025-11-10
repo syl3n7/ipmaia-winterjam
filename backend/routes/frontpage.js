@@ -216,9 +216,9 @@ router.post('/admin/upload-background', requireAdmin, uploadLimiter, upload.sing
       await fs.unlink(oldFilePath).catch(console.error);
     }
 
-    // Store relative path instead of full URL to avoid CORS issues
-    // Frontend will construct the full URL based on its own domain
-    const imageUrl = '/api/frontpage/background';
+    // Store full URL for cross-domain access
+    const apiUrl = process.env.API_URL || 'https://api.ipmaia-winterjam.pt/api';
+    const imageUrl = `${apiUrl}/frontpage/background`;
 
     // Update database with new filename and URL
     await pool.query(`
