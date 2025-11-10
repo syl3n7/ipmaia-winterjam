@@ -15,8 +15,8 @@ NC='\033[0m' # No Color
 # Check if .env.production exists
 if [ ! -f .env.production ]; then
     echo -e "${RED}❌ Error: .env.production file not found!${NC}"
-    echo -e "${YELLOW}📝 Please copy .env.production.example to .env.production and fill in the values${NC}"
-    echo -e "${BLUE}Example: cp .env.production.example .env.production${NC}"
+    echo -e "${YELLOW}📝 Please create .env.production with your production values${NC}"
+    echo -e "${BLUE}Required variables: DB_NAME, DB_USER, DB_PASSWORD, JWT_SECRET, SESSION_SECRET, FRONTEND_URL, NEXT_PUBLIC_API_URL, OIDC_* variables${NC}"
     exit 1
 fi
 
