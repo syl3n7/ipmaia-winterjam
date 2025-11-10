@@ -48,16 +48,28 @@ async function recordMigration(migrationName) {
 // Run base migration to create initial schema
 async function runBaseMigration() {
   const migrationName = 'base_schema';
-  
+
   if (await isMigrationApplied(migrationName)) {
     console.log(`⏭️  Skipping ${migrationName} (already applied)`);
     return;
   }
 
   console.log(`🔄 Running ${migrationName}...`);
-  console.log(`⚠️  Base schema should already exist. Marking as applied.`);
-  await recordMigration(migrationName);
-  console.log(`✅ ${migrationName} marked as completed`);
+
+  try {
+    const migration = require('../migrations/base_schema.js');
+
+    if (typeof migration.up === 'function') {
+      await migration.up(pool);
+      await recordMigration(migrationName);
+      console.log(`✅ ${migrationName} completed`);
+    } else {
+      console.warn(`⚠️  ${migrationName} has no 'up' function, skipping`);
+    }
+  } catch (error) {
+    console.error(`❌ Error running ${migrationName}:`, error);
+    throw error;
+  }
 }
 
 // Run individual migration files
