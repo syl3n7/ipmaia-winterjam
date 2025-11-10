@@ -37,6 +37,7 @@ services:
       JWT_SECRET: ${JWT_SECRET:-change-this-in-production}
       SESSION_SECRET: ${SESSION_SECRET:-change-this-in-production}
       FRONTEND_URL: ${FRONTEND_URL:-https://ipmaia-winterjam.pt}
+      API_URL: ${API_URL:-https://api.ipmaia-winterjam.pt/api}
       # OIDC Configuration
       OIDC_ISSUER_URL: ${OIDC_ISSUER_URL}
       OIDC_CLIENT_ID: ${OIDC_CLIENT_ID}
