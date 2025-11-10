@@ -12,10 +12,10 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Check if .env.production exists
-if [ ! -f .env.production ]; then
-    echo -e "${RED}❌ Error: .env.production file not found!${NC}"
-    echo -e "${YELLOW}📝 Please create .env.production with your production values${NC}"
+# Check if .env exists
+if [ ! -f .env ]; then
+    echo -e "${RED}❌ Error: .env file not found!${NC}"
+    echo -e "${YELLOW}📝 Please create .env with your production values${NC}"
     echo -e "${BLUE}Required variables: DB_NAME, DB_USER, DB_PASSWORD, JWT_SECRET, SESSION_SECRET, FRONTEND_URL, NEXT_PUBLIC_API_URL, OIDC_* variables${NC}"
     exit 1
 fi
