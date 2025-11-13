@@ -15,16 +15,13 @@
  "dependencies": {
   "brace-expansion": "^2.0.2",
   "critters": "^0.0.23",
-  "easyqrcodejs-nodejs": "^4.5.3",
   "flowbite-react": "^0.10.2",
   "lucide-react": "^0.321.0",
   "next": "^15.2.4",
   "next-sitemap": "^4.2.3",
   "qr-code-styling": "^1.9.2",
-  "qrcode-svg": "^1.1.0",
   "react": "18.2.0",
-  "react-dom": "18.2.0",
-  "sharp": "^0.34.5"
+  "react-dom": "18.2.0"
  },
  "devDependencies": {
   "eslint": "^8",
