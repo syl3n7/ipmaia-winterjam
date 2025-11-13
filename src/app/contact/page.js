@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Mail, Instagram, Music, Check } from 'lucide-react';
+import { Mail, Instagram, Check } from 'lucide-react';
 import Background from "../../components/Background";
 import { useBackground } from "../../contexts/BackgroundContext";
 
@@ -73,50 +73,72 @@ export default function ContactPage() {
             </div>
 
             {/* Instagram Bubble */}
-            <div
-              className="bg-gradient-to-br from-blue-50/80 via-cyan-50/70 to-blue-100/80 backdrop-blur-xl rounded-2xl shadow-2xl border-2 border-cyan-200/60 p-8 relative overflow-hidden"
+            <a
+              href="https://instagram.com/winterjam_ipmaia"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group bg-gradient-to-br from-blue-50/80 via-cyan-50/70 to-blue-100/80 backdrop-blur-xl rounded-2xl shadow-2xl border-2 border-cyan-200/60 p-8 transition-all duration-300 hover:scale-105 hover:shadow-[0_8px_40px_rgba(59,130,246,0.25)] relative overflow-hidden"
               style={{
                 boxShadow: '0 8px 32px rgba(59, 130, 246, 0.15), inset 0 2px 4px rgba(255, 255, 255, 0.8), 0 0 40px rgba(59, 130, 246, 0.1)'
               }}
             >
               <div className="flex flex-col items-center text-center space-y-4">
-                <div className="bg-gradient-to-r from-pink-500 to-purple-600 p-6 rounded-2xl shadow-lg">
-                  <Instagram className="w-12 h-12 text-white" />
+                <div className="relative">
+                  <div className="bg-gradient-to-r from-pink-500 to-purple-600 p-6 rounded-2xl shadow-lg group-hover:scale-110 transition-transform">
+                    <Instagram className="w-12 h-12 text-white" />
+                  </div>
+                  {/* QR Code overlay on hover */}
+                  <div className="absolute inset-0 bg-white p-2 rounded-2xl shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <img
+                      src="/images/instagram-custom.png"
+                      alt="Instagram QR Code"
+                      className="w-full h-full object-contain rounded-2xl group-hover:scale-150 transition-transform duration-300"
+                    />
+                  </div>
                 </div>
                 <h3 className="text-2xl font-bold text-gray-900">Instagram</h3>
-                <div className="bg-yellow-100 border-2 border-yellow-400 rounded-lg px-4 py-2 mt-2">
-                  <span className="text-yellow-800 font-semibold text-sm">
-                    🚧 Em Breve
-                  </span>
-                </div>
-                <p className="text-xs text-gray-600">
-                  Perfil em construção
+                <p className="text-sm text-gray-700 break-all">
+                  @winterjam_ipmaia
                 </p>
+                <span className="text-pink-600 font-semibold group-hover:underline">
+                  Seguir →
+                </span>
               </div>
-            </div>
+            </a>
 
             {/* TikTok Bubble */}
-            <div
-              className="bg-gradient-to-br from-blue-50/80 via-cyan-50/70 to-blue-100/80 backdrop-blur-xl rounded-2xl shadow-2xl border-2 border-cyan-200/60 p-8 relative overflow-hidden"
+            <a
+              href="https://tiktok.com/@wintergamejam"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group bg-gradient-to-br from-blue-50/80 via-cyan-50/70 to-blue-100/80 backdrop-blur-xl rounded-2xl shadow-2xl border-2 border-cyan-200/60 p-8 transition-all duration-300 hover:scale-105 hover:shadow-[0_8px_40px_rgba(59,130,246,0.25)] relative overflow-hidden"
               style={{
                 boxShadow: '0 8px 32px rgba(59, 130, 246, 0.15), inset 0 2px 4px rgba(255, 255, 255, 0.8), 0 0 40px rgba(59, 130, 246, 0.1)'
               }}
             >
               <div className="flex flex-col items-center text-center space-y-4">
-                <div className="bg-gradient-to-r from-black to-gray-800 p-6 rounded-2xl shadow-lg">
-                  <Music className="w-12 h-12 text-white" />
+                <div className="relative">
+                  <div className="bg-white p-6 rounded-2xl shadow-lg group-hover:scale-110 transition-transform">
+                    <img src="/images/tiktok-icon.svg" alt="TikTok" className="w-12 h-12" />
+                  </div>
+                  {/* QR Code overlay on hover */}
+                  <div className="absolute inset-0 p-2 rounded-2xl shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <img
+                      src="/images/tiktok-custom.png"
+                      alt="TikTok QR Code"
+                      className="w-full h-full object-contain rounded-2xl group-hover:scale-150 transition-transform duration-300"
+                    />
+                  </div>
                 </div>
                 <h3 className="text-2xl font-bold text-gray-900">TikTok</h3>
-                <div className="bg-yellow-100 border-2 border-yellow-400 rounded-lg px-4 py-2 mt-2">
-                  <span className="text-yellow-800 font-semibold text-sm">
-                    🚧 Em Breve
-                  </span>
-                </div>
-                <p className="text-xs text-gray-600">
-                  Perfil em construção
+                <p className="text-sm text-gray-700 break-all">
+                  @wintergamejam
                 </p>
+                <span className="text-black font-semibold group-hover:underline">
+                  Seguir →
+                </span>
               </div>
-            </div>
+            </a>
           </div>
 
           {/* Additional Info */}
