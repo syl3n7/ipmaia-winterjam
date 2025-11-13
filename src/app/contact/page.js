@@ -155,14 +155,6 @@ export default function ContactPage() {
                   <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-6 rounded-2xl shadow-lg group-hover:scale-110 transition-transform">
                     <MessageCircle className="w-12 h-12 text-white" />
                   </div>
-                  {/* QR Code overlay on hover */}
-                  <div className="absolute inset-0 bg-white p-2 rounded-2xl shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <img
-                      src="/images/discord-custom.png"
-                      alt="Discord QR Code"
-                      className="w-full h-full object-contain rounded-2xl group-hover:scale-150 transition-transform duration-300"
-                    />
-                  </div>
                 </div>
                 <h3 className="text-2xl font-bold text-gray-900">Discord</h3>
                 <p className="text-sm text-gray-700 break-all">
