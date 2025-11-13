@@ -45,7 +45,7 @@ export default function ContactPage() {
           </div>
 
           {/* Social Media Bubbles */}
-          <div className="grid md:grid-cols-3 gap-6 mb-12">
+          <div className="grid md:grid-cols-2 gap-6 mb-12">
             {/* Email Bubble */}
             <div
               onClick={copyEmailToClipboard}
