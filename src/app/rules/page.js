@@ -254,7 +254,7 @@ export default function Page() {
                   {/* Day 1 - Start */}
                   <div>
                     <h3 className="text-xl font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                      📅 Dia 1 ({new Date(currentGameJam.start_date).toLocaleDateString('pt-PT', { day: 'numeric', month: 'numeric' })})
+                      📅 {new Date(currentGameJam.start_date).toLocaleDateString('pt-PT', { day: 'numeric', month: 'long', weekday: 'long' })}
                     </h3>
                     <div className="space-y-2 ml-4">
                       {/* Reception */}
@@ -317,7 +317,7 @@ export default function Page() {
                       return (
                         <div>
                           <h3 className="text-xl font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                            📅 Dia 2 ({middleDay.toLocaleDateString('pt-PT', { day: 'numeric', month: 'numeric' })})
+                            📅 {middleDay.toLocaleDateString('pt-PT', { day: 'numeric', month: 'long', weekday: 'long' })}
                           </h3>
                           <div className="space-y-2 ml-4">
                             <div className="flex items-start gap-3">
@@ -337,12 +337,7 @@ export default function Page() {
                   {/* Day 3 - End */}
                   <div>
                     <h3 className="text-xl font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                      📅 Dia {(() => {
-                        const start = new Date(currentGameJam.start_date);
-                        const end = new Date(currentGameJam.end_date);
-                        const daysDiff = Math.floor((end - start) / (1000 * 60 * 60 * 24));
-                        return daysDiff >= 2 ? '3' : '2';
-                      })()} ({new Date(currentGameJam.end_date).toLocaleDateString('pt-PT', { day: 'numeric', month: 'numeric' })})
+                      📅 {new Date(currentGameJam.end_date).toLocaleDateString('pt-PT', { day: 'numeric', month: 'long', weekday: 'long' })}
                     </h3>
                     <div className="space-y-2 ml-4">
                       {/* Jam End */}
