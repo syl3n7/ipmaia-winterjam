@@ -192,7 +192,7 @@ export default function Page() {
                 Como submeter o seu projeto e informações sobre propriedade.
               </p>
               <ul className="list-disc list-inside space-y-2 ml-4 text-gray-700">
-                <li>Os projetos devem ser submetidos no Itch.io após as 45 horas concluírem, e o link partilhado no Discord</li>
+                <li>Os projetos devem ser submetidos no Itch.io após as 45 horas concluírem, e o link partilhado no <a href="http://discord.gg/X97GAg7F6E" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 underline">Discord</a></li>
                 <li>Correção de bugs ou adição de novas funcionalidades após a submissão NÃO são permitidas</li>
                 <li>O jogo é propriedade do criador. A organização pode usá-lo para promoção do evento</li>
               </ul>
