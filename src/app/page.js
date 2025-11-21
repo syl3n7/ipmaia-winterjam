@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Background from '../components/Background';
+import Sponsor from '../components/Sponsor';
 import { Clock, ArrowRight, Calendar, Target, Trophy, Users, Info, Lightbulb } from 'lucide-react';
 
 // Helper function to convert line breaks to HTML (with HTML escaping for XSS protection)
@@ -190,6 +191,12 @@ export default function Home() {
                   {currentGameJam ? currentGameJam.description : (frontPageSettings.hero_description || 'Uma game jam onde estudantes de desenvolvimento de jogos criam experiências únicas em 45 horas.')}
                 </p>
               )}
+
+              {/* Mobile-only sponsor under the hero title (discrete spot at top of first bubble) */}
+              <div className="block sm:hidden mt-4">
+                {/* Use horizontal logo on mobile rather than the vertical game cover */}
+                <Sponsor showText={true} textClasses={'inline'} imgClassName={'h-12'} href="https://astralshiftpro.com" alt="Astral Shift Pro" imgSrc={'/images/astralshift-horizontal.png'} />
+              </div>
             </div>
 
             {/* Event Info Stack - Full Width Sections */}

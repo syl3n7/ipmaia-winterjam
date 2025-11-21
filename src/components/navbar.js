@@ -5,6 +5,7 @@ import { Navbar, NavbarBrand, NavbarCollapse, NavbarLink, NavbarToggle } from "f
 import { ChevronDown } from "lucide-react";
 import { useState, useEffect } from "react";
 import { getAllGameJams } from "../data/gameJamData";
+import Sponsor from './Sponsor';
 
 const MainNavbar = () => {
   const pathname = usePathname();
@@ -74,6 +75,11 @@ const MainNavbar = () => {
           IPMAIA WinterJam
         </span>
       </NavbarBrand>
+
+      {/* Sponsor chip next to brand: visible only on md+ screens to avoid cluttering mobile navbar */}
+      <div className="hidden md:flex items-center ml-2 mr-2">
+        <Sponsor imgClassName="h-6 sm:h-8 md:h-10" href="https://astralshiftpro.com" alt="Astral Shift Pro" />
+      </div>
       <NavbarToggle className={toggleClassName} />
       <NavbarCollapse>
         <div className="flex flex-col md:flex-row md:items-center md:space-x-4 space-y-2 md:space-y-0">
