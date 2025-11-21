@@ -40,12 +40,12 @@ export default function Home() {
     } catch (error) {
       // Return fallback settings if API fails
       return {
-        hero_title: 'IPMAIA WinterJam 2025',
+        hero_title: 'IPMAIA WinterJam',
         hero_description: 'Uma game jam onde estudantes de desenvolvimento de jogos criam experiências únicas em 45 horas.',
         hero_background_image: null, // Only use API images, no fallback to old image
-        show_event_dates: true,
-        show_theme: true,
-        show_required_object: true,
+        show_event_dates: false,
+        show_theme: false,
+        show_required_object: false,
         button_before_start_text: 'Inscrever Agora',
         button_before_start_url: '/enlist-now',
         button_during_event_text: 'Ver Regras',
@@ -197,15 +197,15 @@ export default function Home() {
 
                     // fallback single sponsor
                     if (heroSponsors.length === 0) {
-                      heroSponsors.push({ imgSrc: '/images/astralshift-logo-light.png', href: 'https://astralshiftpro.com', alt: 'Astral Shift Pro' });
+                      heroSponsors.push({ imgSrc: '/images/astralshift-horizontal-light.png', href: 'https://astralshiftpro.com', alt: 'Astral Shift' });
                     }
 
                     return (
                       <div className="flex flex-col items-center gap-2 mb-4">
-                        <span className="text-xs uppercase text-orange-300 leading-none">PROUDLY SPONSORED BY</span>
+                        <span className="text-xs uppercase text-orange-300 leading-none">SPONSORED BY</span>
                         <div className="flex items-center gap-3">
                           {heroSponsors.map((s, idx) => (
-                            <Sponsor key={idx} showText={false} isCircular={true} imgSrc={s.imgSrc} alt={s.alt || 'Sponsor'} href={s.href || 'https://astralshiftpro.com'} imgClassName={'h-10 sm:h-12'} containerClass={'p-0'} />
+                            <Sponsor key={idx} showText={false} isCircular={false} imgSrc={s.imgSrc} alt={s.alt || 'Sponsor'} href={s.href || 'https://astralshiftpro.com'} imgClassName={'h-10 sm:h-12'} containerClass={'p-0'} />
                           ))}
                         </div>
                       </div>

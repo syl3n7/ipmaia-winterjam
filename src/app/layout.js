@@ -42,7 +42,6 @@ export default function RootLayout({ children }) {
         />
         <BackgroundProvider>
           <MainNavbar />
-          <FloatingSponsor />
           <main className="flex-1 flex flex-col overflow-auto">
             {children}
           </main>
