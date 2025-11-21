@@ -179,11 +179,19 @@ export default function Home() {
             {/* Header Section */}
             <div className="text-center p-8 border-b border-orange-500/30">
               {(!currentGameJam || currentGameJam.show_title !== false) && (
-                <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-4">
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-300 to-orange-500">
-                    {currentGameJam ? currentGameJam.name : (frontPageSettings.hero_title || 'IPMAIA WinterJam 2025')}
-                  </span>
-                </h1>
+                <>
+                  <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-4">
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-300 to-orange-500">
+                      {currentGameJam ? currentGameJam.name : (frontPageSettings.hero_title || 'IPMAIA WinterJam 2025')}
+                    </span>
+                  </h1>
+
+                  {/* Hero sponsor directly below title (hidden on xs to avoid duplicate with floating sponsor) */}
+                  <div className="flex flex-col items-center gap-2 mb-4">
+                    <span className="text-xs uppercase text-orange-300 leading-none">PROUDLY SPONSORED BY</span>
+                    <Sponsor showText={false} isCircular={true} imgSrc={'/images/astralshift-logo-light.png'} imgClassName={'h-10 sm:h-12'} href="https://astralshiftpro.com" alt="Astral Shift Pro" containerClass={'p-0'} />
+                  </div>
+                </>
               )}
 
               {(!currentGameJam || currentGameJam.show_description !== false) && (
@@ -192,11 +200,9 @@ export default function Home() {
                 </p>
               )}
 
-              {/* Mobile-only sponsor under the hero title (discrete spot at top of first bubble) */}
-              <div className="block sm:hidden mt-4">
-                {/* Use horizontal logo on mobile rather than the vertical game cover */}
-                <Sponsor showText={true} textClasses={'inline'} imgClassName={'h-12'} href="https://astralshiftpro.com" alt="Astral Shift Pro" imgSrc={'/images/astralshift-horizontal.png'} />
-              </div>
+              {/* Mobile sponsor moved to a floating, dismissable widget to avoid duplicated sponsors */}
+
+              {/* Mobile sponsor moved to a floating, dismissable widget to avoid duplicated sponsors */}
             </div>
 
             {/* Event Info Stack - Full Width Sections */}

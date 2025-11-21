@@ -9,7 +9,7 @@ const Sponsor = ({ className = '', imgClassName = 'h-6 sm:h-8 md:h-10', showText
       )}
       <a href={href} target="_blank" rel="noopener noreferrer" className={`inline-flex items-center ${containerClass}`} title={alt} aria-label={alt}>
         {isCircular ? (
-          <div className="rounded-full overflow-hidden h-8 w-8 flex items-center justify-center">
+          <div className={`rounded-full overflow-hidden ${imgClassName} aspect-square flex items-center justify-center`}>
             <img src={imgSrc} alt={alt} className="h-full w-full object-cover" />
           </div>
         ) : (
