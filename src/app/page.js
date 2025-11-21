@@ -197,7 +197,7 @@ export default function Home() {
 
                     // fallback single sponsor
                     if (heroSponsors.length === 0) {
-                      heroSponsors.push({ imgSrc: '/images/astralshift-horizontal-light.png', href: 'https://astralshiftpro.com', alt: 'Astral Shift' });
+                      heroSponsors.push({ imgSrc: '/images/LIGHT_BG_AstralShift_Horizontal.png', href: 'https://astralshiftpro.com', alt: 'Astral Shift' });
                     }
 
                     return (
