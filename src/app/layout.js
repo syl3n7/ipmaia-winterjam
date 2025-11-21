@@ -40,6 +40,19 @@ export default function RootLayout({ children }) {
           data-cf-beacon='{"token": "288377c903af4e4187b8b239e29790e9"}'
           strategy="afterInteractive"
         />
+        {/* Google Analytics */}
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-FG2M7N9TK1"
+          strategy="afterInteractive"
+        />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-FG2M7N9TK1');
+          `}
+        </Script>
         <BackgroundProvider>
           <MainNavbar />
           <main className="flex-1 flex flex-col overflow-auto">
