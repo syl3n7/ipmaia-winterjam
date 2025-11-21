@@ -186,11 +186,31 @@ export default function Home() {
                     </span>
                   </h1>
 
-                  {/* Hero sponsor directly below title (hidden on xs to avoid duplicate with floating sponsor) */}
-                  <div className="flex flex-col items-center gap-2 mb-4">
-                    <span className="text-xs uppercase text-orange-300 leading-none">PROUDLY SPONSORED BY</span>
-                    <Sponsor showText={false} isCircular={true} imgSrc={'/images/astralshift-logo-light.png'} imgClassName={'h-10 sm:h-12'} href="https://astralshiftpro.com" alt="Astral Shift Pro" containerClass={'p-0'} />
-                  </div>
+                  {/* Hero sponsor(s) directly below the title: an array of sponsors (or fallback) */}
+                  {(() => {
+                    const rawSponsors = currentGameJam?.sponsors || frontPageSettings?.hero_sponsors;
+                    const heroSponsors = (Array.isArray(rawSponsors) ? rawSponsors : rawSponsors ? [rawSponsors] : []).map((s) => {
+                      if (!s) return null;
+                      if (typeof s === 'string') return { imgSrc: s, href: 'https://astralshiftpro.com', alt: 'Sponsor' };
+                      return s;
+                    }).filter(Boolean);
+
+                    // fallback single sponsor
+                    if (heroSponsors.length === 0) {
+                      heroSponsors.push({ imgSrc: '/images/astralshift-logo-light.png', href: 'https://astralshiftpro.com', alt: 'Astral Shift Pro' });
+                    }
+
+                    return (
+                      <div className="flex flex-col items-center gap-2 mb-4">
+                        <span className="text-xs uppercase text-orange-300 leading-none">PROUDLY SPONSORED BY</span>
+                        <div className="flex items-center gap-3">
+                          {heroSponsors.map((s, idx) => (
+                            <Sponsor key={idx} showText={false} isCircular={true} imgSrc={s.imgSrc} alt={s.alt || 'Sponsor'} href={s.href || 'https://astralshiftpro.com'} imgClassName={'h-10 sm:h-12'} containerClass={'p-0'} />
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </>
               )}
 
