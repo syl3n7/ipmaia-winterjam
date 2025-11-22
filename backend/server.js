@@ -62,7 +62,12 @@ app.use(helmet({
 // Rate limiting
 const limiter = rateLimit({
   windowMs: process.env.NODE_ENV === 'production' ? 15 * 60 * 1000 : 60 * 60 * 1000, // 15 min prod, 1 hour dev
-  max: process.env.NODE_ENV === 'production' ? 100 : 1000, // 100 req prod, 1000 req dev
+  max: (req, res) => {
+    if (req.session && req.session.role === 'super_admin') {
+      return process.env.NODE_ENV === 'production' ? 1000 : 10000; // Higher limit for super admins
+    }
+    return process.env.NODE_ENV === 'production' ? 100 : 1000; // Standard limits
+  },
   message: 'Too many requests from this IP, please try again later.',
 });
 
