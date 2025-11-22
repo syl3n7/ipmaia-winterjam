@@ -225,13 +225,17 @@
                             <!-- Status Section -->
                             <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; padding: 20px; margin: 20px 0; color: white; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);">
                                 <h4 style="margin-bottom: 15px; color: white;">📊 Game Jam Status</h4>
-                                <div class="form-group" style="margin-bottom: 0;">
-                                    <label style="color: white; font-weight: 500; display: flex; align-items: center; gap: 10px;">
-                                        <input type="checkbox" id="jam-active" name="is_active" checked style="transform: scale(1.2);">
-                                        <span style="font-size: 1.1em;">🎯 Active Game Jam</span>
+                                <div class="toggle-container" style="justify-content: flex-start;">
+                                    <label class="toggle-label" style="background: rgba(255, 255, 255, 0.2); border: 1px solid rgba(255, 255, 255, 0.3);">
+                                        <input type="checkbox" id="jam-active" name="is_active" checked>
+                                        <span class="toggle-slider"></span>
+                                        <span class="toggle-text" style="color: white;">
+                                            <span class="toggle-icon">🎯</span>
+                                            <span class="toggle-label-text">Active Game Jam</span>
+                                        </span>
                                     </label>
-                                    <small style="color: rgba(255,255,255,0.8); margin-top: 5px; display: block;">When checked, this game jam will be visible to users and accept registrations</small>
                                 </div>
+                                <small style="color: rgba(255,255,255,0.8); margin-top: 10px; display: block;">When checked, this game jam will be visible to users and accept registrations</small>
                             </div>
                             
                             <!-- Schedule Section -->
@@ -332,17 +336,25 @@
                                     </h5>
 
                                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
-                                        <div class="form-group" style="margin-bottom: 0;">
-                                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                                                <input type="checkbox" id="show-theme" name="show_theme" checked style="transform: scale(1.1);">
-                                                <span>🎨 Show Theme</span>
+                                        <div class="toggle-container">
+                                            <label class="toggle-label">
+                                                <input type="checkbox" id="show-theme" name="show_theme" checked>
+                                                <span class="toggle-slider"></span>
+                                                <span class="toggle-text">
+                                                    <span class="toggle-icon">🎨</span>
+                                                    <span class="toggle-label-text">Show Theme</span>
+                                                </span>
                                             </label>
                                         </div>
 
-                                        <div class="form-group" style="margin-bottom: 0;">
-                                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                                                <input type="checkbox" id="show-description" name="show_description" checked style="transform: scale(1.1);">
-                                                <span>📄 Show Description</span>
+                                        <div class="toggle-container">
+                                            <label class="toggle-label">
+                                                <input type="checkbox" id="show-description" name="show_description" checked>
+                                                <span class="toggle-slider"></span>
+                                                <span class="toggle-text">
+                                                    <span class="toggle-icon">📄</span>
+                                                    <span class="toggle-label-text">Show Description</span>
+                                                </span>
                                             </label>
                                         </div>
                                     </div>
@@ -356,17 +368,25 @@
                                     </h5>
 
                                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px;">
-                                        <div class="form-group" style="margin-bottom: 0;">
-                                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                                                <input type="checkbox" id="show-start-date" name="show_start_date" checked style="transform: scale(1.1);">
-                                                <span>🕐 Show Start Date</span>
+                                        <div class="toggle-container">
+                                            <label class="toggle-label">
+                                                <input type="checkbox" id="show-start-date" name="show_start_date" checked>
+                                                <span class="toggle-slider"></span>
+                                                <span class="toggle-text">
+                                                    <span class="toggle-icon">🕐</span>
+                                                    <span class="toggle-label-text">Show Start Date</span>
+                                                </span>
                                             </label>
                                         </div>
 
-                                        <div class="form-group" style="margin-bottom: 0;">
-                                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                                                <input type="checkbox" id="show-end-date" name="show_end_date" checked style="transform: scale(1.1);">
-                                                <span>🏁 Show End Date</span>
+                                        <div class="toggle-container">
+                                            <label class="toggle-label">
+                                                <input type="checkbox" id="show-end-date" name="show_end_date" checked>
+                                                <span class="toggle-slider"></span>
+                                                <span class="toggle-text">
+                                                    <span class="toggle-icon">🏁</span>
+                                                    <span class="toggle-label-text">Show End Date</span>
+                                                </span>
                                             </label>
                                         </div>
                                     </div>
@@ -390,10 +410,14 @@
                                     </h5>
 
                                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
-                                        <div class="form-group" style="margin-bottom: 0;">
-                                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                                                <input type="checkbox" id="show-registration-dates" name="show_registration_dates" checked style="transform: scale(1.1);">
-                                                <span>📅 Show Registration Dates</span>
+                                        <div class="toggle-container">
+                                            <label class="toggle-label">
+                                                <input type="checkbox" id="show-registration-dates" name="show_registration_dates" checked>
+                                                <span class="toggle-slider"></span>
+                                                <span class="toggle-text">
+                                                    <span class="toggle-icon">📅</span>
+                                                    <span class="toggle-label-text">Show Registration Dates</span>
+                                                </span>
                                             </label>
                                         </div>
 
@@ -416,10 +440,14 @@
                                     </h5>
 
                                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
-                                        <div class="form-group" style="margin-bottom: 0;">
-                                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
-                                                <input type="checkbox" id="show-banner-image" name="show_banner_image" checked style="transform: scale(1.1);">
-                                                <span>🎨 Show Banner Image</span>
+                                        <div class="toggle-container">
+                                            <label class="toggle-label">
+                                                <input type="checkbox" id="show-banner-image" name="show_banner_image" checked>
+                                                <span class="toggle-slider"></span>
+                                                <span class="toggle-text">
+                                                    <span class="toggle-icon">🎨</span>
+                                                    <span class="toggle-label-text">Show Banner Image</span>
+                                                </span>
                                             </label>
                                         </div>
 
