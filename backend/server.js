@@ -124,7 +124,8 @@ app.use((req, res, next) => {
   // Skip CSRF for admin API routes (already protected by session auth)
   if (req.path.startsWith('/api/admin') || 
       req.path.startsWith('/api/rules/admin') || 
-      req.path.startsWith('/api/frontpage/admin')) {
+      req.path.startsWith('/api/frontpage/admin') ||
+      req.path.startsWith('/api/sponsors/upload-logo')) {
     return next();
   }
   // Apply CSRF for other routes
@@ -236,41 +237,37 @@ const requireAdminAccess = (req, res, next) => {
   next();
 };
 
-// Serve admin dashboard - separate pages for each section
+// Serve admin dashboard - single page application
 app.get('/admin', requireAdminAccess, (req, res) => {
-  res.redirect('/admin/gamejams');
+  res.sendFile(path.join(__dirname, 'admin/dist/index.html'));
 });
 
 app.get('/admin/gamejams', requireAdminAccess, (req, res) => {
-  res.sendFile(path.join(__dirname, 'admin/dist/gamejams.html'));
+  res.sendFile(path.join(__dirname, 'admin/dist/index.html'));
 });
 
 app.get('/admin/games', requireAdminAccess, (req, res) => {
-  res.sendFile(path.join(__dirname, 'admin/dist/games.html'));
+  res.sendFile(path.join(__dirname, 'admin/dist/index.html'));
 });
 
 app.get('/admin/users', requireAdminAccess, (req, res) => {
-  res.sendFile(path.join(__dirname, 'admin/dist/users.html'));
+  res.sendFile(path.join(__dirname, 'admin/dist/index.html'));
 });
 
 app.get('/admin/sponsors', requireAdminAccess, (req, res) => {
-  res.sendFile(path.join(__dirname, 'admin/dist/sponsors.html'));
-});
-
-app.get('/admin/sponsors', requireAdminAccess, (req, res) => {
-  res.sendFile(path.join(__dirname, 'admin/dist/sponsors.html'));
+  res.sendFile(path.join(__dirname, 'admin/dist/index.html'));
 });
 
 app.get('/admin/frontpage', requireAdminAccess, (req, res) => {
-  res.sendFile(path.join(__dirname, 'admin/dist/frontpage.html'));
+  res.sendFile(path.join(__dirname, 'admin/dist/index.html'));
 });
 
 app.get('/admin/rules', requireAdminAccess, (req, res) => {
-  res.sendFile(path.join(__dirname, 'admin/dist/rules.html'));
+  res.sendFile(path.join(__dirname, 'admin/dist/index.html'));
 });
 
 app.get('/admin/system', requireAdminAccess, (req, res) => {
-  res.sendFile(path.join(__dirname, 'admin/dist/system.html'));
+  res.sendFile(path.join(__dirname, 'admin/dist/index.html'));
 });
 
 // 404 handler

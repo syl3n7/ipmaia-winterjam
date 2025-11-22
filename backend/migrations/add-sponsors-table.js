@@ -10,7 +10,7 @@ async function createSponsorsTable() {
         id SERIAL PRIMARY KEY,
         name VARCHAR(255) NOT NULL UNIQUE,
         tier VARCHAR(50) NOT NULL CHECK (tier IN ('platinum', 'gold', 'silver', 'bronze')),
-        logo_url TEXT,
+        logo_filename TEXT,
         website_url TEXT,
         description TEXT,
         is_active BOOLEAN DEFAULT true,
@@ -21,11 +21,11 @@ async function createSponsorsTable() {
 
     // Insert default sponsor (IPMAIA)
     await pool.query(`
-      INSERT INTO sponsors (name, tier, logo_url, website_url, description, is_active)
+      INSERT INTO sponsors (name, tier, logo_filename, website_url, description, is_active)
       VALUES (
         'IPMAIA',
         'platinum',
-        '/images/ipmaia-logo.png',
+        'ipmaia-logo.png',
         'https://ipmaia.pt',
         'Instituto Politécnico da Maia - Patrocinador principal do WinterJam',
         true

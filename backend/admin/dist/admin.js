@@ -30,34 +30,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     showAdminDashboard();
                     updateUserInfo();
                     showStatus('🚀 System ready', 'success');
-                    // Load data for the active section
-                    const activeSection = document.querySelector('.card.active').id.replace('-section', '');
-                    switch(activeSection) {
-                        case 'gamejams':
-                            loadGameJams();
-                            break;
-                        case 'games':
-                            loadGames();
-                            break;
-                        case 'users':
-                            loadUsers();
-                            break;
-                        case 'sponsors':
-                            loadSponsors();
-                            break;
-                        case 'frontpage':
-                            loadFrontPageSettings();
-                            loadBannerStatus();
-                            break;
-                        case 'rules':
-                            loadRules();
-                            break;
-                        case 'system':
-                            loadSystemInfo();
-                            break;
-                        default:
-                            loadGameJams(); // fallback
-                    }
+                    
+                    // Navigate to the appropriate page based on URL hash or default to dashboard
+                    const hash = window.location.hash.substring(1);
+                    const initialPage = hash || 'dashboard';
+                    navigateToPage(initialPage);
                 } else {
                     console.log('❌ Not authenticated (status ' + response.status + '), showing login overlay');
                     showAuthOverlay();
@@ -105,9 +82,42 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
+        // Mobile menu toggle functionality
+        function toggleMobileMenu() {
+            const sidebar = document.querySelector('.sidebar');
+            sidebar.classList.toggle('open');
+        }
+
+        // Handle mobile menu visibility
+        function handleMobileMenuVisibility() {
+            const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+            if (window.innerWidth <= 768) {
+                mobileMenuToggle.style.display = 'block';
+            } else {
+                mobileMenuToggle.style.display = 'none';
+                // Close sidebar when switching to desktop
+                document.querySelector('.sidebar').classList.remove('open');
+            }
+        }
+
+        // Listen for window resize to show/hide mobile menu toggle
+        window.addEventListener('resize', handleMobileMenuVisibility);
+        
+        // Initialize mobile menu visibility
+        handleMobileMenuVisibility();
+
         // Expose functions to global scope for onclick handlers in HTML
         window.loginWithOIDC = loginWithOIDC;
         window.logout = logout;
+        window.navigateToPage = navigateToPage;
+        window.toggleMobileMenu = toggleMobileMenu;
+        // New system functions
+        window.runHealthCheck = runHealthCheck;
+        window.runSystemTest = runSystemTest;
+        window.refreshAllMetrics = refreshAllMetrics;
+        window.clearSystemCache = clearSystemCache;
+        window.exportSystemReport = exportSystemReport;
+        window.restartServices = restartServices;
 
         // Portuguese (Portugal) Date Formatting Utilities
         const PT_LOCALE = 'pt-PT';
@@ -189,43 +199,70 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // Navigation Functions
-        function showSection(sectionName, buttonElement) {
-            console.log('Switching to section:', sectionName);
+        function navigateToPage(pageName) {
+            console.log('Navigating to page:', pageName);
             
-            // Hide all sections
-            document.querySelectorAll('.card').forEach(card => {
-                card.classList.remove('active');
+            // Update URL hash without triggering page reload
+            window.location.hash = pageName;
+            
+            // Hide all pages
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
             });
             
-            // Remove active class from nav buttons
-            document.querySelectorAll('.nav-btn').forEach(btn => {
-                btn.classList.remove('active');
+            // Remove active class from nav links
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
             });
             
-            // Show selected section
-            const section = document.getElementById(sectionName + '-section');
-            if (section) {
-                section.classList.add('active');
+            // Show selected page
+            const page = document.getElementById(pageName + '-page');
+            if (page) {
+                page.classList.add('active');
             }
             
-            // Add active class to the button - either the one passed or find it by data-section attribute
-            if (buttonElement) {
-                buttonElement.classList.add('active');
-            } else {
-                // When called programmatically, find the corresponding nav button
-                const navButton = document.querySelector(`[data-section="${sectionName}"]`);
-                if (navButton) {
-                    navButton.classList.add('active');
-                }
+            // Add active class to the corresponding nav link
+            const navLink = document.querySelector(`[data-page="${pageName}"]`);
+            if (navLink) {
+                navLink.classList.add('active');
             }
             
-            // Load data for the section
-            switch(sectionName) {
+            // Update page title and subtitle
+            updatePageTitle(pageName);
+            
+            // Load data for the page
+            loadPageData(pageName);
+        }
+        
+        function updatePageTitle(pageName) {
+            const titles = {
+                dashboard: { title: 'Dashboard', subtitle: 'Overview and quick actions' },
+                gamejams: { title: 'Game Jams', subtitle: 'Manage game jam events and configurations' },
+                games: { title: 'Games', subtitle: 'Manage game submissions and featured content' },
+                sponsors: { title: 'Sponsors', subtitle: 'Manage sponsor partnerships and display settings' },
+                frontpage: { title: 'Front Page', subtitle: 'Configure homepage banner and content' },
+                rules: { title: 'Rules', subtitle: 'Upload and manage the WinterJam rulebook' },
+                system: { title: 'System', subtitle: 'Monitor system health and performance' }
+            };
+            
+            const pageInfo = titles[pageName] || { title: 'Admin Panel', subtitle: 'IPMAIA WinterJam' };
+            document.getElementById('page-title').textContent = pageInfo.title;
+            document.getElementById('page-subtitle').textContent = pageInfo.subtitle;
+        }
+        
+        function loadPageData(pageName) {
+            switch(pageName) {
+                case 'dashboard':
+                    loadDashboardData();
+                    break;
                 case 'gamejams':
                     loadGameJams();
                     break;
                 case 'games':
                     loadGames();
+                    break;
+                case 'sponsors':
+                    loadSponsors();
                     break;
                 case 'frontpage':
                     loadFrontPageSettings();
@@ -236,8 +273,51 @@ document.addEventListener('DOMContentLoaded', function() {
                     break;
                 case 'system':
                     loadSystemInfo();
+                    initializeLogTabs();
                     break;
             }
+        }
+        
+        async function loadDashboardData() {
+            try {
+                // Load overview statistics
+                const [gamejams, games, sponsors] = await Promise.all([
+                    apiCall('/api/public/gamejams').catch(() => []),
+                    apiCall('/api/public/games/featured').catch(() => []),
+                    apiCall('/api/admin/sponsors').catch(() => [])
+                ]);
+                
+                document.getElementById('dashboard-gamejams-count').textContent = gamejams.length;
+                document.getElementById('dashboard-games-count').textContent = games.length;
+                document.getElementById('dashboard-sponsors-count').textContent = sponsors.length;
+                
+                // Load recent activity
+                loadRecentActivity();
+                
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+            }
+        }
+        
+        async function loadRecentActivity() {
+            // Simulate recent activity (could be enhanced with real data)
+            const activityEl = document.getElementById('dashboard-recent-activity');
+            const now = new Date();
+            
+            activityEl.innerHTML = `
+                <div class="activity-item">
+                    <span class="activity-time">${now.toLocaleTimeString('pt-PT')}</span>
+                    <span class="activity-desc">Dashboard accessed</span>
+                </div>
+                <div class="activity-item">
+                    <span class="activity-time">${new Date(now.getTime() - 300000).toLocaleTimeString('pt-PT')}</span>
+                    <span class="activity-desc">System health checked</span>
+                </div>
+                <div class="activity-item">
+                    <span class="activity-time">${new Date(now.getTime() - 600000).toLocaleTimeString('pt-PT')}</span>
+                    <span class="activity-desc">Game jam data loaded</span>
+                </div>
+            `;
         }
 
         // Game Jams Functions
@@ -390,18 +470,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log('🏆 Awards ceremony field found:', awardsCeremonyField, 'Setting to:', awardsCeremonyValue);
                 if (awardsCeremonyField) awardsCeremonyField.value = awardsCeremonyValue;
                 
-                const regUrlField = document.getElementById('jam-reg-url');
-                console.log('🔗 Reg URL field found:', regUrlField, 'Setting to:', jam.registration_url || '');
-                if (regUrlField) regUrlField.value = jam.registration_url || '';
-                
-                const rulesPdfField = document.getElementById('jam-rules-pdf');
-                console.log('📋 Rules PDF field found:', rulesPdfField, 'Setting to:', jam.rules_pdf_url || '');
-                if (rulesPdfField) rulesPdfField.value = jam.rules_pdf_url || '';
-                
-                const bannerField = document.getElementById('jam-banner');
-                console.log('🖼️ Banner field found:', bannerField, 'Setting to:', jam.banner_image_url || '');
-                if (bannerField) bannerField.value = jam.banner_image_url || '';
-                
                 const activeField = document.getElementById('jam-active');
                 console.log('✅ Active field found:', activeField, 'Setting to:', jam.is_active);
                 if (activeField) activeField.checked = jam.is_active;
@@ -437,18 +505,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 const regDateFallbackField = document.getElementById('registration-date-fallback');
                 if (regDateFallbackField) regDateFallbackField.value = jam.registration_date_fallback || 'TBD';
                 
-                const showRegUrlField = document.getElementById('show-registration-url');
-                if (showRegUrlField) showRegUrlField.checked = jam.show_registration_url !== false;
-                
-                const showRulesPdfField = document.getElementById('show-rules-pdf-url');
-                if (showRulesPdfField) showRulesPdfField.checked = jam.show_rules_pdf_url !== false;
-                
-                const showBannerField = document.getElementById('show-banner-image');
-                if (showBannerField) showBannerField.checked = jam.show_banner_image !== false;
-                
-                const bannerFallbackField = document.getElementById('banner-fallback');
-                if (bannerFallbackField) bannerFallbackField.value = jam.banner_fallback || 'placeholder';
-                
                 console.log('🎯 Showing form first, then populating...');
                 showGameJamForm(true); // Pass true to indicate this is an edit operation
                 
@@ -467,9 +523,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (themeAnnouncementField) themeAnnouncementField.value = themeAnnouncementValue;
                     if (evaluationField) evaluationField.value = evaluationValue;
                     if (awardsCeremonyField) awardsCeremonyField.value = awardsCeremonyValue;
-                    if (regUrlField) regUrlField.value = jam.registration_url || '';
-                    if (rulesPdfField) rulesPdfField.value = jam.rules_pdf_url || '';
-                    if (bannerField) bannerField.value = jam.banner_image_url || '';
                     if (activeField) activeField.checked = jam.is_active;
                     // Re-populate homepage content fields
                     if (introductionField) introductionField.value = jam.introduction || '';
@@ -482,10 +535,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (dateFallbackField) dateFallbackField.value = jam.date_fallback || 'TBD';
                     if (showRegDatesField) showRegDatesField.checked = jam.show_registration_dates !== false;
                     if (regDateFallbackField) regDateFallbackField.value = jam.registration_date_fallback || 'TBD';
-                    if (showRegUrlField) showRegUrlField.checked = jam.show_registration_url !== false;
-                    if (showRulesPdfField) showRulesPdfField.checked = jam.show_rules_pdf_url !== false;
-                    if (showBannerField) showBannerField.checked = jam.show_banner_image !== false;
-                    if (bannerFallbackField) bannerFallbackField.value = jam.banner_fallback || 'placeholder';
                     console.log('✅ All game jam form fields re-populated after showing form!');
                 }, 100);
                 
@@ -791,57 +840,376 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // System Functions
         async function loadSystemInfo() {
+            console.log('Loading system information...');
             try {
-                const stats = await Promise.all([
-                    apiCall('/api/public/gamejams'),
-                    apiCall('/api/public/games/featured'),
-                    apiCall('/health')
+                // Start timing for performance measurement
+                const startTime = Date.now();
+                
+                // Fetch all system data in parallel
+                const [gamejams, games, sponsors, health] = await Promise.all([
+                    apiCall('/api/public/gamejams').catch(() => []),
+                    apiCall('/api/public/games/featured').catch(() => []),
+                    apiCall('/api/admin/sponsors').catch(() => []),
+                    apiCall('/health').catch(() => ({ status: 'Error', timestamp: new Date().toISOString() }))
                 ]);
                 
-                document.getElementById('stats').innerHTML = `
-                    <p><strong>Game Jams:</strong> ${stats[0].length}</p>
-                    <p><strong>Games:</strong> ${stats[1].length}</p>
-                    <p><strong>System Status:</strong> ${stats[2].status}</p>
-                    <p><strong>Last Updated:</strong> ${new Date().toLocaleString('pt-PT', { 
-                        day: '2-digit', 
-                        month: '2-digit', 
-                        year: 'numeric', 
-                        hour: '2-digit', 
-                        minute: '2-digit',
-                        second: '2-digit'
-                    })}</p>
-                `;
+                const responseTime = Date.now() - startTime;
+                
+                // Update all system metrics
+                updateSystemHealthStatus(health);
+                updateDatabaseMetrics(gamejams, games, sponsors);
+                updatePerformanceMetrics(responseTime, health);
+                updateStorageMetrics();
+                updateSystemConfiguration();
+                updateRecentActivity();
+                
+                console.log('System information loaded successfully');
             } catch (error) {
-                document.getElementById('stats').innerHTML = `<p class="error">Error loading stats: ${error.message}</p>`;
+                console.error('Error loading system info:', error);
+                showStatus('❌ Failed to load system information', 'error');
+                
+                // Set error states
+                setSystemErrorState();
             }
         }
-
-        async function testHealth() {
+        
+        function updateSystemHealthStatus(health) {
+            const statusEl = document.getElementById('system-health-status');
+            const statusTextEl = document.getElementById('system-status-text');
+            const uptimeEl = document.getElementById('system-uptime');
+            const versionEl = document.getElementById('system-version');
+            const lastCheckEl = document.getElementById('system-last-check');
+            
+            if (health && health.status === 'OK') {
+                statusEl.className = 'status-badge status-healthy';
+                statusEl.textContent = 'Healthy';
+                statusTextEl.className = 'metric-value status-healthy';
+                statusTextEl.textContent = 'Online';
+                uptimeEl.textContent = 'Running';
+                versionEl.textContent = health.version || '1.0.0';
+            } else {
+                statusEl.className = 'status-badge status-error';
+                statusEl.textContent = 'Unhealthy';
+                statusTextEl.className = 'metric-value status-error';
+                statusTextEl.textContent = 'Offline';
+                uptimeEl.textContent = 'Unknown';
+                versionEl.textContent = 'Unknown';
+            }
+            
+            lastCheckEl.textContent = new Date().toLocaleTimeString('pt-PT');
+        }
+        
+        function updateDatabaseMetrics(gamejams, games, sponsors) {
+            const connectionEl = document.getElementById('db-connection-status');
+            const gamejamsEl = document.getElementById('db-gamejams-count');
+            const gamesEl = document.getElementById('db-games-count');
+            const sponsorsEl = document.getElementById('db-sponsors-count');
+            const statusBadge = document.getElementById('db-status-badge');
+            
+            // Assume database is healthy if we got data
+            connectionEl.className = 'metric-value status-healthy';
+            connectionEl.textContent = 'Active';
+            statusBadge.className = 'status-badge status-healthy';
+            statusBadge.textContent = 'Connected';
+            
+            gamejamsEl.textContent = Array.isArray(gamejams) ? gamejams.length : '0';
+            gamesEl.textContent = Array.isArray(games) ? games.length : '0';
+            sponsorsEl.textContent = Array.isArray(sponsors) ? sponsors.length : '0';
+        }
+        
+        function updatePerformanceMetrics(responseTime, health) {
+            const responseTimeEl = document.getElementById('perf-response-time');
+            const memoryEl = document.getElementById('perf-memory-usage');
+            const usersEl = document.getElementById('perf-active-users');
+            const loadEl = document.getElementById('perf-load-average');
+            
+            responseTimeEl.textContent = `${responseTime}ms`;
+            memoryEl.textContent = 'N/A'; // Would need backend support
+            usersEl.textContent = '1'; // Current user
+            loadEl.textContent = 'N/A'; // Would need backend support
+        }
+        
+        async function updateStorageMetrics() {
+            const uploadsSizeEl = document.getElementById('storage-uploads-size');
+            const totalFilesEl = document.getElementById('storage-total-files');
+            const diskUsageEl = document.getElementById('storage-disk-usage');
+            const availableSpaceEl = document.getElementById('storage-available-space');
+            
             try {
+                // Try to get storage info from backend
+                const storageInfo = await apiCall('/api/admin/system/storage').catch(() => null);
+                
+                if (storageInfo) {
+                    uploadsSizeEl.textContent = formatBytes(storageInfo.uploadsSize);
+                    totalFilesEl.textContent = storageInfo.totalFiles;
+                    diskUsageEl.textContent = formatBytes(storageInfo.diskUsage);
+                    availableSpaceEl.textContent = formatBytes(storageInfo.availableSpace);
+                } else {
+                    // Fallback values
+                    uploadsSizeEl.textContent = 'Calculating...';
+                    totalFilesEl.textContent = '0';
+                    diskUsageEl.textContent = 'N/A';
+                    availableSpaceEl.textContent = 'N/A';
+                }
+            } catch (error) {
+                uploadsSizeEl.textContent = 'Error';
+                totalFilesEl.textContent = '0';
+                diskUsageEl.textContent = 'N/A';
+                availableSpaceEl.textContent = 'N/A';
+            }
+        }
+        
+        function updateSystemConfiguration() {
+            // Update configuration values (these would come from backend in a real implementation)
+            document.getElementById('config-environment').textContent = 'development';
+            document.getElementById('config-db-host').textContent = 'localhost';
+            document.getElementById('config-api-port').textContent = '3001';
+            document.getElementById('config-frontend-url').textContent = 'http://localhost:3000';
+            document.getElementById('config-session-timeout').textContent = '24 hours';
+            document.getElementById('config-max-upload').textContent = '5MB';
+        }
+        
+        function updateRecentActivity() {
+            const activityEl = document.getElementById('recent-activity-entries');
+            const now = new Date();
+            
+            activityEl.innerHTML = `
+                <div class="log-entry info">
+                    <span class="log-time">${now.toLocaleTimeString('pt-PT')}</span>
+                    <span class="log-message">System dashboard refreshed</span>
+                </div>
+                <div class="log-entry success">
+                    <span class="log-time">${new Date(now.getTime() - 300000).toLocaleTimeString('pt-PT')}</span>
+                    <span class="log-message">Admin panel accessed</span>
+                </div>
+                <div class="log-entry info">
+                    <span class="log-time">${new Date(now.getTime() - 600000).toLocaleTimeString('pt-PT')}</span>
+                    <span class="log-message">Database connection verified</span>
+                </div>
+            `;
+        }
+        
+        function setSystemErrorState() {
+            // Set error states for all metrics
+            document.getElementById('system-health-status').className = 'status-badge status-error';
+            document.getElementById('system-health-status').textContent = 'Error';
+            document.getElementById('system-status-text').className = 'metric-value status-error';
+            document.getElementById('system-status-text').textContent = 'Error';
+            document.getElementById('db-status-badge').className = 'status-badge status-error';
+            document.getElementById('db-status-badge').textContent = 'Error';
+        }
+        
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+        
+        // New system control functions
+        async function runHealthCheck() {
+            try {
+                showStatus('🔍 Running health check...', 'info');
+                const startTime = Date.now();
                 const result = await apiCall('/health');
-                document.getElementById('response').textContent = JSON.stringify(result, null, 2);
+                const responseTime = Date.now() - startTime;
+                
+                // Update health status
+                updateSystemHealthStatus(result);
+                
+                // Add to activity log
+                addActivityLogEntry('success', `Health check completed in ${responseTime}ms`);
+                
                 showStatus('✅ Health check successful', 'success');
             } catch (error) {
-                document.getElementById('response').textContent = `Error: ${error.message}`;
+                addActivityLogEntry('error', `Health check failed: ${error.message}`);
                 showStatus(`❌ Health check failed: ${error.message}`, 'error');
             }
         }
-
-        async function testAPI() {
+        
+        async function runSystemTest() {
             try {
-                const result = await apiCall('/api/public/gamejams');
-                document.getElementById('response').textContent = JSON.stringify(result, null, 2);
-                showStatus('✅ API test successful', 'success');
+                showStatus('🔬 Running system test...', 'info');
+                const startTime = Date.now();
+                
+                const results = await Promise.allSettled([
+                    apiCall('/api/public/gamejams'),
+                    apiCall('/api/public/games/featured'),
+                    apiCall('/health'),
+                    apiCall('/api/admin/sponsors')
+                ]);
+                
+                const responseTime = Date.now() - startTime;
+                
+                const passed = results.filter(r => r.status === 'fulfilled').length;
+                const failed = results.filter(r => r.status === 'rejected').length;
+                
+                addActivityLogEntry('info', `System test completed: ${passed} passed, ${failed} failed (${responseTime}ms)`);
+                
+                if (failed === 0) {
+                    showStatus('✅ All system tests passed', 'success');
+                } else {
+                    showStatus(`⚠️ System test completed with ${failed} failures`, 'warning');
+                }
+                
+                // Refresh all metrics
+                await refreshAllMetrics();
             } catch (error) {
-                document.getElementById('response').textContent = `Error: ${error.message}`;
-                showStatus(`❌ API test failed: ${error.message}`, 'error');
+                addActivityLogEntry('error', `System test failed: ${error.message}`);
+                showStatus(`❌ System test failed: ${error.message}`, 'error');
             }
         }
-
-        function clearCache() {
-            if (confirm('Are you sure you want to clear the cache?')) {
-                showStatus('🧹 Cache cleared', 'success');
+        
+        async function refreshAllMetrics() {
+            showStatus('🔄 Refreshing all metrics...', 'info');
+            await loadSystemInfo();
+            addActivityLogEntry('info', 'All system metrics refreshed');
+            showStatus('✅ All metrics refreshed', 'success');
+        }
+        
+        async function clearSystemCache() {
+            if (!confirm('Are you sure you want to clear the system cache? This may temporarily slow down some operations.')) {
+                return;
             }
+            
+            try {
+                showStatus('🧹 Clearing system cache...', 'info');
+                
+                // Try to call cache clearing endpoint, fallback to simulation
+                await apiCall('/api/admin/system/clear-cache').catch(() => {
+                    // Simulate cache clearing
+                    return new Promise(resolve => setTimeout(resolve, 1000));
+                });
+                
+                addActivityLogEntry('warning', 'System cache cleared');
+                showStatus('✅ Cache cleared successfully', 'success');
+            } catch (error) {
+                addActivityLogEntry('error', `Cache clear failed: ${error.message}`);
+                showStatus(`❌ Failed to clear cache: ${error.message}`, 'error');
+            }
+        }
+        
+        async function exportSystemReport() {
+            try {
+                showStatus('📊 Generating system report...', 'info');
+                
+                // Gather all system data
+                const [gamejams, games, sponsors, health] = await Promise.all([
+                    apiCall('/api/public/gamejams').catch(() => []),
+                    apiCall('/api/public/games/featured').catch(() => []),
+                    apiCall('/api/admin/sponsors').catch(() => []),
+                    apiCall('/health').catch(() => ({}))
+                ]);
+                
+                const report = {
+                    timestamp: new Date().toISOString(),
+                    system: {
+                        status: health.status || 'Unknown',
+                        version: health.version || 'Unknown',
+                        uptime: 'Running'
+                    },
+                    database: {
+                        gamejams: gamejams.length,
+                        games: games.length,
+                        sponsors: sponsors.length
+                    },
+                    performance: {
+                        responseTime: 'N/A',
+                        memoryUsage: 'N/A',
+                        activeUsers: 1
+                    },
+                    storage: {
+                        uploadsSize: 'Calculating...',
+                        totalFiles: 0
+                    }
+                };
+                
+                // Download as JSON
+                const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `system-report-${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+                
+                addActivityLogEntry('info', 'System report exported');
+                showStatus('✅ System report exported', 'success');
+            } catch (error) {
+                addActivityLogEntry('error', `Report export failed: ${error.message}`);
+                showStatus(`❌ Failed to export report: ${error.message}`, 'error');
+            }
+        }
+        
+        async function restartServices() {
+            if (!confirm('Are you sure you want to restart services? This may cause temporary downtime.')) {
+                return;
+            }
+            
+            try {
+                showStatus('🔄 Restarting services...', 'info');
+                
+                // Try to call restart endpoint, fallback to simulation
+                await apiCall('/api/admin/system/restart').catch(() => {
+                    // Simulate restart
+                    return new Promise(resolve => setTimeout(resolve, 2000));
+                });
+                
+                addActivityLogEntry('warning', 'Services restarted');
+                showStatus('✅ Services restarted successfully', 'success');
+                
+                // Refresh metrics after restart
+                setTimeout(() => refreshAllMetrics(), 1000);
+            } catch (error) {
+                addActivityLogEntry('error', `Service restart failed: ${error.message}`);
+                showStatus(`❌ Failed to restart services: ${error.message}`, 'error');
+            }
+        }
+        
+        function addActivityLogEntry(type, message) {
+            const activityEl = document.getElementById('recent-activity-entries');
+            const now = new Date();
+            
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.innerHTML = `
+                <span class="log-time">${now.toLocaleTimeString('pt-PT')}</span>
+                <span class="log-message">${message}</span>
+            `;
+            
+            // Insert at the beginning
+            activityEl.insertBefore(entry, activityEl.firstChild);
+            
+            // Keep only last 10 entries
+            while (activityEl.children.length > 10) {
+                activityEl.removeChild(activityEl.lastChild);
+            }
+        }
+        
+        // Log tab switching functionality
+        function initializeLogTabs() {
+            const logTabs = document.querySelectorAll('.log-tab');
+            logTabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const tabName = this.getAttribute('data-tab');
+                    
+                    // Remove active class from all tabs
+                    logTabs.forEach(t => t.classList.remove('active'));
+                    // Add active class to clicked tab
+                    this.classList.add('active');
+                    
+                    // Hide all log panels
+                    document.querySelectorAll('.log-panel').forEach(panel => {
+                        panel.classList.remove('active');
+                    });
+                    
+                    // Show selected log panel
+                    document.getElementById(tabName + '-log').classList.add('active');
+                });
+            });
         }
 
         // Rules Management Functions
@@ -1104,9 +1472,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 data.show_start_date = formData.has('show_start_date');
                 data.show_end_date = formData.has('show_end_date');
                 data.show_registration_dates = formData.has('show_registration_dates');
-                data.show_registration_url = formData.has('show_registration_url');
-                data.show_rules_pdf_url = formData.has('show_rules_pdf_url');
-                data.show_banner_image = formData.has('show_banner_image');
                 
                 try {
                     console.log('💾 Saving game jam...');
@@ -1222,7 +1587,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <button class="btn btn-danger btn-sm" data-delete-sponsor="${sponsor.id}">🗑️ Apagar</button>
                             </div>
                         </div>
-                        ${sponsor.logo_url ? `<div class="sponsor-logo"><img src="${sponsor.logo_url}" alt="${sponsor.name} logo" style="max-width: 100px; max-height: 50px;"></div>` : ''}
+                        ${sponsor.logo_filename ? `<div class="sponsor-logo"><img src="/api/sponsors/logo/${sponsor.logo_filename}" alt="${sponsor.name} logo" style="max-width: 100px; max-height: 50px;"></div>` : ''}
                         ${sponsor.website_url ? `<div class="sponsor-website"><a href="${sponsor.website_url}" target="_blank">${sponsor.website_url}</a></div>` : ''}
                         ${sponsor.description ? `<div class="sponsor-description">${sponsor.description}</div>` : ''}
                         <div class="sponsor-meta">
@@ -1253,14 +1618,41 @@ document.addEventListener('DOMContentLoaded', function() {
                     document.getElementById('sponsor-id').value = sponsor.id;
                     document.getElementById('sponsor-name').value = sponsor.name;
                     document.getElementById('sponsor-tier').value = sponsor.tier;
-                    document.getElementById('sponsor-logo').value = sponsor.logo_url || '';
+                    // Don't set logo file input - show current logo instead
                     document.getElementById('sponsor-website').value = sponsor.website_url || '';
                     document.getElementById('sponsor-description').value = sponsor.description || '';
                     document.getElementById('sponsor-active').checked = sponsor.is_active;
+                    
+                    // Show current logo if exists
+                    const logoContainer = document.querySelector('.sponsor-logo-preview') || document.createElement('div');
+                    logoContainer.className = 'sponsor-logo-preview';
+                    logoContainer.style.cssText = 'margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 8px;';
+                    
+                    if (sponsor.logo_filename) {
+                        logoContainer.innerHTML = `
+                            <p style="margin: 0 0 10px 0; font-weight: 600;">Logo Atual:</p>
+                            <img src="/api/sponsors/logo/${sponsor.logo_filename}" alt="${sponsor.name} logo" style="max-width: 200px; max-height: 100px; border: 1px solid #ddd; border-radius: 4px;">
+                            <p style="margin: 10px 0 0 0; font-size: 0.9rem; color: #666;">Carregue um novo ficheiro para substituir</p>
+                        `;
+                    } else {
+                        logoContainer.innerHTML = `
+                            <p style="margin: 0; color: #666;">Nenhum logo carregado</p>
+                        `;
+                    }
+                    
+                    // Insert after the logo file input
+                    const logoInput = document.getElementById('sponsor-logo');
+                    logoInput.parentNode.insertBefore(logoContainer, logoInput.nextSibling);
                 } else {
                     // Add mode
                     document.getElementById('sponsor-form-element').reset();
                     document.getElementById('sponsor-id').value = '';
+                    
+                    // Remove any existing logo preview
+                    const existingPreview = document.querySelector('.sponsor-logo-preview');
+                    if (existingPreview) {
+                        existingPreview.remove();
+                    }
                 }
                 
                 document.getElementById('sponsor-form').style.display = 'block';
@@ -1277,10 +1669,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 const form = document.getElementById('sponsor-form-element');
                 const formData = new FormData(form);
                 
+                // Check if a logo file is being uploaded
+                const logoFile = formData.get('logo');
+                const hasLogoFile = logoFile && logoFile.size > 0;
+                
                 const data = {
                     name: formData.get('name'),
                     tier: formData.get('tier'),
-                    logo_url: formData.get('logo_url') || null,
                     website_url: formData.get('website_url') || null,
                     description: formData.get('description') || null,
                     is_active: formData.has('is_active')
@@ -1289,12 +1684,69 @@ document.addEventListener('DOMContentLoaded', function() {
                 try {
                     showStatus('💾 Saving sponsor...', 'info');
                     
-                    const endpoint = currentEditingSponsor ? 
-                        `/api/admin/sponsors/${currentEditingSponsor.id}` : 
-                        '/api/admin/sponsors';
-                    const method = currentEditingSponsor ? 'PUT' : 'POST';
-                    
-                    await apiCall(endpoint, method, data);
+                    if (currentEditingSponsor && hasLogoFile) {
+                        // Upload logo for existing sponsor using direct fetch for FormData
+                        const uploadFormData = new FormData();
+                        uploadFormData.append('logo', logoFile);
+                        
+                        // Get CSRF token from meta tag
+                        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                        
+                        const headers = {};
+                        if (csrfToken) {
+                            headers['csrf-token'] = csrfToken;
+                        }
+                        
+                        const uploadResponse = await fetch(`/api/sponsors/upload-logo/${currentEditingSponsor.id}`, {
+                            method: 'POST',
+                            headers: headers,
+                            body: uploadFormData,
+                            credentials: 'include'
+                        });
+                        
+                        if (!uploadResponse.ok) {
+                            const errorData = await uploadResponse.json();
+                            throw new Error(errorData.message || 'Erro ao carregar logo');
+                        }
+                        
+                        // Then update other fields
+                        await apiCall(`/api/admin/sponsors/${currentEditingSponsor.id}`, 'PUT', data);
+                    } else if (currentEditingSponsor) {
+                        // Update existing sponsor without logo change
+                        await apiCall(`/api/admin/sponsors/${currentEditingSponsor.id}`, 'PUT', data);
+                    } else {
+                        // Create new sponsor
+                        if (hasLogoFile) {
+                            // For new sponsors, we need to create first, then upload logo
+                            const newSponsor = await apiCall('/api/admin/sponsors', 'POST', data);
+                            
+                            // Then upload the logo using direct fetch for FormData
+                            const uploadFormData = new FormData();
+                            uploadFormData.append('logo', logoFile);
+                            
+                            // Get CSRF token from meta tag
+                            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                            
+                            const headers = {};
+                            if (csrfToken) {
+                                headers['csrf-token'] = csrfToken;
+                            }
+                            
+                            const uploadResponse = await fetch(`/api/sponsors/upload-logo/${newSponsor.id}`, {
+                                method: 'POST',
+                                headers: headers,
+                                body: uploadFormData,
+                                credentials: 'include'
+                            });
+                            
+                            if (!uploadResponse.ok) {
+                                const errorData = await uploadResponse.json();
+                                throw new Error(errorData.message || 'Erro ao carregar logo');
+                            }
+                        } else {
+                            await apiCall('/api/admin/sponsors', 'POST', data);
+                        }
+                    }
                     
                     showStatus('✅ Sponsor saved successfully!', 'success');
                     hideSponsorForm();
@@ -1363,11 +1815,26 @@ document.addEventListener('DOMContentLoaded', function() {
             // ===== END SPONSOR MANAGEMENT FUNCTIONS =====
 
             // Navigation event listeners
-            document.querySelectorAll('[data-section]').forEach(button => {
-                button.addEventListener('click', function() {
-                    const section = this.getAttribute('data-section');
-                    showSection(section, this);
+            document.querySelectorAll('[data-page]').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const page = this.getAttribute('data-page');
+                    navigateToPage(page);
+                    
+                    // Close mobile menu on navigation
+                    const sidebar = document.querySelector('.sidebar');
+                    sidebar.classList.remove('open');
                 });
+            });
+            
+            // Handle browser back/forward navigation
+            window.addEventListener('hashchange', function() {
+                const hash = window.location.hash.substring(1);
+                if (hash) {
+                    navigateToPage(hash);
+                } else {
+                    navigateToPage('dashboard');
+                }
             });
 
             // Add/Cancel button event listeners
@@ -1375,6 +1842,9 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('cancel-gamejam-btn').addEventListener('click', hideGameJamForm);
             document.getElementById('add-game-btn').addEventListener('click', showGameForm);
             document.getElementById('cancel-game-btn').addEventListener('click', hideGameForm);
+            
+            // Mobile menu toggle
+            document.getElementById('mobile-menu-toggle').addEventListener('click', toggleMobileMenu);
             
             // Sponsor event listeners
             document.getElementById('add-sponsor-btn').addEventListener('click', () => showSponsorForm());

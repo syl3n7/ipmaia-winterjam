@@ -32,7 +32,9 @@ export default function Home() {
   // Fetch front page settings from admin-controlled API
   const fetchFrontPageSettings = async () => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+      const apiUrl = typeof window === 'undefined' 
+        ? (process.env.NEXT_PUBLIC_API_URL || 'http://backend:3001/api')
+        : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api');
       const response = await fetch(`${apiUrl}/frontpage/settings`);
       if (!response.ok) throw new Error('Failed to fetch front page settings');
       const settings = await response.json();
@@ -157,7 +159,9 @@ export default function Home() {
   }, [isLoading]);
 
   useEffect(() => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+    const apiUrl = typeof window === 'undefined' 
+      ? (process.env.NEXT_PUBLIC_API_URL || 'http://backend:3001/api')
+      : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api');
     fetch(`${apiUrl}/sponsors`)
       .then(res => res.json())
       .then(data => setSponsors(data.sponsors || []))
@@ -196,20 +200,16 @@ export default function Home() {
                   </h1>
 
                   {/* Hero sponsor(s) directly below the title: fetched from API */}
-                  {(() => {
-                    const heroSponsors = sponsors.length > 0 ? sponsors : [{ imgSrc: '/images/LIGHT_BG_AstralShift_Horizontal.png', href: 'https://astralshiftpro.com', alt: 'Astral Shift' }];
-
-                    return (
-                      <div className="flex flex-col items-center gap-2 mb-4">
-                        <span className="text-xs uppercase text-orange-300 leading-none">SPONSORED BY</span>
-                        <div className="flex items-center gap-3">
-                          {heroSponsors.map((s, idx) => (
-                            <Sponsor key={idx} showText={false} isCircular={false} imgSrc={s.imgSrc} alt={s.alt || 'Sponsor'} href={s.href || 'https://astralshiftpro.com'} imgClassName={'h-10 sm:h-12'} containerClass={'p-0'} />
-                          ))}
-                        </div>
+                  {sponsors.length > 0 && (
+                    <div className="flex flex-col items-center gap-2 mb-4">
+                      <span className="text-xs uppercase text-orange-300 leading-none">SPONSORED BY</span>
+                      <div className="flex items-center gap-3">
+                        {sponsors.map((s, idx) => (
+                          <Sponsor key={idx} showText={false} isCircular={false} imgSrc={s.imgSrc} alt={s.alt || 'Sponsor'} href={s.href} imgClassName={'h-10 sm:h-12'} containerClass={'p-0'} />
+                        ))}
                       </div>
-                    );
-                  })()}
+                    </div>
+                  )}
                 </>
               )}
 
