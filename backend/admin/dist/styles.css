@@ -1504,3 +1504,472 @@
     transform: translateY(0);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
+
+/* ===== SYSTEM DASHBOARD STYLES ===== */
+
+/* System Status Grid */
+.system-status-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 24px;
+    margin-bottom: 32px;
+}
+
+.system-card {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.system-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+}
+
+.system-card-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.system-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+.system-health-card .system-icon {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+}
+
+.database-card .system-icon {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    color: white;
+}
+
+.performance-card .system-icon {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+}
+
+.storage-card .system-icon {
+    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+    color: white;
+}
+
+.system-card-title {
+    flex: 1;
+}
+
+.system-card-title h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 4px;
+}
+
+.status-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-badge.status-healthy {
+    background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+    color: #166534;
+}
+
+.status-badge.status-error {
+    background: linear-gradient(135deg, #fef2f2, #fecaca);
+    color: #991b1b;
+}
+
+.status-badge.status-good {
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    color: #92400e;
+}
+
+.system-card-content {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.health-metrics,
+.db-metrics,
+.performance-metrics,
+.storage-metrics {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.metric-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.metric-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.metric-value {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.metric-value.status-healthy {
+    color: #059669;
+}
+
+.metric-value.status-error {
+    color: #dc2626;
+}
+
+/* System Controls */
+.system-controls-section {
+    margin-bottom: 32px;
+}
+
+.actions-card .system-icon {
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
+    color: white;
+}
+
+.action-buttons-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+.action-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    border-radius: 12px;
+    border: none;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    text-align: left;
+    background: rgba(255, 255, 255, 0.9);
+    color: #374151;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.btn-success {
+    border-left: 4px solid #10b981;
+}
+
+.btn-success:hover {
+    background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+}
+
+.btn-primary {
+    border-left: 4px solid #3b82f6;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+}
+
+.btn-info {
+    border-left: 4px solid #06b6d4;
+}
+
+.btn-info:hover {
+    background: linear-gradient(135deg, #cffafe, #a5f3fc);
+}
+
+.btn-warning {
+    border-left: 4px solid #f59e0b;
+}
+
+.btn-warning:hover {
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+}
+
+.btn-secondary {
+    border-left: 4px solid #6b7280;
+}
+
+.btn-secondary:hover {
+    background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+}
+
+.btn-danger {
+    border-left: 4px solid #ef4444;
+}
+
+.btn-danger:hover {
+    background: linear-gradient(135deg, #fef2f2, #fecaca);
+}
+
+.btn-icon {
+    font-size: 16px;
+}
+
+.btn-text {
+    flex: 1;
+}
+
+/* System Logs */
+.system-logs-section {
+    margin-bottom: 32px;
+}
+
+.logs-card .system-icon {
+    background: linear-gradient(135deg, #374151, #1f2937);
+    color: white;
+}
+
+.log-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 20px;
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 8px;
+    padding: 4px;
+}
+
+.log-tab {
+    flex: 1;
+    padding: 8px 16px;
+    border-radius: 6px;
+    background: transparent;
+    border: none;
+    color: #6b7280;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.log-tab.active {
+    background: white;
+    color: #1f2937;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.log-content {
+    background: rgba(0, 0, 0, 0.02);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.log-panel {
+    display: none;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.log-panel.active {
+    display: block;
+}
+
+.log-entries {
+    padding: 16px;
+}
+
+.log-entry {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.log-entry:last-child {
+    border-bottom: none;
+}
+
+.log-time {
+    font-size: 12px;
+    color: #6b7280;
+    font-weight: 500;
+    min-width: 60px;
+}
+
+.log-message {
+    font-size: 14px;
+    color: #374151;
+    flex: 1;
+}
+
+.log-entry.info .log-message {
+    color: #374151;
+}
+
+.log-entry.success .log-message {
+    color: #059669;
+}
+
+.log-entry.warning .log-message {
+    color: #d97706;
+}
+
+.log-entry.error .log-message {
+    color: #dc2626;
+}
+
+.log-entry.loading .log-message {
+    color: #6b7280;
+    font-style: italic;
+}
+
+/* API Endpoints */
+.system-api-section {
+    margin-bottom: 32px;
+}
+
+.api-card .system-icon {
+    background: linear-gradient(135deg, #06b6d4, #0891b2);
+    color: white;
+}
+
+.api-endpoints-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+}
+
+.api-endpoint-group h4 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.endpoint-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.endpoint-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+}
+
+.endpoint-item code {
+    background: rgba(0, 0, 0, 0.05);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #374151;
+    flex-shrink: 0;
+}
+
+.endpoint-desc {
+    font-size: 14px;
+    color: #6b7280;
+}
+
+/* System Configuration */
+.system-config-section {
+    margin-bottom: 32px;
+}
+
+.config-card .system-icon {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+}
+
+.config-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 16px;
+}
+
+.config-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.config-item:last-child {
+    border-bottom: none;
+}
+
+.config-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+}
+
+.config-value {
+    font-size: 14px;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .system-status-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .api-endpoints-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .action-buttons-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .config-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .system-card {
+        padding: 20px;
+    }
+    
+    .system-card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+    
+    .health-metrics,
+    .db-metrics,
+    .performance-metrics,
+    .storage-metrics {
+        grid-template-columns: 1fr;
+    }
+}

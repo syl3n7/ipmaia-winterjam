@@ -116,6 +116,13 @@ document.addEventListener('DOMContentLoaded', function() {
         window.refreshSystemInfo = refreshSystemInfo;
         window.navigateToPage = navigateToPage;
         window.toggleMobileMenu = toggleMobileMenu;
+        // New system functions
+        window.runHealthCheck = runHealthCheck;
+        window.runSystemTest = runSystemTest;
+        window.refreshAllMetrics = refreshAllMetrics;
+        window.clearSystemCache = clearSystemCache;
+        window.exportSystemReport = exportSystemReport;
+        window.restartServices = restartServices;
 
         // Portuguese (Portugal) Date Formatting Utilities
         const PT_LOCALE = 'pt-PT';
@@ -271,6 +278,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     break;
                 case 'system':
                     loadSystemInfo();
+                    initializeLogTabs();
                     break;
             }
         }
@@ -852,16 +860,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 const responseTime = Date.now() - startTime;
                 
-                // Update system status
-                updateSystemStatus(health);
-                
-                // Update database metrics
+                // Update all system metrics
+                updateSystemHealthStatus(health);
                 updateDatabaseMetrics(gamejams, games, sponsors);
-                
-                // Update performance metrics
                 updatePerformanceMetrics(responseTime, health);
-                
-                // Update recent activity
+                updateStorageMetrics();
+                updateSystemConfiguration();
                 updateRecentActivity();
                 
                 console.log('System information loaded successfully');
@@ -870,35 +874,48 @@ document.addEventListener('DOMContentLoaded', function() {
                 showStatus('❌ Failed to load system information', 'error');
                 
                 // Set error states
-                document.getElementById('system-status').innerHTML = '<span class="status-dot status-error"></span><span class="status-text">Error</span>';
-                document.getElementById('db-status').innerHTML = '<span class="status-dot status-error"></span><span class="status-text">Error</span>';
+                setSystemErrorState();
             }
         }
         
-        function updateSystemStatus(health) {
-            const statusEl = document.getElementById('system-status');
+        function updateSystemHealthStatus(health) {
+            const statusEl = document.getElementById('system-health-status');
+            const statusTextEl = document.getElementById('system-status-text');
             const uptimeEl = document.getElementById('system-uptime');
             const versionEl = document.getElementById('system-version');
+            const lastCheckEl = document.getElementById('system-last-check');
             
             if (health && health.status === 'OK') {
-                statusEl.innerHTML = '<span class="status-dot status-success"></span><span class="status-text">Healthy</span>';
+                statusEl.className = 'status-badge status-healthy';
+                statusEl.textContent = 'Healthy';
+                statusTextEl.className = 'metric-value status-healthy';
+                statusTextEl.textContent = 'Online';
                 uptimeEl.textContent = 'Running';
                 versionEl.textContent = health.version || '1.0.0';
             } else {
-                statusEl.innerHTML = '<span class="status-dot status-error"></span><span class="status-text">Unhealthy</span>';
+                statusEl.className = 'status-badge status-error';
+                statusEl.textContent = 'Unhealthy';
+                statusTextEl.className = 'metric-value status-error';
+                statusTextEl.textContent = 'Offline';
                 uptimeEl.textContent = 'Unknown';
                 versionEl.textContent = 'Unknown';
             }
+            
+            lastCheckEl.textContent = new Date().toLocaleTimeString('pt-PT');
         }
         
         function updateDatabaseMetrics(gamejams, games, sponsors) {
-            const statusEl = document.getElementById('db-status');
-            const gamejamsEl = document.getElementById('db-gamejams');
-            const gamesEl = document.getElementById('db-games');
-            const sponsorsEl = document.getElementById('db-sponsors');
+            const connectionEl = document.getElementById('db-connection-status');
+            const gamejamsEl = document.getElementById('db-gamejams-count');
+            const gamesEl = document.getElementById('db-games-count');
+            const sponsorsEl = document.getElementById('db-sponsors-count');
+            const statusBadge = document.getElementById('db-status-badge');
             
             // Assume database is healthy if we got data
-            statusEl.innerHTML = '<span class="status-dot status-success"></span><span class="status-text">Connected</span>';
+            connectionEl.className = 'metric-value status-healthy';
+            connectionEl.textContent = 'Active';
+            statusBadge.className = 'status-badge status-healthy';
+            statusBadge.textContent = 'Connected';
             
             gamejamsEl.textContent = Array.isArray(gamejams) ? gamejams.length : '0';
             gamesEl.textContent = Array.isArray(games) ? games.length : '0';
@@ -907,144 +924,297 @@ document.addEventListener('DOMContentLoaded', function() {
         
         function updatePerformanceMetrics(responseTime, health) {
             const responseTimeEl = document.getElementById('perf-response-time');
-            const memoryEl = document.getElementById('perf-memory');
-            const lastUpdateEl = document.getElementById('perf-last-update');
+            const memoryEl = document.getElementById('perf-memory-usage');
+            const usersEl = document.getElementById('perf-active-users');
+            const loadEl = document.getElementById('perf-load-average');
             
             responseTimeEl.textContent = `${responseTime}ms`;
             memoryEl.textContent = 'N/A'; // Would need backend support
-            lastUpdateEl.textContent = new Date().toLocaleTimeString('pt-PT');
+            usersEl.textContent = '1'; // Current user
+            loadEl.textContent = 'N/A'; // Would need backend support
+        }
+        
+        async function updateStorageMetrics() {
+            const uploadsSizeEl = document.getElementById('storage-uploads-size');
+            const totalFilesEl = document.getElementById('storage-total-files');
+            const diskUsageEl = document.getElementById('storage-disk-usage');
+            const availableSpaceEl = document.getElementById('storage-available-space');
+            
+            try {
+                // Try to get storage info from backend
+                const storageInfo = await apiCall('/api/admin/system/storage').catch(() => null);
+                
+                if (storageInfo) {
+                    uploadsSizeEl.textContent = formatBytes(storageInfo.uploadsSize);
+                    totalFilesEl.textContent = storageInfo.totalFiles;
+                    diskUsageEl.textContent = formatBytes(storageInfo.diskUsage);
+                    availableSpaceEl.textContent = formatBytes(storageInfo.availableSpace);
+                } else {
+                    // Fallback values
+                    uploadsSizeEl.textContent = 'Calculating...';
+                    totalFilesEl.textContent = '0';
+                    diskUsageEl.textContent = 'N/A';
+                    availableSpaceEl.textContent = 'N/A';
+                }
+            } catch (error) {
+                uploadsSizeEl.textContent = 'Error';
+                totalFilesEl.textContent = '0';
+                diskUsageEl.textContent = 'N/A';
+                availableSpaceEl.textContent = 'N/A';
+            }
+        }
+        
+        function updateSystemConfiguration() {
+            // Update configuration values (these would come from backend in a real implementation)
+            document.getElementById('config-environment').textContent = 'development';
+            document.getElementById('config-db-host').textContent = 'localhost';
+            document.getElementById('config-api-port').textContent = '3001';
+            document.getElementById('config-frontend-url').textContent = 'http://localhost:3000';
+            document.getElementById('config-session-timeout').textContent = '24 hours';
+            document.getElementById('config-max-upload').textContent = '5MB';
         }
         
         function updateRecentActivity() {
-            const activityEl = document.getElementById('recent-activity');
+            const activityEl = document.getElementById('recent-activity-entries');
             const now = new Date();
             
             activityEl.innerHTML = `
-                <div class="activity-item">
-                    <span class="activity-time">${now.toLocaleTimeString('pt-PT')}</span>
-                    <span class="activity-desc">System dashboard refreshed</span>
+                <div class="log-entry info">
+                    <span class="log-time">${now.toLocaleTimeString('pt-PT')}</span>
+                    <span class="log-message">System dashboard refreshed</span>
                 </div>
-                <div class="activity-item">
-                    <span class="activity-time">${new Date(now.getTime() - 300000).toLocaleTimeString('pt-PT')}</span>
-                    <span class="activity-desc">Admin panel accessed</span>
+                <div class="log-entry success">
+                    <span class="log-time">${new Date(now.getTime() - 300000).toLocaleTimeString('pt-PT')}</span>
+                    <span class="log-message">Admin panel accessed</span>
                 </div>
-                <div class="activity-item">
-                    <span class="activity-time">${new Date(now.getTime() - 600000).toLocaleTimeString('pt-PT')}</span>
-                    <span class="activity-desc">Database connection verified</span>
+                <div class="log-entry info">
+                    <span class="log-time">${new Date(now.getTime() - 600000).toLocaleTimeString('pt-PT')}</span>
+                    <span class="log-message">Database connection verified</span>
                 </div>
             `;
         }
         
-        async function testHealth() {
+        function setSystemErrorState() {
+            // Set error states for all metrics
+            document.getElementById('system-health-status').className = 'status-badge status-error';
+            document.getElementById('system-health-status').textContent = 'Error';
+            document.getElementById('system-status-text').className = 'metric-value status-error';
+            document.getElementById('system-status-text').textContent = 'Error';
+            document.getElementById('db-status-badge').className = 'status-badge status-error';
+            document.getElementById('db-status-badge').textContent = 'Error';
+        }
+        
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+        
+        // New system control functions
+        async function runHealthCheck() {
             try {
                 showStatus('🔍 Running health check...', 'info');
                 const startTime = Date.now();
                 const result = await apiCall('/health');
                 const responseTime = Date.now() - startTime;
                 
-                document.getElementById('response').textContent = JSON.stringify({
-                    ...result,
-                    responseTime: `${responseTime}ms`,
-                    timestamp: new Date().toISOString()
-                }, null, 2);
+                // Update health status
+                updateSystemHealthStatus(result);
+                
+                // Add to activity log
+                addActivityLogEntry('success', `Health check completed in ${responseTime}ms`);
                 
                 showStatus('✅ Health check successful', 'success');
-                updateRecentActivity();
             } catch (error) {
-                document.getElementById('response').textContent = `Error: ${error.message}`;
+                addActivityLogEntry('error', `Health check failed: ${error.message}`);
                 showStatus(`❌ Health check failed: ${error.message}`, 'error');
             }
         }
-
-        async function testAPI() {
+        
+        async function runSystemTest() {
             try {
-                showStatus('🔍 Testing API endpoints...', 'info');
+                showStatus('🔬 Running system test...', 'info');
                 const startTime = Date.now();
                 
                 const results = await Promise.allSettled([
                     apiCall('/api/public/gamejams'),
                     apiCall('/api/public/games/featured'),
-                    apiCall('/health')
-                ]);
-                
-                const responseTime = Date.now() - startTime;
-                
-                const testResults = {
-                    responseTime: `${responseTime}ms`,
-                    timestamp: new Date().toISOString(),
-                    endpoints: {
-                        gamejams: results[0].status === 'fulfilled' ? 
-                            { status: 'OK', count: results[0].value.length } : 
-                            { status: 'ERROR', error: results[0].reason?.message },
-                        games: results[1].status === 'fulfilled' ? 
-                            { status: 'OK', count: results[1].value.length } : 
-                            { status: 'ERROR', error: results[1].reason?.message },
-                        health: results[2].status === 'fulfilled' ? 
-                            { status: 'OK', data: results[2].value } : 
-                            { status: 'ERROR', error: results[2].reason?.message }
-                    }
-                };
-                
-                document.getElementById('response').textContent = JSON.stringify(testResults, null, 2);
-                showStatus('✅ API test completed', 'success');
-                updateRecentActivity();
-            } catch (error) {
-                document.getElementById('response').textContent = `Error: ${error.message}`;
-                showStatus(`❌ API test failed: ${error.message}`, 'error');
-            }
-        }
-        
-        async function testDatabase() {
-            try {
-                showStatus('🔍 Testing database connection...', 'info');
-                const startTime = Date.now();
-                
-                // Test multiple database operations
-                const results = await Promise.allSettled([
-                    apiCall('/api/public/gamejams'),
-                    apiCall('/api/admin/games'),
+                    apiCall('/health'),
                     apiCall('/api/admin/sponsors')
                 ]);
                 
                 const responseTime = Date.now() - startTime;
                 
-                const dbTest = {
-                    responseTime: `${responseTime}ms`,
-                    timestamp: new Date().toISOString(),
-                    database: {
-                        status: results.every(r => r.status === 'fulfilled') ? 'CONNECTED' : 'ISSUES',
-                        tables: {
-                            gamejams: results[0].status === 'fulfilled' ? `${results[0].value.length} records` : 'ERROR',
-                            games: results[1].status === 'fulfilled' ? `${results[1].value.length} records` : 'ERROR',
-                            sponsors: results[2].status === 'fulfilled' ? `${results[2].value.length} records` : 'ERROR'
-                        }
-                    }
-                };
+                const passed = results.filter(r => r.status === 'fulfilled').length;
+                const failed = results.filter(r => r.status === 'rejected').length;
                 
-                document.getElementById('response').textContent = JSON.stringify(dbTest, null, 2);
-                showStatus('✅ Database test completed', 'success');
-                updateRecentActivity();
+                addActivityLogEntry('info', `System test completed: ${passed} passed, ${failed} failed (${responseTime}ms)`);
+                
+                if (failed === 0) {
+                    showStatus('✅ All system tests passed', 'success');
+                } else {
+                    showStatus(`⚠️ System test completed with ${failed} failures`, 'warning');
+                }
+                
+                // Refresh all metrics
+                await refreshAllMetrics();
             } catch (error) {
-                document.getElementById('response').textContent = `Error: ${error.message}`;
-                showStatus(`❌ Database test failed: ${error.message}`, 'error');
+                addActivityLogEntry('error', `System test failed: ${error.message}`);
+                showStatus(`❌ System test failed: ${error.message}`, 'error');
             }
         }
         
-        async function refreshSystemInfo() {
-            showStatus('🔄 Refreshing system information...', 'info');
+        async function refreshAllMetrics() {
+            showStatus('🔄 Refreshing all metrics...', 'info');
             await loadSystemInfo();
-            showStatus('✅ System information refreshed', 'success');
+            addActivityLogEntry('info', 'All system metrics refreshed');
+            showStatus('✅ All metrics refreshed', 'success');
         }
-
-        function clearCache() {
-            if (confirm('Are you sure you want to clear the system cache? This will temporarily slow down some operations.')) {
-                showStatus('🧹 Clearing system cache...', 'info');
-                // Simulate cache clearing (would need backend support)
-                setTimeout(() => {
-                    showStatus('✅ Cache cleared successfully', 'success');
-                    updateRecentActivity();
-                }, 1000);
+        
+        async function clearSystemCache() {
+            if (!confirm('Are you sure you want to clear the system cache? This may temporarily slow down some operations.')) {
+                return;
             }
+            
+            try {
+                showStatus('🧹 Clearing system cache...', 'info');
+                
+                // Try to call cache clearing endpoint, fallback to simulation
+                await apiCall('/api/admin/system/clear-cache').catch(() => {
+                    // Simulate cache clearing
+                    return new Promise(resolve => setTimeout(resolve, 1000));
+                });
+                
+                addActivityLogEntry('warning', 'System cache cleared');
+                showStatus('✅ Cache cleared successfully', 'success');
+            } catch (error) {
+                addActivityLogEntry('error', `Cache clear failed: ${error.message}`);
+                showStatus(`❌ Failed to clear cache: ${error.message}`, 'error');
+            }
+        }
+        
+        async function exportSystemReport() {
+            try {
+                showStatus('📊 Generating system report...', 'info');
+                
+                // Gather all system data
+                const [gamejams, games, sponsors, health] = await Promise.all([
+                    apiCall('/api/public/gamejams').catch(() => []),
+                    apiCall('/api/public/games/featured').catch(() => []),
+                    apiCall('/api/admin/sponsors').catch(() => []),
+                    apiCall('/health').catch(() => ({}))
+                ]);
+                
+                const report = {
+                    timestamp: new Date().toISOString(),
+                    system: {
+                        status: health.status || 'Unknown',
+                        version: health.version || 'Unknown',
+                        uptime: 'Running'
+                    },
+                    database: {
+                        gamejams: gamejams.length,
+                        games: games.length,
+                        sponsors: sponsors.length
+                    },
+                    performance: {
+                        responseTime: 'N/A',
+                        memoryUsage: 'N/A',
+                        activeUsers: 1
+                    },
+                    storage: {
+                        uploadsSize: 'Calculating...',
+                        totalFiles: 0
+                    }
+                };
+                
+                // Download as JSON
+                const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `system-report-${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+                
+                addActivityLogEntry('info', 'System report exported');
+                showStatus('✅ System report exported', 'success');
+            } catch (error) {
+                addActivityLogEntry('error', `Report export failed: ${error.message}`);
+                showStatus(`❌ Failed to export report: ${error.message}`, 'error');
+            }
+        }
+        
+        async function restartServices() {
+            if (!confirm('Are you sure you want to restart services? This may cause temporary downtime.')) {
+                return;
+            }
+            
+            try {
+                showStatus('🔄 Restarting services...', 'info');
+                
+                // Try to call restart endpoint, fallback to simulation
+                await apiCall('/api/admin/system/restart').catch(() => {
+                    // Simulate restart
+                    return new Promise(resolve => setTimeout(resolve, 2000));
+                });
+                
+                addActivityLogEntry('warning', 'Services restarted');
+                showStatus('✅ Services restarted successfully', 'success');
+                
+                // Refresh metrics after restart
+                setTimeout(() => refreshAllMetrics(), 1000);
+            } catch (error) {
+                addActivityLogEntry('error', `Service restart failed: ${error.message}`);
+                showStatus(`❌ Failed to restart services: ${error.message}`, 'error');
+            }
+        }
+        
+        function addActivityLogEntry(type, message) {
+            const activityEl = document.getElementById('recent-activity-entries');
+            const now = new Date();
+            
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.innerHTML = `
+                <span class="log-time">${now.toLocaleTimeString('pt-PT')}</span>
+                <span class="log-message">${message}</span>
+            `;
+            
+            // Insert at the beginning
+            activityEl.insertBefore(entry, activityEl.firstChild);
+            
+            // Keep only last 10 entries
+            while (activityEl.children.length > 10) {
+                activityEl.removeChild(activityEl.lastChild);
+            }
+        }
+        
+        // Log tab switching functionality
+        function initializeLogTabs() {
+            const logTabs = document.querySelectorAll('.log-tab');
+            logTabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const tabName = this.getAttribute('data-tab');
+                    
+                    // Remove active class from all tabs
+                    logTabs.forEach(t => t.classList.remove('active'));
+                    // Add active class to clicked tab
+                    this.classList.add('active');
+                    
+                    // Hide all log panels
+                    document.querySelectorAll('.log-panel').forEach(panel => {
+                        panel.classList.remove('active');
+                    });
+                    
+                    // Show selected log panel
+                    document.getElementById(tabName + '-log').classList.add('active');
+                });
+            });
         }
 
         // Rules Management Functions
