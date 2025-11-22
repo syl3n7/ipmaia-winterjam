@@ -2,6 +2,9 @@ FROM node:20.19.2-alpine3.20
 
 WORKDIR /app
 
+# Set production environment
+ENV NODE_ENV production
+
 # Copy package files and install dependencies
 COPY package*.json ./
 RUN npm ci --only=production --no-cache

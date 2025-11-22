@@ -1,4 +1,5 @@
 const express = require('express');
+const { pool } = require('../config/database');
 const GameJam = require('../models/GameJam');
 const Game = require('../models/Game');
 const { requireAdmin, requireSuperAdmin } = require('./auth');
@@ -363,6 +364,85 @@ router.post('/import', async (req, res) => {
   } catch (error) {
     console.error('Error importing data:', error);
     res.status(500).json({ error: 'Failed to import data', details: error.message });
+  }
+});
+
+// Sponsor Management
+router.get('/sponsors', async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT * FROM sponsors ORDER BY created_at DESC'
+    );
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching sponsors:', error);
+    res.status(500).json({ error: 'Failed to fetch sponsors' });
+  }
+});
+
+router.post('/sponsors', async (req, res) => {
+  try {
+    const { name, tier, logo_url, website_url, description } = req.body;
+
+    if (!name || !tier) {
+      return res.status(400).json({ error: 'Nome e nível são obrigatórios' });
+    }
+
+    const result = await pool.query(
+      `INSERT INTO sponsors (name, tier, logo_url, website_url, description, is_active)
+       VALUES ($1, $2, $3, $4, $5, true)
+       RETURNING *`,
+      [name, tier, logo_url, website_url, description]
+    );
+
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error('Error creating sponsor:', error);
+    res.status(500).json({ error: 'Failed to create sponsor' });
+  }
+});
+
+router.put('/sponsors/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, tier, logo_url, website_url, description, is_active } = req.body;
+
+    const result = await pool.query(
+      `UPDATE sponsors
+       SET name = $1, tier = $2, logo_url = $3, website_url = $4, description = $5, is_active = $6, updated_at = NOW()
+       WHERE id = $7
+       RETURNING *`,
+      [name, tier, logo_url, website_url, description, is_active, id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Patrocinador não encontrado' });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Error updating sponsor:', error);
+    res.status(500).json({ error: 'Failed to update sponsor' });
+  }
+});
+
+router.delete('/sponsors/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await pool.query(
+      'DELETE FROM sponsors WHERE id = $1 RETURNING *',
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Patrocinador não encontrado' });
+    }
+
+    res.json({ message: 'Patrocinador removido com sucesso' });
+  } catch (error) {
+    console.error('Error deleting sponsor:', error);
+    res.status(500).json({ error: 'Failed to delete sponsor' });
   }
 });
 

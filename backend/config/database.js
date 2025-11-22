@@ -1,5 +1,19 @@
 const { Pool } = require('pg');
 
+// In development, we can work without database for basic functionality
+// But enable it if DEV_BYPASS_AUTH is true for testing with real database
+if (process.env.NODE_ENV !== 'production' && process.env.DEV_BYPASS_AUTH !== 'true') {
+  console.log('⚠️ Development mode: Database connection disabled for easier testing');
+  module.exports = {
+    pool: {
+      query: async () => ({ rows: [] }),
+      connect: async () => ({}),
+      end: async () => {}
+    }
+  };
+  return;
+}
+
 const pool = new Pool({
   user: process.env.DB_USER || 'winterjam',
   host: process.env.DB_HOST || 'postgres',

@@ -30,7 +30,34 @@ document.addEventListener('DOMContentLoaded', function() {
                     showAdminDashboard();
                     updateUserInfo();
                     showStatus('🚀 System ready', 'success');
-                    loadGameJams();
+                    // Load data for the active section
+                    const activeSection = document.querySelector('.card.active').id.replace('-section', '');
+                    switch(activeSection) {
+                        case 'gamejams':
+                            loadGameJams();
+                            break;
+                        case 'games':
+                            loadGames();
+                            break;
+                        case 'users':
+                            loadUsers();
+                            break;
+                        case 'sponsors':
+                            loadSponsors();
+                            break;
+                        case 'frontpage':
+                            loadFrontPageSettings();
+                            loadBannerStatus();
+                            break;
+                        case 'rules':
+                            loadRules();
+                            break;
+                        case 'system':
+                            loadSystemInfo();
+                            break;
+                        default:
+                            loadGameJams(); // fallback
+                    }
                 } else {
                     console.log('❌ Not authenticated (status ' + response.status + '), showing login overlay');
                     showAuthOverlay();
@@ -1153,6 +1180,188 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
 
+            // ===== SPONSOR MANAGEMENT FUNCTIONS =====
+            
+            let currentEditingSponsor = null;
+            let sponsors = [];
+            
+            async function loadSponsors() {
+                try {
+                    showStatus('📥 Loading sponsors...', 'info');
+                    
+                    const response = await apiCall('/api/admin/sponsors');
+                    sponsors = response || [];
+                    
+                    renderSponsorsList();
+                    showStatus('✅ Sponsors loaded successfully', 'success');
+                } catch (error) {
+                    console.error('Error loading sponsors:', error);
+                    showStatus(`❌ Error loading sponsors: ${error.message}`, 'error');
+                    document.getElementById('sponsors-list').innerHTML = '<div class="error">Erro ao carregar patrocinadores</div>';
+                }
+            }
+            
+            function renderSponsorsList() {
+                const container = document.getElementById('sponsors-list');
+                
+                if (sponsors.length === 0) {
+                    container.innerHTML = '<div class="empty-state">Nenhum patrocinador encontrado. Clique em "Adicionar Novo Patrocinador" para começar.</div>';
+                    return;
+                }
+                
+                const html = sponsors.map(sponsor => `
+                    <div class="sponsor-item" data-id="${sponsor.id}">
+                        <div class="sponsor-header">
+                            <div class="sponsor-info">
+                                <h3>${sponsor.name}</h3>
+                                <span class="sponsor-tier tier-${sponsor.tier}">${getTierDisplayName(sponsor.tier)}</span>
+                                ${!sponsor.is_active ? '<span class="inactive-badge">Inativo</span>' : ''}
+                            </div>
+                            <div class="sponsor-actions">
+                                <button class="btn btn-sm" data-edit-sponsor="${sponsor.id}">✏️ Editar</button>
+                                <button class="btn btn-danger btn-sm" data-delete-sponsor="${sponsor.id}">🗑️ Apagar</button>
+                            </div>
+                        </div>
+                        ${sponsor.logo_url ? `<div class="sponsor-logo"><img src="${sponsor.logo_url}" alt="${sponsor.name} logo" style="max-width: 100px; max-height: 50px;"></div>` : ''}
+                        ${sponsor.website_url ? `<div class="sponsor-website"><a href="${sponsor.website_url}" target="_blank">${sponsor.website_url}</a></div>` : ''}
+                        ${sponsor.description ? `<div class="sponsor-description">${sponsor.description}</div>` : ''}
+                        <div class="sponsor-meta">
+                            Criado: ${new Date(sponsor.created_at).toLocaleDateString('pt-PT')}
+                            ${sponsor.updated_at !== sponsor.created_at ? ` | Atualizado: ${new Date(sponsor.updated_at).toLocaleDateString('pt-PT')}` : ''}
+                        </div>
+                    </div>
+                `).join('');
+                
+                container.innerHTML = html;
+            }
+            
+            function getTierDisplayName(tier) {
+                const names = {
+                    platinum: '🏆 Platinum',
+                    gold: '⭐ Gold', 
+                    silver: '🥈 Silver',
+                    bronze: '🥉 Bronze'
+                };
+                return names[tier] || tier;
+            }
+            
+            function showSponsorForm(sponsor = null) {
+                currentEditingSponsor = sponsor;
+                
+                if (sponsor) {
+                    // Edit mode
+                    document.getElementById('sponsor-id').value = sponsor.id;
+                    document.getElementById('sponsor-name').value = sponsor.name;
+                    document.getElementById('sponsor-tier').value = sponsor.tier;
+                    document.getElementById('sponsor-logo').value = sponsor.logo_url || '';
+                    document.getElementById('sponsor-website').value = sponsor.website_url || '';
+                    document.getElementById('sponsor-description').value = sponsor.description || '';
+                    document.getElementById('sponsor-active').checked = sponsor.is_active;
+                } else {
+                    // Add mode
+                    document.getElementById('sponsor-form-element').reset();
+                    document.getElementById('sponsor-id').value = '';
+                }
+                
+                document.getElementById('sponsor-form').style.display = 'block';
+                document.getElementById('sponsor-form').scrollIntoView({ behavior: 'smooth' });
+            }
+            
+            function hideSponsorForm() {
+                document.getElementById('sponsor-form').style.display = 'none';
+                currentEditingSponsor = null;
+                document.getElementById('sponsor-form-element').reset();
+            }
+            
+            async function saveSponsor() {
+                const form = document.getElementById('sponsor-form-element');
+                const formData = new FormData(form);
+                
+                const data = {
+                    name: formData.get('name'),
+                    tier: formData.get('tier'),
+                    logo_url: formData.get('logo_url') || null,
+                    website_url: formData.get('website_url') || null,
+                    description: formData.get('description') || null,
+                    is_active: formData.has('is_active')
+                };
+                
+                try {
+                    showStatus('💾 Saving sponsor...', 'info');
+                    
+                    const endpoint = currentEditingSponsor ? 
+                        `/api/admin/sponsors/${currentEditingSponsor.id}` : 
+                        '/api/admin/sponsors';
+                    const method = currentEditingSponsor ? 'PUT' : 'POST';
+                    
+                    await apiCall(endpoint, method, data);
+                    
+                    showStatus('✅ Sponsor saved successfully!', 'success');
+                    hideSponsorForm();
+                    loadSponsors();
+                } catch (error) {
+                    showStatus(`❌ Error saving sponsor: ${error.message}`, 'error');
+                }
+            }
+            
+            async function deleteSponsor(id) {
+                if (!confirm('Tem certeza que deseja apagar este patrocinador? Esta ação não pode ser desfeita.')) {
+                    return;
+                }
+                
+                try {
+                    showStatus('🗑️ Deleting sponsor...', 'info');
+                    
+                    await apiCall(`/api/admin/sponsors/${id}`, 'DELETE');
+                    
+                    showStatus('✅ Sponsor deleted successfully!', 'success');
+                    loadSponsors();
+                } catch (error) {
+                    showStatus(`❌ Error deleting sponsor: ${error.message}`, 'error');
+                }
+            }
+            
+            async function exportSponsors() {
+                try {
+                    showStatus('📥 Preparing sponsors export...', 'info');
+                    
+                    const sponsors = await apiCall('/api/admin/sponsors');
+                    
+                    // Create CSV content
+                    const csvContent = [
+                        ['ID', 'Nome', 'Nível', 'Logo URL', 'Website', 'Descrição', 'Ativo', 'Criado', 'Atualizado'],
+                        ...sponsors.map(sponsor => [
+                            sponsor.id,
+                            sponsor.name,
+                            sponsor.tier,
+                            sponsor.logo_url || '',
+                            sponsor.website_url || '',
+                            sponsor.description || '',
+                            sponsor.is_active ? 'Sim' : 'Não',
+                            sponsor.created_at,
+                            sponsor.updated_at
+                        ])
+                    ].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+                    
+                    // Download CSV
+                    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                    const link = document.createElement('a');
+                    const url = URL.createObjectURL(blob);
+                    link.setAttribute('href', url);
+                    link.setAttribute('download', `sponsors_export_${new Date().toISOString().split('T')[0]}.csv`);
+                    link.style.visibility = 'hidden';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    
+                    showStatus('✅ Sponsors exported successfully!', 'success');
+                } catch (error) {
+                    showStatus(`❌ Error exporting sponsors: ${error.message}`, 'error');
+                }
+            }
+            
+            // ===== END SPONSOR MANAGEMENT FUNCTIONS =====
+
             // Navigation event listeners
             document.querySelectorAll('[data-section]').forEach(button => {
                 button.addEventListener('click', function() {
@@ -1166,6 +1375,17 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('cancel-gamejam-btn').addEventListener('click', hideGameJamForm);
             document.getElementById('add-game-btn').addEventListener('click', showGameForm);
             document.getElementById('cancel-game-btn').addEventListener('click', hideGameForm);
+            
+            // Sponsor event listeners
+            document.getElementById('add-sponsor-btn').addEventListener('click', () => showSponsorForm());
+            document.getElementById('cancel-sponsor-btn').addEventListener('click', hideSponsorForm);
+            document.getElementById('export-sponsors-btn').addEventListener('click', exportSponsors);
+            
+            // Sponsor form submit
+            document.getElementById('sponsor-form-element').addEventListener('submit', function(e) {
+                e.preventDefault();
+                saveSponsor();
+            });
             
             // Export button event listener
             document.getElementById('export-all-btn').addEventListener('click', async function() {
@@ -1403,6 +1623,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else if (target.hasAttribute('data-delete-game')) {
                     const id = target.getAttribute('data-delete-game');
                     deleteGame(id);
+                } else if (target.hasAttribute('data-edit-sponsor')) {
+                    const id = target.getAttribute('data-edit-sponsor');
+                    const sponsor = sponsors.find(s => s.id == id);
+                    if (sponsor) {
+                        showSponsorForm(sponsor);
+                    }
+                } else if (target.hasAttribute('data-delete-sponsor')) {
+                    const id = target.getAttribute('data-delete-sponsor');
+                    deleteSponsor(id);
                 }
             });
             

@@ -27,6 +27,7 @@ export default function Home() {
   const [fetchError, setFetchError] = useState(false);
   const [currentGameJam, setCurrentGameJam] = useState(null);
   const [frontPageSettings, setFrontPageSettings] = useState({});
+  const [sponsors, setSponsors] = useState([]);
 
   // Fetch front page settings from admin-controlled API
   const fetchFrontPageSettings = async () => {
@@ -155,6 +156,14 @@ export default function Home() {
     return () => clearInterval(interval);
   }, [isLoading]);
 
+  useEffect(() => {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+    fetch(`${apiUrl}/sponsors`)
+      .then(res => res.json())
+      .then(data => setSponsors(data.sponsors || []))
+      .catch(() => setSponsors([]));
+  }, []);
+
   return (
     <main className="min-h-screen">
       <Background
@@ -186,19 +195,9 @@ export default function Home() {
                     </span>
                   </h1>
 
-                  {/* Hero sponsor(s) directly below the title: an array of sponsors (or fallback) */}
+                  {/* Hero sponsor(s) directly below the title: fetched from API */}
                   {(() => {
-                    const rawSponsors = currentGameJam?.sponsors || frontPageSettings?.hero_sponsors;
-                    const heroSponsors = (Array.isArray(rawSponsors) ? rawSponsors : rawSponsors ? [rawSponsors] : []).map((s) => {
-                      if (!s) return null;
-                      if (typeof s === 'string') return { imgSrc: s, href: 'https://astralshiftpro.com', alt: 'Sponsor' };
-                      return s;
-                    }).filter(Boolean);
-
-                    // fallback single sponsor
-                    if (heroSponsors.length === 0) {
-                      heroSponsors.push({ imgSrc: '/images/LIGHT_BG_AstralShift_Horizontal.png', href: 'https://astralshiftpro.com', alt: 'Astral Shift' });
-                    }
+                    const heroSponsors = sponsors.length > 0 ? sponsors : [{ imgSrc: '/images/LIGHT_BG_AstralShift_Horizontal.png', href: 'https://astralshiftpro.com', alt: 'Astral Shift' }];
 
                     return (
                       <div className="flex flex-col items-center gap-2 mb-4">

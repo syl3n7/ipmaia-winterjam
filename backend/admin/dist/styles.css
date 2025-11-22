@@ -24,8 +24,8 @@
         .header {
             background: linear-gradient(135deg, #ffffff 0%, #f8faff 100%);
             border-radius: 20px;
-            padding: 40px;
-            margin-bottom: 30px;
+            padding: 30px;
+            margin-bottom: 40px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.1), 0 8px 32px rgba(102, 126, 234, 0.1);
             text-align: center;
             border: 1px solid rgba(255,255,255,0.2);
@@ -52,42 +52,59 @@
         }
         
         .header h1 {
-            font-size: 2.5rem;
+            font-size: 2.2rem;
             font-weight: 700;
             background: linear-gradient(135deg, #667eea, #764ba2);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
         
         .header p {
             color: #6c757d;
-            font-size: 1.1rem;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+        .user-info {
+            margin-top: 15px;
+            font-size: 0.9rem;
+            color: #495057;
             font-weight: 500;
         }
         .nav {
             display: flex;
-            gap: 10px;
-            margin-bottom: 30px;
+            gap: 8px;
+            margin-bottom: 40px;
             justify-content: center;
             flex-wrap: wrap;
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 8px;
+            border: 1px solid rgba(255,255,255,0.2);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
         }
         .nav-btn {
-            background: rgba(255,255,255,0.9);
+            background: rgba(255,255,255,0.8);
             color: #667eea;
-            border: 2px solid rgba(102, 126, 234, 0.2);
-            padding: 14px 28px;
-            border-radius: 30px;
-            cursor: pointer;
+            border: 1px solid rgba(102, 126, 234, 0.3);
+            padding: 12px 24px;
+            border-radius: 12px;
+            text-decoration: none;
             font-weight: 600;
-            font-size: 0.95rem;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            backdrop-filter: blur(10px);
+            font-size: 0.9rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
             overflow: hidden;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 120px;
+            justify-content: center;
+            backdrop-filter: blur(10px);
         }
-        
+
         .nav-btn::before {
             content: '';
             position: absolute;
@@ -95,39 +112,40 @@
             left: -100%;
             width: 100%;
             height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.1), transparent);
             transition: left 0.5s;
         }
-        
+
         .nav-btn:hover::before {
             left: 100%;
         }
-        
+
         .nav-btn:hover, .nav-btn.active {
             background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
-            transform: translateY(-3px) scale(1.02);
-            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
-            border-color: transparent;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+            border-color: rgba(102, 126, 234, 0.5);
         }
-        
+
         .nav-btn:active {
-            transform: translateY(-1px) scale(0.98);
+            transform: translateY(0px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
         }
         .card {
             background: linear-gradient(135deg, #ffffff 0%, #f8faff 100%);
-            border-radius: 20px;
-            padding: 40px;
+            border-radius: 16px;
+            padding: 32px;
             margin-bottom: 30px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.08), 0 8px 32px rgba(102, 126, 234, 0.1);
             border: 1px solid rgba(255,255,255,0.2);
             backdrop-filter: blur(10px);
-            display: none;
+            display: block;
             animation: fadeInUp 0.6s ease-out;
             position: relative;
             overflow: hidden;
         }
-        
+
         .card::before {
             content: '';
             position: absolute;
@@ -136,10 +154,6 @@
             right: 0;
             height: 3px;
             background: linear-gradient(90deg, #667eea, #764ba2);
-        }
-        
-        .card.active { 
-            display: block; 
         }
         
         @keyframes fadeInUp {
@@ -157,9 +171,13 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            margin-bottom: 30px;
+            margin-bottom: 24px;
+            font-size: 1.5rem;
+            font-weight: 700;
             display: flex;
             align-items: center;
+            gap: 12px;
+        }
             gap: 12px;
             font-size: 1.8rem;
             font-weight: 700;
@@ -520,3 +538,175 @@
             gap: 8px;
             margin-top: 10px;
         }
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .container {
+        padding: 15px;
+    }
+
+    .header {
+        padding: 24px 20px;
+        margin-bottom: 30px;
+    }
+
+    .header h1 {
+        font-size: 1.8rem;
+    }
+
+    .nav {
+        gap: 6px;
+        padding: 6px;
+    }
+
+    .nav-btn {
+        padding: 10px 16px;
+        font-size: 0.85rem;
+        min-width: 100px;
+    }
+
+    .card {
+        padding: 24px 20px;
+        border-radius: 12px;
+    }
+
+    .card h2 {
+        font-size: 1.3rem;
+        margin-bottom: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .header h1 {
+        font-size: 1.6rem;
+    }
+
+    .nav {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .nav-btn {
+        justify-content: flex-start;
+        min-width: auto;
+    }
+
+    .card {
+        padding: 20px 16px;
+    }
+}
+
+/* ===== SPONSOR MANAGEMENT STYLES ===== */
+
+.sponsor-item {
+    background: linear-gradient(135deg, #ffffff 0%, #f8faff 100%);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
+    border: 1px solid rgba(102, 126, 234, 0.1);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    transition: all 0.3s ease;
+}
+
+.sponsor-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
+    border-color: rgba(102, 126, 234, 0.2);
+}
+
+.sponsor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+}
+
+.sponsor-info h3 {
+    margin: 0 0 8px 0;
+    color: #333;
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.sponsor-tier {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.tier-platinum {
+    background: linear-gradient(135deg, #ffd700, #ffb347);
+    color: #8b4513;
+}
+
+.tier-gold {
+    background: linear-gradient(135deg, #ffd700, #ffed4e);
+    color: #b8860b;
+}
+
+.tier-silver {
+    background: linear-gradient(135deg, #c0c0c0, #e8e8e8);
+    color: #666;
+}
+
+.tier-bronze {
+    background: linear-gradient(135deg, #cd7f32, #a0522d);
+    color: #fff;
+}
+
+.inactive-badge {
+    background: linear-gradient(135deg, #6c757d, #5a6268);
+    color: white;
+    margin-left: 8px;
+}
+
+.sponsor-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.sponsor-logo {
+    margin: 12px 0;
+    text-align: center;
+}
+
+.sponsor-logo img {
+    border-radius: 8px;
+    border: 1px solid rgba(102, 126, 234, 0.2);
+}
+
+.sponsor-website {
+    margin: 8px 0;
+    font-size: 0.9rem;
+}
+
+.sponsor-website a {
+    color: #667eea;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.sponsor-website a:hover {
+    text-decoration: underline;
+}
+
+.sponsor-description {
+    margin: 8px 0;
+    color: #666;
+    font-style: italic;
+    line-height: 1.4;
+}
+
+.sponsor-meta {
+    margin-top: 12px;
+    font-size: 0.8rem;
+    color: #888;
+    border-top: 1px solid rgba(102, 126, 234, 0.1);
+    padding-top: 8px;
+}
+
+/* ===== END SPONSOR MANAGEMENT STYLES ===== */

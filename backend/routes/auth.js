@@ -8,27 +8,43 @@ const router = express.Router();
 
 // Admin middleware
 const requireAdmin = (req, res, next) => {
+  // In development or when auth bypass is enabled, skip authentication checks
+  if (process.env.NODE_ENV !== 'production' || process.env.DEV_BYPASS_AUTH === 'true') {
+    req.session.userId = req.session.userId || 1;
+    req.session.username = req.session.username || 'dev-admin';
+    req.session.role = req.session.role || 'super_admin';
+    return next();
+  }
+
   if (!req.session.userId) {
     return res.status(401).json({ error: 'Authentication required' });
   }
-  
+
   if (req.session.role !== 'admin' && req.session.role !== 'super_admin') {
     return res.status(403).json({ error: 'Admin privileges required' });
   }
-  
+
   next();
 };
 
 // Super admin middleware (for destructive operations)
 const requireSuperAdmin = (req, res, next) => {
+  // In development or when auth bypass is enabled, skip authentication checks
+  if (process.env.NODE_ENV !== 'production' || process.env.DEV_BYPASS_AUTH === 'true') {
+    req.session.userId = req.session.userId || 1;
+    req.session.username = req.session.username || 'dev-admin';
+    req.session.role = req.session.role || 'super_admin';
+    return next();
+  }
+
   if (!req.session.userId) {
     return res.status(401).json({ error: 'Authentication required' });
   }
-  
+
   if (req.session.role !== 'super_admin') {
     return res.status(403).json({ error: 'Super admin privileges required' });
   }
-  
+
   next();
 };
 
@@ -130,8 +146,12 @@ const initOIDC = async () => {
   }
 };
 
-// Initialize OIDC on startup
-initOIDC();
+// Initialize OIDC on startup (only if not bypassing auth)
+if (process.env.DEV_BYPASS_AUTH !== 'true') {
+  initOIDC();
+} else {
+  console.log('🔄 OIDC initialization skipped (DEV_BYPASS_AUTH=true)');
+}
 
 // Legacy login - DISABLED (OIDC only)
 router.post('/login', async (req, res) => {
@@ -153,6 +173,15 @@ router.post('/logout', (req, res) => {
 
 // Get current user
 router.get('/me', (req, res) => {
+  // In development, return dev user if not authenticated
+  if (process.env.NODE_ENV !== 'production' && !req.session.userId) {
+    return res.json({
+      id: 1,
+      username: 'dev-admin',
+      role: 'super_admin'
+    });
+  }
+
   if (!req.session.userId) {
     return res.status(401).json({ error: 'Not authenticated' });
   }
@@ -166,6 +195,16 @@ router.get('/me', (req, res) => {
 
 // OIDC Routes
 router.get('/oidc/login', (req, res, next) => {
+  // In development with auth bypass, create a dev session and redirect to admin
+  if (process.env.DEV_BYPASS_AUTH === 'true') {
+    req.session.userId = 1;
+    req.session.username = 'dev-admin';
+    req.session.role = 'super_admin';
+    req.session.email = 'dev@admin.local';
+    console.log('🔄 DEV_BYPASS_AUTH: Created dev session and redirecting to admin');
+    return res.redirect('/admin');
+  }
+
   if (!oidcClient) {
     return res.status(500).json({ error: 'OIDC not configured' });
   }
@@ -195,6 +234,12 @@ router.get('/oidc/login', (req, res, next) => {
 });
 
 router.get('/oidc/callback', async (req, res) => {
+  // In development with auth bypass, this route should not be reached
+  if (process.env.DEV_BYPASS_AUTH === 'true') {
+    console.log('⚠️ OIDC callback called in dev bypass mode - redirecting to admin');
+    return res.redirect('/admin');
+  }
+
   console.log('🔄 OIDC callback initiated');
   console.log('📝 Query params:', req.query);
   console.log('� Session ID:', req.sessionID);

@@ -19,6 +19,7 @@ const adminRoutes = require('./routes/admin');
 const publicRoutes = require('./routes/public');
 const frontPageRoutes = require('./routes/frontpage');
 const rulesRoutes = require('./routes/rules');
+const sponsorRoutes = require('./routes/sponsors');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -60,8 +61,8 @@ app.use(helmet({
 
 // Rate limiting
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
+  windowMs: process.env.NODE_ENV === 'production' ? 15 * 60 * 1000 : 60 * 60 * 1000, // 15 min prod, 1 hour dev
+  max: process.env.NODE_ENV === 'production' ? 100 : 1000, // 100 req prod, 1000 req dev
   message: 'Too many requests from this IP, please try again later.',
 });
 
@@ -176,6 +177,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/public', publicRoutes);
 app.use('/api/frontpage', frontPageRoutes);
 app.use('/api/rules', rulesRoutes);
+app.use('/api/sponsors', sponsorRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -212,6 +214,15 @@ app.get('/debug/files', (req, res) => {
 
 // Admin middleware for dashboard access
 const requireAdminAccess = (req, res, next) => {
+  // In development with auth bypass, or when DEV_BYPASS_AUTH is enabled, skip authentication checks
+  if (process.env.DEV_BYPASS_AUTH === 'true') {
+    // Simulate admin user session for development
+    req.session.userId = req.session.userId || 1;
+    req.session.username = req.session.username || 'dev-admin';
+    req.session.role = req.session.role || 'super_admin';
+    return next();
+  }
+
   // Check if user is authenticated and has admin or super_admin role
   if (!req.session.userId || (req.session.role !== 'admin' && req.session.role !== 'super_admin')) {
     // Redirect to OIDC login for admin access
@@ -220,9 +231,41 @@ const requireAdminAccess = (req, res, next) => {
   next();
 };
 
-// Serve admin dashboard - all requests serve the same SPA HTML
-app.get('/admin*', requireAdminAccess, (req, res) => {
-  res.sendFile(path.join(__dirname, 'admin/dist/index.html'));
+// Serve admin dashboard - separate pages for each section
+app.get('/admin', requireAdminAccess, (req, res) => {
+  res.redirect('/admin/gamejams');
+});
+
+app.get('/admin/gamejams', requireAdminAccess, (req, res) => {
+  res.sendFile(path.join(__dirname, 'admin/dist/gamejams.html'));
+});
+
+app.get('/admin/games', requireAdminAccess, (req, res) => {
+  res.sendFile(path.join(__dirname, 'admin/dist/games.html'));
+});
+
+app.get('/admin/users', requireAdminAccess, (req, res) => {
+  res.sendFile(path.join(__dirname, 'admin/dist/users.html'));
+});
+
+app.get('/admin/sponsors', requireAdminAccess, (req, res) => {
+  res.sendFile(path.join(__dirname, 'admin/dist/sponsors.html'));
+});
+
+app.get('/admin/sponsors', requireAdminAccess, (req, res) => {
+  res.sendFile(path.join(__dirname, 'admin/dist/sponsors.html'));
+});
+
+app.get('/admin/frontpage', requireAdminAccess, (req, res) => {
+  res.sendFile(path.join(__dirname, 'admin/dist/frontpage.html'));
+});
+
+app.get('/admin/rules', requireAdminAccess, (req, res) => {
+  res.sendFile(path.join(__dirname, 'admin/dist/rules.html'));
+});
+
+app.get('/admin/system', requireAdminAccess, (req, res) => {
+  res.sendFile(path.join(__dirname, 'admin/dist/system.html'));
 });
 
 // 404 handler
