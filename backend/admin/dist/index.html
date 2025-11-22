@@ -29,22 +29,31 @@
     </div>
 
     <div class="container" id="admin-content">
-        <div class="header">
-            <h1>🎮 Painel de Administração IPMAIA WinterJam</h1>
-            <p>Sistema de Gestão de Conteúdo Completo</p>
-            <div id="user-info" class="user-info"></div>
-            <div id="status" class="status info" style="margin-top: 15px;">A carregar estado do sistema...</div>
+        <!-- Header Section -->
+        <div class="admin-header">
+            <div class="header-main">
+                <div class="header-content">
+                    <h1>🎮 IPMAIA WinterJam</h1>
+                    <p>Admin Dashboard</p>
+                </div>
+                <div class="header-actions">
+                    <div id="user-info" class="user-info-card"></div>
+                </div>
+            </div>
+            <div id="status" class="status-banner info">Loading system status...</div>
         </div>
 
         <!-- Navigation -->
-        <div class="nav">
-            <button class="nav-btn active" data-section="gamejams">🎮 Game Jams</button>
-            <button class="nav-btn" data-section="games">🎯 Jogos</button>
-            <button class="nav-btn" data-section="sponsors">🎪 Patrocinadores</button>
-            <button class="nav-btn" data-section="users">👥 Utilizadores</button>
-            <button class="nav-btn" data-section="frontpage">🏠 Página Inicial</button>
-            <button class="nav-btn" data-section="rules">📋 Regras</button>
-            <button class="nav-btn" data-section="system">⚙️ Sistema</button>
+        <div class="nav-container">
+            <div class="nav">
+                <button class="nav-btn active" data-section="gamejams">🎮 Game Jams</button>
+                <button class="nav-btn" data-section="games">🎯 Games</button>
+                <button class="nav-btn" data-section="sponsors">🎪 Sponsors</button>
+                <button class="nav-btn" data-section="users">👥 Users</button>
+                <button class="nav-btn" data-section="frontpage">🏠 Front Page</button>
+                <button class="nav-btn" data-section="rules">📋 Rules</button>
+                <button class="nav-btn" data-section="system">⚙️ System</button>
+            </div>
         </div>
 
         <!-- Game Jams Section -->
