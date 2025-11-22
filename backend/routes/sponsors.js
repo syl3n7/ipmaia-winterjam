@@ -1,6 +1,57 @@
 const express = require('express');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs').promises;
+const rateLimit = require('express-rate-limit');
 const { pool } = require('../config/database');
 const router = express.Router();
+
+// Rate limiter for logo uploads
+const uploadLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 20, // limit each IP to 20 uploads per hour
+  message: 'Too many upload attempts, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => {
+    const ip = req.ip || req.connection.remoteAddress || '0.0.0.0';
+    return ip.split(':')[0];
+  }
+});
+
+// Configure multer for sponsor logo uploads
+const storage = multer.diskStorage({
+  destination: async (req, file, cb) => {
+    const uploadDir = path.join(__dirname, '../uploads/sponsors');
+    try {
+      await fs.access(uploadDir);
+    } catch {
+      await fs.mkdir(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const timestamp = Date.now();
+    const ext = path.extname(file.originalname);
+    const filename = `sponsor_${timestamp}${ext}`;
+    cb(null, filename);
+  }
+});
+
+const upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 2 * 1024 * 1024 // 2MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/svg+xml'];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only JPEG, PNG, WebP, and SVG images are allowed'));
+    }
+  }
+});
 
 // In-memory storage for development fallback
 let sponsors = [
@@ -8,7 +59,7 @@ let sponsors = [
     id: 1,
     name: 'IPMAIA',
     tier: 'platinum',
-    logo_url: '/images/ipmaia-logo.png',
+    logo_filename: 'ipmaia-logo.png',
     website_url: 'https://ipmaia.pt',
     description: 'Instituto Politécnico da Maia - Patrocinador principal do WinterJam',
     is_active: true,
@@ -34,8 +85,8 @@ const validateSponsor = (data) => {
     errors.push('Nível de patrocínio inválido');
   }
 
-  if (data.logo_url && typeof data.logo_url !== 'string') {
-    errors.push('URL do logo deve ser uma string válida');
+  if (data.logo_filename && typeof data.logo_filename !== 'string') {
+    errors.push('Nome do ficheiro do logo deve ser uma string válida');
   }
 
   if (data.website_url && typeof data.website_url !== 'string') {
@@ -81,7 +132,7 @@ router.get('/', async (req, res) => {
 
     // Transform to frontend format
     const frontendSponsors = activeSponsors.map((sponsor, index) => ({
-      imgSrc: sponsor.logo_url,
+      imgSrc: sponsor.logo_filename ? `/api/sponsors/logo/${sponsor.logo_filename}` : null,
       alt: sponsor.name,
       href: sponsor.website_url,
       index: index
@@ -111,7 +162,7 @@ router.get('/admin', async (req, res) => {
     } else {
       // Get all sponsors from database
       const result = await pool.query(`
-        SELECT id, name, tier, logo_url, website_url, description, is_active, created_at, updated_at
+        SELECT id, name, tier, logo_filename, website_url, description, is_active, created_at, updated_at
         FROM sponsors
         ORDER BY
           CASE tier
@@ -150,7 +201,7 @@ router.get('/admin', async (req, res) => {
 // POST /api/sponsors - Create new sponsor
 router.post('/', async (req, res) => {
   try {
-    const { name, tier, logo_url, website_url, description, is_active } = req.body;
+    const { name, tier, logo_filename, website_url, description, is_active } = req.body;
 
     // Validate input
     const validationErrors = validateSponsor(req.body);
@@ -178,7 +229,7 @@ router.post('/', async (req, res) => {
         id: nextId++,
         name: name.trim(),
         tier,
-        logo_url: logo_url ? logo_url.trim() : null,
+        logo_filename: logo_filename ? logo_filename.trim() : null,
         website_url: website_url ? website_url.trim() : null,
         description: description ? description.trim() : null,
         is_active: is_active !== undefined ? Boolean(is_active) : true,
@@ -203,13 +254,13 @@ router.post('/', async (req, res) => {
 
       // Create new sponsor
       const result = await pool.query(`
-        INSERT INTO sponsors (name, tier, logo_url, website_url, description, is_active)
+        INSERT INTO sponsors (name, tier, logo_filename, website_url, description, is_active)
         VALUES ($1, $2, $3, $4, $5, $6)
-        RETURNING id, name, tier, logo_url, website_url, description, is_active, created_at, updated_at
+        RETURNING id, name, tier, logo_filename, website_url, description, is_active, created_at, updated_at
       `, [
         name.trim(),
         tier,
-        logo_url ? logo_url.trim() : null,
+        logo_filename ? logo_filename.trim() : null,
         website_url ? website_url.trim() : null,
         description ? description.trim() : null,
         is_active !== undefined ? Boolean(is_active) : true
@@ -236,7 +287,7 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const id = parseInt(req.params.id);
-    const { name, tier, logo_url, website_url, description, is_active } = req.body;
+    const { name, tier, logo_filename, website_url, description, is_active } = req.body;
 
     if (isNaN(id)) {
       return res.status(400).json({
@@ -283,7 +334,7 @@ router.put('/:id', async (req, res) => {
         ...sponsors[sponsorIndex],
         name: name.trim(),
         tier,
-        logo_url: logo_url ? logo_url.trim() : null,
+        logo_filename: logo_filename ? logo_filename.trim() : null,
         website_url: website_url ? website_url.trim() : null,
         description: description ? description.trim() : null,
         is_active: is_active !== undefined ? Boolean(is_active) : sponsors[sponsorIndex].is_active,
@@ -331,13 +382,13 @@ router.put('/:id', async (req, res) => {
       // Update sponsor
       const result = await pool.query(`
         UPDATE sponsors
-        SET name = $1, tier = $2, logo_url = $3, website_url = $4, description = $5, is_active = $6, updated_at = NOW()
+        SET name = $1, tier = $2, logo_filename = $3, website_url = $4, description = $5, is_active = $6, updated_at = NOW()
         WHERE id = $7
-        RETURNING id, name, tier, logo_url, website_url, description, is_active, created_at, updated_at
+        RETURNING id, name, tier, logo_filename, website_url, description, is_active, created_at, updated_at
       `, [
         name.trim(),
         tier,
-        logo_url ? logo_url.trim() : null,
+        logo_filename ? logo_filename.trim() : null,
         website_url ? website_url.trim() : null,
         description ? description.trim() : null,
         is_active !== undefined ? Boolean(is_active) : existingResult.rows[0].is_active,
@@ -415,6 +466,146 @@ router.delete('/:id', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Erro interno do servidor'
+    });
+  }
+});
+
+// Upload sponsor logo (admin only)
+router.post('/upload-logo/:id', uploadLimiter, upload.single('logo'), async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+
+    if (isNaN(id)) {
+      return res.status(400).json({
+        success: false,
+        error: 'ID inválido'
+      });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        error: 'Nenhum ficheiro foi enviado'
+      });
+    }
+
+    console.log('🖼️ Sponsor logo uploaded:', req.file.filename);
+    console.log('👤 Uploaded by:', req.session?.email || req.session?.userId || 'unknown');
+
+    let updatedSponsor;
+
+    if (isDevelopment) {
+      // Use in-memory storage for development
+      const sponsorIndex = sponsors.findIndex(s => s.id === id);
+      if (sponsorIndex === -1) {
+        return res.status(404).json({
+          success: false,
+          error: 'Patrocinador não encontrado'
+        });
+      }
+
+      // Delete old logo file if it exists
+      if (sponsors[sponsorIndex].logo_filename) {
+        const oldFilePath = path.join(__dirname, '../uploads/sponsors', sponsors[sponsorIndex].logo_filename);
+        await fs.unlink(oldFilePath).catch(console.error);
+      }
+
+      // Update sponsor with new logo filename
+      updatedSponsor = {
+        ...sponsors[sponsorIndex],
+        logo_filename: req.file.filename,
+        updated_at: new Date().toISOString()
+      };
+
+      sponsors[sponsorIndex] = updatedSponsor;
+    } else {
+      // Check if sponsor exists
+      const existingResult = await pool.query(
+        'SELECT id, logo_filename FROM sponsors WHERE id = $1',
+        [id]
+      );
+
+      if (existingResult.rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          error: 'Patrocinador não encontrado'
+        });
+      }
+
+      // Delete old logo file if it exists
+      if (existingResult.rows[0].logo_filename) {
+        const oldFilePath = path.join(__dirname, '../uploads/sponsors', existingResult.rows[0].logo_filename);
+        await fs.unlink(oldFilePath).catch(console.error);
+      }
+
+      // Update sponsor with new logo filename
+      const result = await pool.query(`
+        UPDATE sponsors
+        SET logo_filename = $1, updated_at = NOW()
+        WHERE id = $2
+        RETURNING id, name, tier, logo_filename, website_url, description, is_active, created_at, updated_at
+      `, [req.file.filename, id]);
+
+      updatedSponsor = result.rows[0];
+    }
+
+    res.json({
+      success: true,
+      sponsor: updatedSponsor,
+      message: 'Logo do patrocinador carregado com sucesso',
+      filename: req.file.filename,
+      size: req.file.size
+    });
+  } catch (error) {
+    console.error('Error uploading sponsor logo:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Erro ao carregar logo',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
+// Serve sponsor logo images (public)
+router.get('/logo/:filename', async (req, res) => {
+  try {
+    const filename = req.params.filename;
+    const filePath = path.join(__dirname, '../uploads/sponsors', filename);
+
+    // Check if file exists
+    try {
+      await fs.access(filePath);
+    } catch {
+      return res.status(404).json({
+        error: 'Logo not found',
+        message: 'Imagem não encontrada'
+      });
+    }
+
+    // Determine content type from extension
+    const ext = path.extname(filename).toLowerCase();
+    const contentTypes = {
+      '.jpg': 'image/jpeg',
+      '.jpeg': 'image/jpeg',
+      '.png': 'image/png',
+      '.webp': 'image/webp',
+      '.svg': 'image/svg+xml'
+    };
+
+    // Set CORS headers to allow cross-origin image loading
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET');
+    res.setHeader('Content-Type', contentTypes[ext] || 'image/jpeg');
+    res.setHeader('Cache-Control', 'public, max-age=31536000'); // Cache for 1 year
+
+    // Stream the file
+    const fileStream = require('fs').createReadStream(filePath);
+    fileStream.pipe(res);
+  } catch (error) {
+    console.error('Error serving sponsor logo:', error);
+    res.status(500).json({
+      error: 'Failed to serve logo',
+      message: 'Erro ao carregar imagem'
     });
   }
 });

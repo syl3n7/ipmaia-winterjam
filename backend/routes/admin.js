@@ -382,17 +382,17 @@ router.get('/sponsors', async (req, res) => {
 
 router.post('/sponsors', async (req, res) => {
   try {
-    const { name, tier, logo_url, website_url, description } = req.body;
+    const { name, tier, logo_filename, website_url, description } = req.body;
 
     if (!name || !tier) {
       return res.status(400).json({ error: 'Nome e nível são obrigatórios' });
     }
 
     const result = await pool.query(
-      `INSERT INTO sponsors (name, tier, logo_url, website_url, description, is_active)
+      `INSERT INTO sponsors (name, tier, logo_filename, website_url, description, is_active)
        VALUES ($1, $2, $3, $4, $5, true)
        RETURNING *`,
-      [name, tier, logo_url, website_url, description]
+      [name, tier, logo_filename, website_url, description]
     );
 
     res.status(201).json(result.rows[0]);
@@ -405,14 +405,14 @@ router.post('/sponsors', async (req, res) => {
 router.put('/sponsors/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, tier, logo_url, website_url, description, is_active } = req.body;
+    const { name, tier, logo_filename, website_url, description, is_active } = req.body;
 
     const result = await pool.query(
       `UPDATE sponsors
-       SET name = $1, tier = $2, logo_url = $3, website_url = $4, description = $5, is_active = $6, updated_at = NOW()
+       SET name = $1, tier = $2, logo_filename = $3, website_url = $4, description = $5, is_active = $6, updated_at = NOW()
        WHERE id = $7
        RETURNING *`,
-      [name, tier, logo_url, website_url, description, is_active, id]
+      [name, tier, logo_filename, website_url, description, is_active, id]
     );
 
     if (result.rows.length === 0) {

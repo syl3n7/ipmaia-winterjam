@@ -1422,7 +1422,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <button class="btn btn-danger btn-sm" data-delete-sponsor="${sponsor.id}">🗑️ Apagar</button>
                             </div>
                         </div>
-                        ${sponsor.logo_url ? `<div class="sponsor-logo"><img src="${sponsor.logo_url}" alt="${sponsor.name} logo" style="max-width: 100px; max-height: 50px;"></div>` : ''}
+                        ${sponsor.logo_filename ? `<div class="sponsor-logo"><img src="/api/sponsors/logo/${sponsor.logo_filename}" alt="${sponsor.name} logo" style="max-width: 100px; max-height: 50px;"></div>` : ''}
                         ${sponsor.website_url ? `<div class="sponsor-website"><a href="${sponsor.website_url}" target="_blank">${sponsor.website_url}</a></div>` : ''}
                         ${sponsor.description ? `<div class="sponsor-description">${sponsor.description}</div>` : ''}
                         <div class="sponsor-meta">
@@ -1453,14 +1453,41 @@ document.addEventListener('DOMContentLoaded', function() {
                     document.getElementById('sponsor-id').value = sponsor.id;
                     document.getElementById('sponsor-name').value = sponsor.name;
                     document.getElementById('sponsor-tier').value = sponsor.tier;
-                    document.getElementById('sponsor-logo').value = sponsor.logo_url || '';
+                    // Don't set logo file input - show current logo instead
                     document.getElementById('sponsor-website').value = sponsor.website_url || '';
                     document.getElementById('sponsor-description').value = sponsor.description || '';
                     document.getElementById('sponsor-active').checked = sponsor.is_active;
+                    
+                    // Show current logo if exists
+                    const logoContainer = document.querySelector('.sponsor-logo-preview') || document.createElement('div');
+                    logoContainer.className = 'sponsor-logo-preview';
+                    logoContainer.style.cssText = 'margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 8px;';
+                    
+                    if (sponsor.logo_filename) {
+                        logoContainer.innerHTML = `
+                            <p style="margin: 0 0 10px 0; font-weight: 600;">Logo Atual:</p>
+                            <img src="/api/sponsors/logo/${sponsor.logo_filename}" alt="${sponsor.name} logo" style="max-width: 200px; max-height: 100px; border: 1px solid #ddd; border-radius: 4px;">
+                            <p style="margin: 10px 0 0 0; font-size: 0.9rem; color: #666;">Carregue um novo ficheiro para substituir</p>
+                        `;
+                    } else {
+                        logoContainer.innerHTML = `
+                            <p style="margin: 0; color: #666;">Nenhum logo carregado</p>
+                        `;
+                    }
+                    
+                    // Insert after the logo file input
+                    const logoInput = document.getElementById('sponsor-logo');
+                    logoInput.parentNode.insertBefore(logoContainer, logoInput.nextSibling);
                 } else {
                     // Add mode
                     document.getElementById('sponsor-form-element').reset();
                     document.getElementById('sponsor-id').value = '';
+                    
+                    // Remove any existing logo preview
+                    const existingPreview = document.querySelector('.sponsor-logo-preview');
+                    if (existingPreview) {
+                        existingPreview.remove();
+                    }
                 }
                 
                 document.getElementById('sponsor-form').style.display = 'block';
@@ -1477,10 +1504,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 const form = document.getElementById('sponsor-form-element');
                 const formData = new FormData(form);
                 
+                // Check if a logo file is being uploaded
+                const logoFile = formData.get('logo');
+                const hasLogoFile = logoFile && logoFile.size > 0;
+                
                 const data = {
                     name: formData.get('name'),
                     tier: formData.get('tier'),
-                    logo_url: formData.get('logo_url') || null,
                     website_url: formData.get('website_url') || null,
                     description: formData.get('description') || null,
                     is_active: formData.has('is_active')
@@ -1489,12 +1519,69 @@ document.addEventListener('DOMContentLoaded', function() {
                 try {
                     showStatus('💾 Saving sponsor...', 'info');
                     
-                    const endpoint = currentEditingSponsor ? 
-                        `/api/admin/sponsors/${currentEditingSponsor.id}` : 
-                        '/api/admin/sponsors';
-                    const method = currentEditingSponsor ? 'PUT' : 'POST';
-                    
-                    await apiCall(endpoint, method, data);
+                    if (currentEditingSponsor && hasLogoFile) {
+                        // Upload logo for existing sponsor using direct fetch for FormData
+                        const uploadFormData = new FormData();
+                        uploadFormData.append('logo', logoFile);
+                        
+                        // Get CSRF token from meta tag
+                        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                        
+                        const headers = {};
+                        if (csrfToken) {
+                            headers['csrf-token'] = csrfToken;
+                        }
+                        
+                        const uploadResponse = await fetch(`/api/sponsors/upload-logo/${currentEditingSponsor.id}`, {
+                            method: 'POST',
+                            headers: headers,
+                            body: uploadFormData,
+                            credentials: 'include'
+                        });
+                        
+                        if (!uploadResponse.ok) {
+                            const errorData = await uploadResponse.json();
+                            throw new Error(errorData.message || 'Erro ao carregar logo');
+                        }
+                        
+                        // Then update other fields
+                        await apiCall(`/api/admin/sponsors/${currentEditingSponsor.id}`, 'PUT', data);
+                    } else if (currentEditingSponsor) {
+                        // Update existing sponsor without logo change
+                        await apiCall(`/api/admin/sponsors/${currentEditingSponsor.id}`, 'PUT', data);
+                    } else {
+                        // Create new sponsor
+                        if (hasLogoFile) {
+                            // For new sponsors, we need to create first, then upload logo
+                            const newSponsor = await apiCall('/api/admin/sponsors', 'POST', data);
+                            
+                            // Then upload the logo using direct fetch for FormData
+                            const uploadFormData = new FormData();
+                            uploadFormData.append('logo', logoFile);
+                            
+                            // Get CSRF token from meta tag
+                            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                            
+                            const headers = {};
+                            if (csrfToken) {
+                                headers['csrf-token'] = csrfToken;
+                            }
+                            
+                            const uploadResponse = await fetch(`/api/sponsors/upload-logo/${newSponsor.id}`, {
+                                method: 'POST',
+                                headers: headers,
+                                body: uploadFormData,
+                                credentials: 'include'
+                            });
+                            
+                            if (!uploadResponse.ok) {
+                                const errorData = await uploadResponse.json();
+                                throw new Error(errorData.message || 'Erro ao carregar logo');
+                            }
+                        } else {
+                            await apiCall('/api/admin/sponsors', 'POST', data);
+                        }
+                    }
                     
                     showStatus('✅ Sponsor saved successfully!', 'success');
                     hideSponsorForm();

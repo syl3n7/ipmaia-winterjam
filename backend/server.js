@@ -119,7 +119,9 @@ app.use((req, res, next) => {
   // Skip CSRF for admin API routes (already protected by session auth)
   if (req.path.startsWith('/api/admin') || 
       req.path.startsWith('/api/rules/admin') || 
-      req.path.startsWith('/api/frontpage/admin')) {
+      req.path.startsWith('/api/frontpage/admin') ||
+      // Also skip sponsor upload routes in development
+      (process.env.NODE_ENV !== 'production' && req.path.startsWith('/api/sponsors/upload-logo'))) {
     return next();
   }
   // Apply CSRF for other routes
