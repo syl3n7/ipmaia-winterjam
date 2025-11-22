@@ -53,25 +53,12 @@ const upload = multer({
   }
 });
 
-// In-memory storage for development fallback
-let sponsors = [
-  {
-    id: 1,
-    name: 'IPMAIA',
-    tier: 'platinum',
-    logo_filename: 'sponsor_1763781067301.svg',
-    website_url: 'https://ipmaia.pt',
-    description: 'Instituto Politécnico da Maia - Patrocinador principal do WinterJam',
-    is_active: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  }
-];
-
-let nextId = 2;
+// In-memory storage disabled - always use database
+// let sponsors = [];
+// let nextId = 1;
 
 // Check if we're in development mode (database disabled)
-const isDevelopment = process.env.NODE_ENV !== 'production';
+const isDevelopment = false; // Always use database for sponsors
 
 // Validation helper
 const validateSponsor = (data) => {
@@ -103,28 +90,21 @@ const validateSponsor = (data) => {
 // GET /api/sponsors - Get all sponsors
 router.get('/', async (req, res) => {
   try {
-    let activeSponsors = [];
-
-    if (isDevelopment) {
-      // Use in-memory storage for development
-      activeSponsors = sponsors.filter(sponsor => sponsor.is_active);
-    } else {
-      // Get active sponsors from database
-      const result = await pool.query(`
-        SELECT id, name, tier, logo_filename, website_url, description, is_active, created_at, updated_at
-        FROM sponsors
-        WHERE is_active = true
-        ORDER BY
-          CASE tier
-            WHEN 'platinum' THEN 1
-            WHEN 'gold' THEN 2
-            WHEN 'silver' THEN 3
-            WHEN 'bronze' THEN 4
-          END,
-          name
-      `);
-      activeSponsors = result.rows;
-    }
+    // Get active sponsors from database
+    const result = await pool.query(`
+      SELECT id, name, tier, logo_filename, website_url, description, is_active, created_at, updated_at
+      FROM sponsors
+      WHERE is_active = true
+      ORDER BY
+        CASE tier
+          WHEN 'platinum' THEN 1
+          WHEN 'gold' THEN 2
+          WHEN 'silver' THEN 3
+          WHEN 'bronze' THEN 4
+        END,
+        name
+    `);
+    const activeSponsors = result.rows;
 
     // Sort by tier (platinum first, then gold, silver, bronze)
     const tierOrder = { platinum: 1, gold: 2, silver: 3, bronze: 4 };
@@ -154,27 +134,20 @@ router.get('/', async (req, res) => {
 // GET /api/sponsors/admin - Get all sponsors for admin (including inactive)
 router.get('/admin', async (req, res) => {
   try {
-    let allSponsors = [];
-
-    if (isDevelopment) {
-      // Use in-memory storage for development
-      allSponsors = [...sponsors];
-    } else {
-      // Get all sponsors from database
-      const result = await pool.query(`
-        SELECT id, name, tier, logo_filename, website_url, description, is_active, created_at, updated_at
-        FROM sponsors
-        ORDER BY
-          CASE tier
-            WHEN 'platinum' THEN 1
-            WHEN 'gold' THEN 2
-            WHEN 'silver' THEN 3
-            WHEN 'bronze' THEN 4
-          END,
-          name
-      `);
-      allSponsors = result.rows;
-    }
+    // Get all sponsors from database
+    const result = await pool.query(`
+      SELECT id, name, tier, logo_filename, website_url, description, is_active, created_at, updated_at
+      FROM sponsors
+      ORDER BY
+        CASE tier
+          WHEN 'platinum' THEN 1
+          WHEN 'gold' THEN 2
+          WHEN 'silver' THEN 3
+          WHEN 'bronze' THEN 4
+        END,
+        name
+    `);
+    const allSponsors = result.rows;
 
     // Sort by tier and then by name
     const tierOrder = { platinum: 1, gold: 2, silver: 3, bronze: 4 };
@@ -213,61 +186,34 @@ router.post('/', async (req, res) => {
       });
     }
 
-    let newSponsor;
+    // Check for duplicate names
+    const existingResult = await pool.query(
+      'SELECT id FROM sponsors WHERE LOWER(name) = LOWER($1)',
+      [name.trim()]
+    );
 
-    if (isDevelopment) {
-      // Use in-memory storage for development
-      const existingSponsor = sponsors.find(s => s.name.toLowerCase() === name.toLowerCase());
-      if (existingSponsor) {
-        return res.status(409).json({
-          success: false,
-          error: 'Já existe um patrocinador com este nome'
-        });
-      }
-
-      newSponsor = {
-        id: nextId++,
-        name: name.trim(),
-        tier,
-        logo_filename: logo_filename ? logo_filename.trim() : null,
-        website_url: website_url ? website_url.trim() : null,
-        description: description ? description.trim() : null,
-        is_active: is_active !== undefined ? Boolean(is_active) : true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      };
-
-      sponsors.push(newSponsor);
-    } else {
-      // Check for duplicate names
-      const existingResult = await pool.query(
-        'SELECT id FROM sponsors WHERE LOWER(name) = LOWER($1)',
-        [name.trim()]
-      );
-
-      if (existingResult.rows.length > 0) {
-        return res.status(409).json({
-          success: false,
-          error: 'Já existe um patrocinador com este nome'
-        });
-      }
-
-      // Create new sponsor
-      const result = await pool.query(`
-        INSERT INTO sponsors (name, tier, logo_filename, website_url, description, is_active)
-        VALUES ($1, $2, $3, $4, $5, $6)
-        RETURNING id, name, tier, logo_filename, website_url, description, is_active, created_at, updated_at
-      `, [
-        name.trim(),
-        tier,
-        logo_filename ? logo_filename.trim() : null,
-        website_url ? website_url.trim() : null,
-        description ? description.trim() : null,
-        is_active !== undefined ? Boolean(is_active) : true
-      ]);
-
-      newSponsor = result.rows[0];
+    if (existingResult.rows.length > 0) {
+      return res.status(409).json({
+        success: false,
+        error: 'Já existe um patrocinador com este nome'
+      });
     }
+
+    // Create new sponsor
+    const result = await pool.query(`
+      INSERT INTO sponsors (name, tier, logo_filename, website_url, description, is_active)
+      VALUES ($1, $2, $3, $4, $5, $6)
+      RETURNING id, name, tier, logo_filename, website_url, description, is_active, created_at, updated_at
+    `, [
+      name.trim(),
+      tier,
+      logo_filename ? logo_filename.trim() : null,
+      website_url ? website_url.trim() : null,
+      description ? description.trim() : null,
+      is_active !== undefined ? Boolean(is_active) : true
+    ]);
+
+    const newSponsor = result.rows[0];
 
     res.status(201).json({
       success: true,
@@ -296,107 +242,100 @@ router.put('/:id', async (req, res) => {
       });
     }
 
-    let updatedSponsor;
+    // Check if sponsor exists
+    const existingResult = await pool.query(
+      'SELECT id FROM sponsors WHERE id = $1',
+      [id]
+    );
 
-    if (isDevelopment) {
-      // Use in-memory storage for development
-      const sponsorIndex = sponsors.findIndex(s => s.id === id);
-      if (sponsorIndex === -1) {
-        return res.status(404).json({
-          success: false,
-          error: 'Patrocinador não encontrado'
-        });
-      }
-
-      // Validate input
-      const validationErrors = validateSponsor(req.body);
-      if (validationErrors.length > 0) {
-        return res.status(400).json({
-          success: false,
-          error: 'Dados inválidos',
-          details: validationErrors
-        });
-      }
-
-      // Check for duplicate names (excluding current sponsor)
-      const existingSponsor = sponsors.find(s =>
-        s.id !== id && s.name.toLowerCase() === name.toLowerCase()
-      );
-      if (existingSponsor) {
-        return res.status(409).json({
-          success: false,
-          error: 'Já existe um patrocinador com este nome'
-        });
-      }
-
-      // Update sponsor
-      updatedSponsor = {
-        ...sponsors[sponsorIndex],
-        name: name.trim(),
-        tier,
-        logo_filename: logo_filename ? logo_filename.trim() : null,
-        website_url: website_url ? website_url.trim() : null,
-        description: description ? description.trim() : null,
-        is_active: is_active !== undefined ? Boolean(is_active) : sponsors[sponsorIndex].is_active,
-        updated_at: new Date().toISOString()
-      };
-
-      sponsors[sponsorIndex] = updatedSponsor;
-    } else {
-      // Check if sponsor exists
-      const existingResult = await pool.query(
-        'SELECT id FROM sponsors WHERE id = $1',
-        [id]
-      );
-
-      if (existingResult.rows.length === 0) {
-        return res.status(404).json({
-          success: false,
-          error: 'Patrocinador não encontrado'
-        });
-      }
-
-      // Validate input
-      const validationErrors = validateSponsor(req.body);
-      if (validationErrors.length > 0) {
-        return res.status(400).json({
-          success: false,
-          error: 'Dados inválidos',
-          details: validationErrors
-        });
-      }
-
-      // Check for duplicate names (excluding current sponsor)
-      const duplicateResult = await pool.query(
-        'SELECT id FROM sponsors WHERE LOWER(name) = LOWER($1) AND id != $2',
-        [name.trim(), id]
-      );
-
-      if (duplicateResult.rows.length > 0) {
-        return res.status(409).json({
-          success: false,
-          error: 'Já existe um patrocinador com este nome'
-        });
-      }
-
-      // Update sponsor
-      const result = await pool.query(`
-        UPDATE sponsors
-        SET name = $1, tier = $2, logo_filename = $3, website_url = $4, description = $5, is_active = $6, updated_at = NOW()
-        WHERE id = $7
-        RETURNING id, name, tier, logo_filename, website_url, description, is_active, created_at, updated_at
-      `, [
-        name.trim(),
-        tier,
-        logo_filename ? logo_filename.trim() : null,
-        website_url ? website_url.trim() : null,
-        description ? description.trim() : null,
-        is_active !== undefined ? Boolean(is_active) : existingResult.rows[0].is_active,
-        id
-      ]);
-
-      updatedSponsor = result.rows[0];
+    if (existingResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Patrocinador não encontrado'
+      });
     }
+
+    // Validate input
+    const validationErrors = validateSponsor(req.body);
+    if (validationErrors.length > 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Dados inválidos',
+        details: validationErrors
+      });
+    }
+
+    // Check for duplicate names (excluding current sponsor)
+    const duplicateResult = await pool.query(
+      'SELECT id FROM sponsors WHERE LOWER(name) = LOWER($1) AND id != $2',
+      [name.trim(), id]
+    );
+
+    if (duplicateResult.rows.length > 0) {
+      return res.status(409).json({
+        success: false,
+        error: 'Já existe um patrocinador com este nome'
+      });
+    }
+
+    // Build dynamic update query - only update fields that are provided
+    const updates = [];
+    const values = [];
+    let paramIndex = 1;
+
+    if (name !== undefined) {
+      updates.push(`name = $${paramIndex++}`);
+      values.push(name.trim());
+    }
+
+    if (tier !== undefined) {
+      updates.push(`tier = $${paramIndex++}`);
+      values.push(tier);
+    }
+
+    if (logo_filename !== undefined) {
+      updates.push(`logo_filename = $${paramIndex++}`);
+      values.push(logo_filename ? logo_filename.trim() : null);
+    }
+
+    if (website_url !== undefined) {
+      updates.push(`website_url = $${paramIndex++}`);
+      values.push(website_url ? website_url.trim() : null);
+    }
+
+    if (description !== undefined) {
+      updates.push(`description = $${paramIndex++}`);
+      values.push(description ? description.trim() : null);
+    }
+
+    if (is_active !== undefined) {
+      updates.push(`is_active = $${paramIndex++}`);
+      values.push(is_active !== undefined ? Boolean(is_active) : existingResult.rows[0].is_active);
+    }
+
+    // Always update updated_at
+    updates.push(`updated_at = NOW()`);
+
+    // Add id at the end
+    values.push(id);
+
+    if (updates.length === 1) { // Only updated_at
+      return res.status(400).json({
+        success: false,
+        error: 'Nenhum campo para atualizar'
+      });
+    }
+
+    const query = `
+      UPDATE sponsors
+      SET ${updates.join(', ')}
+      WHERE id = $${paramIndex}
+      RETURNING id, name, tier, logo_filename, website_url, description, is_active, created_at, updated_at
+    `;
+
+    const result = await pool.query(query, values);
+
+    const updatedSponsor = result.rows[0];
 
     res.json({
       success: true,
@@ -424,37 +363,22 @@ router.delete('/:id', async (req, res) => {
       });
     }
 
-    let deletedSponsor;
+    // Check if sponsor exists
+    const existingResult = await pool.query(
+      'SELECT id, name FROM sponsors WHERE id = $1',
+      [id]
+    );
 
-    if (isDevelopment) {
-      // Use in-memory storage for development
-      const sponsorIndex = sponsors.findIndex(s => s.id === id);
-      if (sponsorIndex === -1) {
-        return res.status(404).json({
-          success: false,
-          error: 'Patrocinador não encontrado'
-        });
-      }
-
-      deletedSponsor = sponsors.splice(sponsorIndex, 1)[0];
-    } else {
-      // Check if sponsor exists
-      const existingResult = await pool.query(
-        'SELECT id, name FROM sponsors WHERE id = $1',
-        [id]
-      );
-
-      if (existingResult.rows.length === 0) {
-        return res.status(404).json({
-          success: false,
-          error: 'Patrocinador não encontrado'
-        });
-      }
-
-      // Delete sponsor
-      await pool.query('DELETE FROM sponsors WHERE id = $1', [id]);
-      deletedSponsor = existingResult.rows[0];
+    if (existingResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Patrocinador não encontrado'
+      });
     }
+
+    // Delete sponsor
+    await pool.query('DELETE FROM sponsors WHERE id = $1', [id]);
+    const deletedSponsor = existingResult.rows[0];
 
     res.json({
       success: true,
@@ -492,62 +416,34 @@ router.post('/upload-logo/:id', uploadLimiter, upload.single('logo'), async (req
     console.log('🖼️ Sponsor logo uploaded:', req.file.filename);
     console.log('👤 Uploaded by:', req.session?.email || req.session?.userId || 'unknown');
 
-    let updatedSponsor;
+    // Check if sponsor exists
+    const existingResult = await pool.query(
+      'SELECT id, logo_filename FROM sponsors WHERE id = $1',
+      [id]
+    );
 
-    if (isDevelopment) {
-      // Use in-memory storage for development
-      const sponsorIndex = sponsors.findIndex(s => s.id === id);
-      if (sponsorIndex === -1) {
-        return res.status(404).json({
-          success: false,
-          error: 'Patrocinador não encontrado'
-        });
-      }
-
-      // Delete old logo file if it exists
-      if (sponsors[sponsorIndex].logo_filename) {
-        const oldFilePath = path.join(__dirname, '../uploads/sponsors', sponsors[sponsorIndex].logo_filename);
-        await fs.unlink(oldFilePath).catch(console.error);
-      }
-
-      // Update sponsor with new logo filename
-      updatedSponsor = {
-        ...sponsors[sponsorIndex],
-        logo_filename: req.file.filename,
-        updated_at: new Date().toISOString()
-      };
-
-      sponsors[sponsorIndex] = updatedSponsor;
-    } else {
-      // Check if sponsor exists
-      const existingResult = await pool.query(
-        'SELECT id, logo_filename FROM sponsors WHERE id = $1',
-        [id]
-      );
-
-      if (existingResult.rows.length === 0) {
-        return res.status(404).json({
-          success: false,
-          error: 'Patrocinador não encontrado'
-        });
-      }
-
-      // Delete old logo file if it exists
-      if (existingResult.rows[0].logo_filename) {
-        const oldFilePath = path.join(__dirname, '../uploads/sponsors', existingResult.rows[0].logo_filename);
-        await fs.unlink(oldFilePath).catch(console.error);
-      }
-
-      // Update sponsor with new logo filename
-      const result = await pool.query(`
-        UPDATE sponsors
-        SET logo_filename = $1, updated_at = NOW()
-        WHERE id = $2
-        RETURNING id, name, tier, logo_filename, website_url, description, is_active, created_at, updated_at
-      `, [req.file.filename, id]);
-
-      updatedSponsor = result.rows[0];
+    if (existingResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Patrocinador não encontrado'
+      });
     }
+
+    // Delete old logo file if it exists
+    if (existingResult.rows[0].logo_filename) {
+      const oldFilePath = path.join(__dirname, '../uploads/sponsors', existingResult.rows[0].logo_filename);
+      await fs.unlink(oldFilePath).catch(console.error);
+    }
+
+    // Update sponsor with new logo filename
+    const result = await pool.query(`
+      UPDATE sponsors
+      SET logo_filename = $1, updated_at = NOW()
+      WHERE id = $2
+      RETURNING id, name, tier, logo_filename, website_url, description, is_active, created_at, updated_at
+    `, [req.file.filename, id]);
+
+    const updatedSponsor = result.rows[0];
 
     res.json({
       success: true,

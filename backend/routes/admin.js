@@ -407,17 +407,71 @@ router.put('/sponsors/:id', async (req, res) => {
     const { id } = req.params;
     const { name, tier, logo_filename, website_url, description, is_active } = req.body;
 
-    const result = await pool.query(
-      `UPDATE sponsors
-       SET name = $1, tier = $2, logo_filename = $3, website_url = $4, description = $5, is_active = $6, updated_at = NOW()
-       WHERE id = $7
-       RETURNING *`,
-      [name, tier, logo_filename, website_url, description, is_active, id]
+    // Check if sponsor exists
+    const existingResult = await pool.query(
+      'SELECT id, name, tier, logo_filename, website_url, description, is_active FROM sponsors WHERE id = $1',
+      [id]
     );
 
-    if (result.rows.length === 0) {
+    if (existingResult.rows.length === 0) {
       return res.status(404).json({ error: 'Patrocinador não encontrado' });
     }
+
+    const existing = existingResult.rows[0];
+
+    // Build dynamic update query - only update fields that are provided
+    const updates = [];
+    const values = [];
+    let paramIndex = 1;
+
+    if (name !== undefined) {
+      updates.push(`name = $${paramIndex++}`);
+      values.push(name.trim());
+    }
+
+    if (tier !== undefined) {
+      updates.push(`tier = $${paramIndex++}`);
+      values.push(tier);
+    }
+
+    if (logo_filename !== undefined) {
+      updates.push(`logo_filename = $${paramIndex++}`);
+      values.push(logo_filename ? logo_filename.trim() : null);
+    }
+
+    if (website_url !== undefined) {
+      updates.push(`website_url = $${paramIndex++}`);
+      values.push(website_url ? website_url.trim() : null);
+    }
+
+    if (description !== undefined) {
+      updates.push(`description = $${paramIndex++}`);
+      values.push(description ? description.trim() : null);
+    }
+
+    if (is_active !== undefined) {
+      updates.push(`is_active = $${paramIndex++}`);
+      values.push(Boolean(is_active));
+    }
+
+    // Always update updated_at
+    updates.push(`updated_at = NOW()`);
+
+    // Add id at the end
+    values.push(id);
+
+    if (updates.length === 1) { // Only updated_at
+      return res.status(400).json({ error: 'Nenhum campo para atualizar' });
+    }
+
+    const query = `
+      UPDATE sponsors
+      SET ${updates.join(', ')}
+      WHERE id = $${paramIndex}
+      RETURNING *
+    `;
+
+    const result = await pool.query(query, values);
 
     res.json(result.rows[0]);
   } catch (error) {
