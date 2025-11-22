@@ -815,178 +815,180 @@
         </div>
 
                 <!-- System Page -->
-                <div id="system-page" class="page" style="background: linear-gradient(135deg, #f8f9ff 0%, #e8f2ff 100%);">
-                    <div class="page-header">
-                        <h2>⚙️ System Dashboard</h2>
-                        <p>Monitor system health, performance, and manage administrative functions</p>
-                    </div>
-                    
-                    <!-- System Overview Cards -->
-                    <div class="system-overview-grid">
-                        <div class="system-card">
-                            <div class="system-card-header">
-                                <div class="system-icon">🖥️</div>
-                                <h3>System Status</h3>
-                            </div>
-                            <div class="system-card-content">
-                                <div id="system-status" class="status-indicator">
-                                    <span class="status-dot status-loading"></span>
-                                    <span class="status-text">Checking...</span>
+                <div id="system-page" class="page">
+                    <div class="page-content">
+                        <div class="page-header">
+                            <h2>⚙️ System Dashboard</h2>
+                            <p>Monitor system health, performance, and manage administrative functions</p>
+                        </div>
+                        
+                        <!-- System Overview Cards -->
+                        <div class="system-overview-grid">
+                            <div class="system-card">
+                                <div class="system-card-header">
+                                    <div class="system-icon">🖥️</div>
+                                    <h3>System Status</h3>
                                 </div>
-                                <div class="system-metrics">
-                                    <div class="metric">
-                                        <span class="metric-label">Uptime</span>
-                                        <span id="system-uptime" class="metric-value">-</span>
+                                <div class="system-card-content">
+                                    <div id="system-status" class="status-indicator">
+                                        <span class="status-dot status-loading"></span>
+                                        <span class="status-text">Checking...</span>
                                     </div>
-                                    <div class="metric">
-                                        <span class="metric-label">Version</span>
-                                        <span id="system-version" class="metric-value">-</span>
+                                    <div class="system-metrics">
+                                        <div class="metric">
+                                            <span class="metric-label">Uptime</span>
+                                            <span id="system-uptime" class="metric-value">-</span>
+                                        </div>
+                                        <div class="metric">
+                                            <span class="metric-label">Version</span>
+                                            <span id="system-version" class="metric-value">-</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="system-card">
+                                <div class="system-card-header">
+                                    <div class="system-icon">🗄️</div>
+                                    <h3>Database</h3>
+                                </div>
+                                <div class="system-card-content">
+                                    <div id="db-status" class="status-indicator">
+                                        <span class="status-dot status-loading"></span>
+                                        <span class="status-text">Checking...</span>
+                                    </div>
+                                    <div class="system-metrics">
+                                        <div class="metric">
+                                            <span class="metric-label">Game Jams</span>
+                                            <span id="db-gamejams" class="metric-value">-</span>
+                                        </div>
+                                        <div class="metric">
+                                            <span class="metric-label">Games</span>
+                                            <span id="db-games" class="metric-value">-</span>
+                                        </div>
+                                        <div class="metric">
+                                            <span class="metric-label">Sponsors</span>
+                                            <span id="db-sponsors" class="metric-value">-</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="system-card">
+                                <div class="system-card-header">
+                                    <div class="system-icon">📊</div>
+                                    <h3>Performance</h3>
+                                </div>
+                                <div class="system-card-content">
+                                    <div class="system-metrics">
+                                        <div class="metric">
+                                            <span class="metric-label">Response Time</span>
+                                            <span id="perf-response-time" class="metric-value">-</span>
+                                        </div>
+                                        <div class="metric">
+                                            <span class="metric-label">Memory Usage</span>
+                                            <span id="perf-memory" class="metric-value">-</span>
+                                        </div>
+                                        <div class="metric">
+                                            <span class="metric-label">Last Updated</span>
+                                            <span id="perf-last-update" class="metric-value">-</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         
-                        <div class="system-card">
-                            <div class="system-card-header">
-                                <div class="system-icon">🗄️</div>
-                                <h3>Database</h3>
-                            </div>
-                            <div class="system-card-content">
-                                <div id="db-status" class="status-indicator">
-                                    <span class="status-dot status-loading"></span>
-                                    <span class="status-text">Checking...</span>
+                        <!-- Quick Actions & API Testing -->
+                        <div class="system-actions-section">
+                            <div class="system-card">
+                                <div class="system-card-header">
+                                    <div class="system-icon">🔧</div>
+                                    <h3>Quick Actions</h3>
                                 </div>
-                                <div class="system-metrics">
-                                    <div class="metric">
-                                        <span class="metric-label">Game Jams</span>
-                                        <span id="db-gamejams" class="metric-value">-</span>
-                                    </div>
-                                    <div class="metric">
-                                        <span class="metric-label">Games</span>
-                                        <span id="db-games" class="metric-value">-</span>
-                                    </div>
-                                    <div class="metric">
-                                        <span class="metric-label">Sponsors</span>
-                                        <span id="db-sponsors" class="metric-value">-</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="system-card">
-                            <div class="system-card-header">
-                                <div class="system-icon">📊</div>
-                                <h3>Performance</h3>
-                            </div>
-                            <div class="system-card-content">
-                                <div class="system-metrics">
-                                    <div class="metric">
-                                        <span class="metric-label">Response Time</span>
-                                        <span id="perf-response-time" class="metric-value">-</span>
-                                    </div>
-                                    <div class="metric">
-                                        <span class="metric-label">Memory Usage</span>
-                                        <span id="perf-memory" class="metric-value">-</span>
-                                    </div>
-                                    <div class="metric">
-                                        <span class="metric-label">Last Updated</span>
-                                        <span id="perf-last-update" class="metric-value">-</span>
+                                <div class="system-card-content">
+                                    <div class="action-buttons-grid">
+                                        <button class="btn btn-primary" onclick="testHealth()">
+                                            <span class="btn-icon">❤️</span>
+                                            Health Check
+                                        </button>
+                                        <button class="btn btn-primary" onclick="testAPI()">
+                                            <span class="btn-icon">🔗</span>
+                                            Test API
+                                        </button>
+                                        <button class="btn btn-secondary" onclick="testDatabase()">
+                                            <span class="btn-icon">🗄️</span>
+                                            Test Database
+                                        </button>
+                                        <button class="btn btn-warning" onclick="clearCache()">
+                                            <span class="btn-icon">🧹</span>
+                                            Clear Cache
+                                        </button>
+                                        <button class="btn btn-info" onclick="refreshSystemInfo()">
+                                            <span class="btn-icon">🔄</span>
+                                            Refresh Data
+                                        </button>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Quick Actions & API Testing -->
-                    <div class="system-actions-section">
-                        <div class="system-card">
-                            <div class="system-card-header">
-                                <div class="system-icon">🔧</div>
-                                <h3>Quick Actions</h3>
-                            </div>
-                            <div class="system-card-content">
-                                <div class="action-buttons-grid">
-                                    <button class="btn btn-primary" onclick="testHealth()">
-                                        <span class="btn-icon">❤️</span>
-                                        Health Check
-                                    </button>
-                                    <button class="btn btn-primary" onclick="testAPI()">
-                                        <span class="btn-icon">🔗</span>
-                                        Test API
-                                    </button>
-                                    <button class="btn btn-secondary" onclick="testDatabase()">
-                                        <span class="btn-icon">🗄️</span>
-                                        Test Database
-                                    </button>
-                                    <button class="btn btn-warning" onclick="clearCache()">
-                                        <span class="btn-icon">🧹</span>
-                                        Clear Cache
-                                    </button>
-                                    <button class="btn btn-info" onclick="refreshSystemInfo()">
-                                        <span class="btn-icon">🔄</span>
-                                        Refresh Data
-                                    </button>
+                            
+                            <div class="system-card">
+                                <div class="system-card-header">
+                                    <div class="system-icon">🔗</div>
+                                    <h3>API Endpoints</h3>
+                                </div>
+                                <div class="system-card-content">
+                                    <div class="api-endpoints-list">
+                                        <div class="api-endpoint">
+                                            <code>GET /health</code>
+                                            <span class="endpoint-desc">System health status</span>
+                                        </div>
+                                        <div class="api-endpoint">
+                                            <code>GET /api/public/gamejams</code>
+                                            <span class="endpoint-desc">List all game jams</span>
+                                        </div>
+                                        <div class="api-endpoint">
+                                            <code>GET /api/public/games/featured</code>
+                                            <span class="endpoint-desc">Featured games</span>
+                                        </div>
+                                        <div class="api-endpoint">
+                                            <code>GET /api/public/games/search</code>
+                                            <span class="endpoint-desc">Search games</span>
+                                        </div>
+                                        <div class="api-endpoint">
+                                            <code>GET /api/public/archive/:year</code>
+                                            <span class="endpoint-desc">Archive data</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                         
-                        <div class="system-card">
-                            <div class="system-card-header">
-                                <div class="system-icon">🔗</div>
-                                <h3>API Endpoints</h3>
-                            </div>
-                            <div class="system-card-content">
-                                <div class="api-endpoints-list">
-                                    <div class="api-endpoint">
-                                        <code>GET /health</code>
-                                        <span class="endpoint-desc">System health status</span>
-                                    </div>
-                                    <div class="api-endpoint">
-                                        <code>GET /api/public/gamejams</code>
-                                        <span class="endpoint-desc">List all game jams</span>
-                                    </div>
-                                    <div class="api-endpoint">
-                                        <code>GET /api/public/games/featured</code>
-                                        <span class="endpoint-desc">Featured games</span>
-                                    </div>
-                                    <div class="api-endpoint">
-                                        <code>GET /api/public/games/search</code>
-                                        <span class="endpoint-desc">Search games</span>
-                                    </div>
-                                    <div class="api-endpoint">
-                                        <code>GET /api/public/archive/:year</code>
-                                        <span class="endpoint-desc">Archive data</span>
-                                    </div>
+                        <!-- System Response & Logs -->
+                        <div class="system-response-section">
+                            <div class="system-card">
+                                <div class="system-card-header">
+                                    <div class="system-icon">📝</div>
+                                    <h3>System Response</h3>
+                                </div>
+                                <div class="system-card-content">
+                                    <pre id="response" class="system-response-output">System ready... Click a test button above to see responses.</pre>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    
-                    <!-- System Response & Logs -->
-                    <div class="system-response-section">
-                        <div class="system-card">
-                            <div class="system-card-header">
-                                <div class="system-icon">📝</div>
-                                <h3>System Response</h3>
-                            </div>
-                            <div class="system-card-content">
-                                <pre id="response" class="system-response-output">System ready... Click a test button above to see responses.</pre>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Recent Activity -->
-                    <div class="system-activity-section">
-                        <div class="system-card">
-                            <div class="system-card-header">
-                                <div class="system-icon">📈</div>
-                                <h3>Recent Activity</h3>
-                            </div>
-                            <div class="system-card-content">
-                                <div id="recent-activity" class="activity-list">
-                                    <div class="activity-item">
-                                        <span class="activity-time">Loading...</span>
-                                        <span class="activity-desc">System dashboard initialized</span>
+                        
+                        <!-- Recent Activity -->
+                        <div class="system-activity-section">
+                            <div class="system-card">
+                                <div class="system-card-header">
+                                    <div class="system-icon">📈</div>
+                                    <h3>Recent Activity</h3>
+                                </div>
+                                <div class="system-card-content">
+                                    <div id="recent-activity" class="activity-list">
+                                        <div class="activity-item">
+                                            <span class="activity-time">Loading...</span>
+                                            <span class="activity-desc">System dashboard initialized</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
