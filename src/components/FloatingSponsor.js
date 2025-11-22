@@ -37,7 +37,7 @@ const FloatingSponsor = ({ href = 'https://astralshiftpro.com', alt = 'Astral Sh
       {/* White rounded background so the logo and text are readable on dark backgrounds */}
       <div className="relative flex flex-col items-center gap-2 bg-white/95 text-black px-3 py-3 rounded-full shadow-lg backdrop-blur-md hover:scale-105 transition-transform transform-gpu">
         {/* Top text */}
-        <span className="text-xs uppercase text-slate-700 leading-none">SPONSORED BY</span>
+        <span className="text-xs uppercase text-slate-700 leading-none">Patrocínios</span>
 
         {/* Centered logo */}
         <Sponsor showText={false} isCircular={true} imgSrc={imgSrc} alt={alt} href={href} imgClassName="h-8" containerClass="p-0" />

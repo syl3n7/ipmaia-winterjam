@@ -111,8 +111,21 @@ fi
 
 # Run database migrations
 echo -e "${BLUE}🗄️  Running database migrations...${NC}"
-docker compose exec -T backend npm run migrate 2>/dev/null || {
-    echo -e "${YELLOW}⚠️  Migration script not available, database should auto-initialize${NC}"
+docker compose exec -T backend npm run migrate || {
+    echo -e "${YELLOW}⚠️  Migration script failed, checking if backend auto-initialized...${NC}"
+    # Wait a bit more for backend auto-migration
+    sleep 10
+}
+
+# Verify database has tables
+echo -e "${BLUE}🔍 Verifying database schema...${NC}"
+docker compose exec -T db psql -U postgres -d winterjam_dev -c "\dt" | grep -q "gamejams\|games\|users" && {
+    echo -e "${GREEN}✅ Database tables found${NC}"
+} || {
+    echo -e "${RED}❌ Database tables not found - migrations may have failed${NC}"
+    echo -e "${YELLOW}📋 Checking migration status...${NC}"
+    docker compose exec -T db psql -U postgres -d winterjam_dev -c "SELECT * FROM schema_migrations;" 2>/dev/null || echo "No schema_migrations table"
+    exit 1
 }
 
 # Show final status

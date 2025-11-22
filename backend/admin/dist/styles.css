@@ -709,4 +709,239 @@
     padding-top: 8px;
 }
 
-/* ===== END SPONSOR MANAGEMENT STYLES ===== */
+/* ===== SYSTEM DASHBOARD STYLES ===== */
+
+.system-overview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.system-card {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(20px);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.system-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+    border-color: rgba(102, 126, 234, 0.3);
+}
+
+.system-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 20px 20px 0 20px;
+    margin-bottom: 16px;
+}
+
+.system-icon {
+    font-size: 1.5rem;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: 10px;
+    color: white;
+}
+
+.system-card-header h3 {
+    margin: 0;
+    color: #333;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.system-card-content {
+    padding: 0 20px 20px 20px;
+}
+
+.status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.status-success { background: #28a745; }
+.status-error { background: #dc3545; }
+.status-warning { background: #ffc107; }
+.status-loading { 
+    background: #ffc107; 
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.status-text {
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.system-metrics {
+    display: grid;
+    gap: 12px;
+}
+
+.metric {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+}
+
+.metric:last-child {
+    border-bottom: none;
+}
+
+.metric-label {
+    color: #6c757d;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.metric-value {
+    color: #333;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.system-actions-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.action-buttons-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+}
+
+.btn-icon {
+    margin-right: 6px;
+}
+
+.api-endpoints-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.api-endpoint {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 12px;
+    background: rgba(102, 126, 234, 0.05);
+    border-radius: 8px;
+    border-left: 3px solid #667eea;
+}
+
+.api-endpoint code {
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 0.8rem;
+    color: #667eea;
+    font-weight: 500;
+}
+
+.endpoint-desc {
+    font-size: 0.75rem;
+    color: #6c757d;
+}
+
+.system-response-section,
+.system-activity-section {
+    margin-bottom: 20px;
+}
+
+.system-response-output {
+    background: rgba(248, 249, 250, 0.8);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(102, 126, 234, 0.1);
+    border-radius: 12px;
+    padding: 16px;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 0.8rem;
+    line-height: 1.4;
+    color: #333;
+    min-height: 120px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.activity-list {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.activity-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+}
+
+.activity-item:last-child {
+    border-bottom: none;
+}
+
+.activity-time {
+    font-size: 0.75rem;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.activity-desc {
+    font-size: 0.8rem;
+    color: #333;
+}
+
+/* Responsive adjustments for system dashboard */
+@media (max-width: 768px) {
+    .system-overview-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .system-actions-section {
+        grid-template-columns: 1fr;
+    }
+    
+    .action-buttons-grid {
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    }
+    
+    .system-card-header {
+        padding: 16px 16px 0 16px;
+    }
+    
+    .system-card-content {
+        padding: 0 16px 16px 16px;
+    }
+}
+
+/* ===== END SYSTEM DASHBOARD STYLES ===== */
