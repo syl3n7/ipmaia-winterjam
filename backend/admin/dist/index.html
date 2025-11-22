@@ -222,6 +222,18 @@
                                 <textarea id="jam-description" name="description" placeholder="Describe the game jam..."></textarea>
                             </div>
                             
+                            <!-- Status Section -->
+                            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; padding: 20px; margin: 20px 0; color: white; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);">
+                                <h4 style="margin-bottom: 15px; color: white;">📊 Game Jam Status</h4>
+                                <div class="form-group" style="margin-bottom: 0;">
+                                    <label style="color: white; font-weight: 500; display: flex; align-items: center; gap: 10px;">
+                                        <input type="checkbox" id="jam-active" name="is_active" checked style="transform: scale(1.2);">
+                                        <span style="font-size: 1.1em;">🎯 Active Game Jam</span>
+                                    </label>
+                                    <small style="color: rgba(255,255,255,0.8); margin-top: 5px; display: block;">When checked, this game jam will be visible to users and accept registrations</small>
+                                </div>
+                            </div>
+                            
                             <!-- Schedule Section -->
                             <div style="background: #f8f9ff; border: 2px solid #667eea; border-radius: 8px; padding: 20px; margin: 20px 0;">
                                 <h4 style="color: #667eea; margin-bottom: 20px;">📅 Event Schedule</h4>
@@ -282,29 +294,6 @@
                                 </div>
                             </div>
                             
-                            <div class="grid">
-                                <div class="form-group">
-                                    <label for="jam-reg-url">Registration URL</label>
-                                    <input type="url" id="jam-reg-url" name="registration_url" placeholder="https://forms.microsoft.com/...">
-                                </div>
-                                <div class="form-group">
-                                    <label for="jam-rules-pdf">Rules PDF URL (relative or absolute)</label>
-                                    <input type="text" id="jam-rules-pdf" name="rules_pdf_url" placeholder="/WinterJam_Rulebook.pdf or https://example.com/rules.pdf">
-                                </div>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="jam-banner">Banner Image URL (relative or absolute)</label>
-                                <input type="text" id="jam-banner" name="banner_image_url" placeholder="/images/banner.jpg or https://example.com/banner.jpg">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label>
-                                    <input type="checkbox" id="jam-active" name="is_active" checked>
-                                    Active Game Jam
-                                </label>
-                            </div>
-                            
                             <!-- Homepage Content Section -->
                             <div style="border-top: 2px solid #667eea; margin-top: 30px; padding-top: 30px;">
                                 <h4 style="color: #667eea; margin-bottom: 20px;">Homepage Content</h4>
@@ -327,94 +316,121 @@
                             
                             <!-- Toggle Controls Section -->
                             <div style="border-top: 2px solid #667eea; margin-top: 30px; padding-top: 30px;">
-                                <h4 style="color: #667eea; margin-bottom: 20px;">👁️ Visibility Controls</h4>
-                                
-                                <div class="grid">
-                                    <div class="form-group">
-                                        <label>
-                                            <input type="checkbox" id="show-theme" name="show_theme" checked>
-                                            Show Theme
-                                        </label>
-                                    </div>
-                                    <div class="form-group">
-                                        <label>
-                                            <input type="checkbox" id="show-description" name="show_description" checked>
-                                            Show Description
-                                        </label>
+                                <h4 style="color: #667eea; margin-bottom: 25px; display: flex; align-items: center; gap: 10px;">
+                                    <span>👁️</span>
+                                    <span>Visibility Controls</span>
+                                </h4>
+                                <p style="color: #6c757d; margin-bottom: 25px; font-size: 0.9rem;">
+                                    Control what information is displayed to users on the public website.
+                                </p>
+
+                                <!-- Content Visibility -->
+                                <div style="background: linear-gradient(135deg, #f8f9ff 0%, #e8f2ff 100%); border: 1px solid #e0e7ff; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+                                    <h5 style="color: #4c51bf; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+                                        <span>📝</span>
+                                        <span>Content Display</span>
+                                    </h5>
+
+                                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                                        <div class="form-group" style="margin-bottom: 0;">
+                                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                                <input type="checkbox" id="show-theme" name="show_theme" checked style="transform: scale(1.1);">
+                                                <span>🎨 Show Theme</span>
+                                            </label>
+                                        </div>
+
+                                        <div class="form-group" style="margin-bottom: 0;">
+                                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                                <input type="checkbox" id="show-description" name="show_description" checked style="transform: scale(1.1);">
+                                                <span>📄 Show Description</span>
+                                            </label>
+                                        </div>
                                     </div>
                                 </div>
-                                
-                                <div class="grid">
-                                    <div class="form-group">
-                                        <label>
-                                            <input type="checkbox" id="show-start-date" name="show_start_date" checked>
-                                            Show Start Date
-                                        </label>
+
+                                <!-- Date Visibility -->
+                                <div style="background: linear-gradient(135deg, #fff8f0 0%, #fef3c7 100%); border: 1px solid #fde68a; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+                                    <h5 style="color: #d97706; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+                                        <span>📅</span>
+                                        <span>Date Display</span>
+                                    </h5>
+
+                                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px;">
+                                        <div class="form-group" style="margin-bottom: 0;">
+                                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                                <input type="checkbox" id="show-start-date" name="show_start_date" checked style="transform: scale(1.1);">
+                                                <span>🕐 Show Start Date</span>
+                                            </label>
+                                        </div>
+
+                                        <div class="form-group" style="margin-bottom: 0;">
+                                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                                <input type="checkbox" id="show-end-date" name="show_end_date" checked style="transform: scale(1.1);">
+                                                <span>🏁 Show End Date</span>
+                                            </label>
+                                        </div>
                                     </div>
-                                    <div class="form-group">
-                                        <label>
-                                            <input type="checkbox" id="show-end-date" name="show_end_date" checked>
-                                            Show End Date
-                                        </label>
-                                    </div>
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label for="date-fallback">When dates are disabled, show:</label>
-                                    <select id="date-fallback" name="date_fallback">
-                                        <option value="TBD">TBD (To Be Determined)</option>
-                                        <option value="Coming Soon">Coming Soon</option>
-                                        <option value="To Be Announced">To Be Announced</option>
-                                        <option value="hidden">Hide Completely</option>
-                                    </select>
-                                </div>
-                                
-                                <div class="grid">
-                                    <div class="form-group">
-                                        <label>
-                                            <input type="checkbox" id="show-registration-dates" name="show_registration_dates" checked>
-                                            Show Registration Dates
-                                        </label>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="registration-date-fallback">Registration date fallback:</label>
-                                        <select id="registration-date-fallback" name="registration_date_fallback">
-                                            <option value="TBD">TBD</option>
+
+                                    <div class="form-group" style="margin-bottom: 0;">
+                                        <label for="date-fallback" style="font-weight: 500; color: #92400e;">When dates are disabled, show:</label>
+                                        <select id="date-fallback" name="date_fallback" style="margin-top: 5px; border: 1px solid #f59e0b; border-radius: 6px; padding: 8px 12px;">
+                                            <option value="TBD">TBD (To Be Determined)</option>
                                             <option value="Coming Soon">Coming Soon</option>
+                                            <option value="To Be Announced">To Be Announced</option>
                                             <option value="hidden">Hide Completely</option>
                                         </select>
                                     </div>
                                 </div>
-                                
-                                <div class="grid">
-                                    <div class="form-group">
-                                        <label>
-                                            <input type="checkbox" id="show-registration-url" name="show_registration_url" checked>
-                                            Show Registration URL
-                                        </label>
-                                    </div>
-                                    <div class="form-group">
-                                        <label>
-                                            <input type="checkbox" id="show-rules-pdf-url" name="show_rules_pdf_url" checked>
-                                            Show Rules PDF URL
-                                        </label>
+
+                                <!-- Registration Visibility -->
+                                <div style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border: 1px solid #bae6fd; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+                                    <h5 style="color: #0369a1; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+                                        <span>📝</span>
+                                        <span>Registration Display</span>
+                                    </h5>
+
+                                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+                                        <div class="form-group" style="margin-bottom: 0;">
+                                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                                <input type="checkbox" id="show-registration-dates" name="show_registration_dates" checked style="transform: scale(1.1);">
+                                                <span>📅 Show Registration Dates</span>
+                                            </label>
+                                        </div>
+
+                                        <div class="form-group" style="margin-bottom: 0;">
+                                            <label for="registration-date-fallback" style="font-weight: 500; color: #0c4a6e;">Registration date fallback:</label>
+                                            <select id="registration-date-fallback" name="registration_date_fallback" style="margin-top: 5px; border: 1px solid #0ea5e9; border-radius: 6px; padding: 8px 12px;">
+                                                <option value="TBD">TBD</option>
+                                                <option value="Coming Soon">Coming Soon</option>
+                                                <option value="hidden">Hide Completely</option>
+                                            </select>
+                                        </div>
                                     </div>
                                 </div>
-                                
-                                <div class="grid">
-                                    <div class="form-group">
-                                        <label>
-                                            <input type="checkbox" id="show-banner-image" name="show_banner_image" checked>
-                                            Show Banner Image
-                                        </label>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="banner-fallback">When banner is disabled, show:</label>
-                                        <select id="banner-fallback" name="banner_fallback">
-                                            <option value="placeholder">Placeholder</option>
-                                            <option value="hide">Hide Completely</option>
-                                            <option value="default">Default Background</option>
-                                        </select>
+
+                                <!-- Banner Visibility -->
+                                <div style="background: linear-gradient(135deg, #fef7ff 0%, #fce7f3 100%); border: 1px solid #fbcfe8; border-radius: 12px; padding: 20px;">
+                                    <h5 style="color: #be185d; margin-bottom: 15px; display: flex; align-items: center; gap: 8px;">
+                                        <span>🖼️</span>
+                                        <span>Banner Display</span>
+                                    </h5>
+
+                                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+                                        <div class="form-group" style="margin-bottom: 0;">
+                                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                                <input type="checkbox" id="show-banner-image" name="show_banner_image" checked style="transform: scale(1.1);">
+                                                <span>🎨 Show Banner Image</span>
+                                            </label>
+                                        </div>
+
+                                        <div class="form-group" style="margin-bottom: 0;">
+                                            <label for="banner-fallback" style="font-weight: 500; color: #be185d;">When banner is disabled, show:</label>
+                                            <select id="banner-fallback" name="banner_fallback" style="margin-top: 5px; border: 1px solid #ec4899; border-radius: 6px; padding: 8px 12px;">
+                                                <option value="placeholder">Placeholder</option>
+                                                <option value="hide">Hide Completely</option>
+                                                <option value="default">Default Background</option>
+                                            </select>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

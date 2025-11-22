@@ -467,18 +467,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log('🏆 Awards ceremony field found:', awardsCeremonyField, 'Setting to:', awardsCeremonyValue);
                 if (awardsCeremonyField) awardsCeremonyField.value = awardsCeremonyValue;
                 
-                const regUrlField = document.getElementById('jam-reg-url');
-                console.log('🔗 Reg URL field found:', regUrlField, 'Setting to:', jam.registration_url || '');
-                if (regUrlField) regUrlField.value = jam.registration_url || '';
-                
-                const rulesPdfField = document.getElementById('jam-rules-pdf');
-                console.log('📋 Rules PDF field found:', rulesPdfField, 'Setting to:', jam.rules_pdf_url || '');
-                if (rulesPdfField) rulesPdfField.value = jam.rules_pdf_url || '';
-                
-                const bannerField = document.getElementById('jam-banner');
-                console.log('🖼️ Banner field found:', bannerField, 'Setting to:', jam.banner_image_url || '');
-                if (bannerField) bannerField.value = jam.banner_image_url || '';
-                
                 const activeField = document.getElementById('jam-active');
                 console.log('✅ Active field found:', activeField, 'Setting to:', jam.is_active);
                 if (activeField) activeField.checked = jam.is_active;
@@ -514,18 +502,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 const regDateFallbackField = document.getElementById('registration-date-fallback');
                 if (regDateFallbackField) regDateFallbackField.value = jam.registration_date_fallback || 'TBD';
                 
-                const showRegUrlField = document.getElementById('show-registration-url');
-                if (showRegUrlField) showRegUrlField.checked = jam.show_registration_url !== false;
-                
-                const showRulesPdfField = document.getElementById('show-rules-pdf-url');
-                if (showRulesPdfField) showRulesPdfField.checked = jam.show_rules_pdf_url !== false;
-                
-                const showBannerField = document.getElementById('show-banner-image');
-                if (showBannerField) showBannerField.checked = jam.show_banner_image !== false;
-                
-                const bannerFallbackField = document.getElementById('banner-fallback');
-                if (bannerFallbackField) bannerFallbackField.value = jam.banner_fallback || 'placeholder';
-                
                 console.log('🎯 Showing form first, then populating...');
                 showGameJamForm(true); // Pass true to indicate this is an edit operation
                 
@@ -544,9 +520,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (themeAnnouncementField) themeAnnouncementField.value = themeAnnouncementValue;
                     if (evaluationField) evaluationField.value = evaluationValue;
                     if (awardsCeremonyField) awardsCeremonyField.value = awardsCeremonyValue;
-                    if (regUrlField) regUrlField.value = jam.registration_url || '';
-                    if (rulesPdfField) rulesPdfField.value = jam.rules_pdf_url || '';
-                    if (bannerField) bannerField.value = jam.banner_image_url || '';
                     if (activeField) activeField.checked = jam.is_active;
                     // Re-populate homepage content fields
                     if (introductionField) introductionField.value = jam.introduction || '';
@@ -559,10 +532,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (dateFallbackField) dateFallbackField.value = jam.date_fallback || 'TBD';
                     if (showRegDatesField) showRegDatesField.checked = jam.show_registration_dates !== false;
                     if (regDateFallbackField) regDateFallbackField.value = jam.registration_date_fallback || 'TBD';
-                    if (showRegUrlField) showRegUrlField.checked = jam.show_registration_url !== false;
-                    if (showRulesPdfField) showRulesPdfField.checked = jam.show_rules_pdf_url !== false;
-                    if (showBannerField) showBannerField.checked = jam.show_banner_image !== false;
-                    if (bannerFallbackField) bannerFallbackField.value = jam.banner_fallback || 'placeholder';
                     console.log('✅ All game jam form fields re-populated after showing form!');
                 }, 100);
                 
@@ -1338,9 +1307,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 data.show_start_date = formData.has('show_start_date');
                 data.show_end_date = formData.has('show_end_date');
                 data.show_registration_dates = formData.has('show_registration_dates');
-                data.show_registration_url = formData.has('show_registration_url');
-                data.show_rules_pdf_url = formData.has('show_rules_pdf_url');
-                data.show_banner_image = formData.has('show_banner_image');
                 
                 try {
                     console.log('💾 Saving game jam...');
