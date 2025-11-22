@@ -59,7 +59,7 @@ let sponsors = [
     id: 1,
     name: 'IPMAIA',
     tier: 'platinum',
-    logo_filename: 'ipmaia-logo.png',
+    logo_filename: 'sponsor_1763781067301.svg',
     website_url: 'https://ipmaia.pt',
     description: 'Instituto Politécnico da Maia - Patrocinador principal do WinterJam',
     is_active: true,
@@ -111,7 +111,7 @@ router.get('/', async (req, res) => {
     } else {
       // Get active sponsors from database
       const result = await pool.query(`
-        SELECT id, name, tier, logo_url, website_url, description, is_active, created_at, updated_at
+        SELECT id, name, tier, logo_filename, website_url, description, is_active, created_at, updated_at
         FROM sponsors
         WHERE is_active = true
         ORDER BY
@@ -132,9 +132,9 @@ router.get('/', async (req, res) => {
 
     // Transform to frontend format
     const frontendSponsors = activeSponsors.map((sponsor, index) => ({
-      imgSrc: sponsor.logo_filename ? `/api/sponsors/logo/${sponsor.logo_filename}` : null,
+      imgSrc: sponsor.logo_filename ? `${req.protocol}://${req.get('host')}/api/sponsors/logo/${sponsor.logo_filename}` : null,
       alt: sponsor.name,
-      href: sponsor.website_url,
+      href: sponsor.website_url ? (sponsor.website_url.startsWith('http') ? sponsor.website_url : (sponsor.website_url.startsWith('/') ? `${req.protocol}://${req.get('host')}${sponsor.website_url}` : `https://${sponsor.website_url}`)) : null,
       index: index
     }));
 
