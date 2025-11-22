@@ -9,6 +9,7 @@ export default function AdminLayout({ children }) {
   const navItems = [
     { href: '/admin/gamejams', label: '🎮 Game Jams', section: 'gamejams' },
     { href: '/admin/games', label: '🎯 Jogos', section: 'games' },
+    { href: '/admin/sponsors', label: '💰 Patrocinadores', section: 'sponsors' },
     { href: '/admin/users', label: '👥 Utilizadores', section: 'users' },
     { href: '/admin/frontpage', label: '🏠 Página Inicial', section: 'frontpage' },
     { href: '/admin/rules', label: '📋 Regras', section: 'rules' },

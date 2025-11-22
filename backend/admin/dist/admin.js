@@ -109,11 +109,6 @@ document.addEventListener('DOMContentLoaded', function() {
         // Expose functions to global scope for onclick handlers in HTML
         window.loginWithOIDC = loginWithOIDC;
         window.logout = logout;
-        window.testHealth = testHealth;
-        window.testAPI = testAPI;
-        window.testDatabase = testDatabase;
-        window.clearCache = clearCache;
-        window.refreshSystemInfo = refreshSystemInfo;
         window.navigateToPage = navigateToPage;
         window.toggleMobileMenu = toggleMobileMenu;
         // New system functions
