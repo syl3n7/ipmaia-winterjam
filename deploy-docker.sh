@@ -26,6 +26,7 @@ echo -e "${GREEN}✅ Environment configuration found${NC}"
 echo -e "${BLUE}📁 Creating required directories...${NC}"
 mkdir -p ssl
 mkdir -p backend/uploads
+mkdir -p backend/uploads/sponsors
 
 # Make scripts executable
 chmod +x backend/scripts/*.js 2>/dev/null || true
