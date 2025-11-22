@@ -30,34 +30,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     showAdminDashboard();
                     updateUserInfo();
                     showStatus('🚀 System ready', 'success');
-                    // Load data for the active section
-                    const activeSection = document.querySelector('.card.active').id.replace('-section', '');
-                    switch(activeSection) {
-                        case 'gamejams':
-                            loadGameJams();
-                            break;
-                        case 'games':
-                            loadGames();
-                            break;
-                        case 'users':
-                            loadUsers();
-                            break;
-                        case 'sponsors':
-                            loadSponsors();
-                            break;
-                        case 'frontpage':
-                            loadFrontPageSettings();
-                            loadBannerStatus();
-                            break;
-                        case 'rules':
-                            loadRules();
-                            break;
-                        case 'system':
-                            loadSystemInfo();
-                            break;
-                        default:
-                            loadGameJams(); // fallback
-                    }
+                    
+                    // Navigate to the appropriate page based on URL hash or default to dashboard
+                    const hash = window.location.hash.substring(1);
+                    const initialPage = hash || 'dashboard';
+                    navigateToPage(initialPage);
                 } else {
                     console.log('❌ Not authenticated (status ' + response.status + '), showing login overlay');
                     showAuthOverlay();
@@ -105,6 +82,30 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
+        // Mobile menu toggle functionality
+        function toggleMobileMenu() {
+            const sidebar = document.querySelector('.sidebar');
+            sidebar.classList.toggle('open');
+        }
+
+        // Handle mobile menu visibility
+        function handleMobileMenuVisibility() {
+            const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+            if (window.innerWidth <= 768) {
+                mobileMenuToggle.style.display = 'block';
+            } else {
+                mobileMenuToggle.style.display = 'none';
+                // Close sidebar when switching to desktop
+                document.querySelector('.sidebar').classList.remove('open');
+            }
+        }
+
+        // Listen for window resize to show/hide mobile menu toggle
+        window.addEventListener('resize', handleMobileMenuVisibility);
+        
+        // Initialize mobile menu visibility
+        handleMobileMenuVisibility();
+
         // Expose functions to global scope for onclick handlers in HTML
         window.loginWithOIDC = loginWithOIDC;
         window.logout = logout;
@@ -113,6 +114,8 @@ document.addEventListener('DOMContentLoaded', function() {
         window.testDatabase = testDatabase;
         window.clearCache = clearCache;
         window.refreshSystemInfo = refreshSystemInfo;
+        window.navigateToPage = navigateToPage;
+        window.toggleMobileMenu = toggleMobileMenu;
 
         // Portuguese (Portugal) Date Formatting Utilities
         const PT_LOCALE = 'pt-PT';
@@ -194,40 +197,62 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // Navigation Functions
-        function showSection(sectionName, buttonElement) {
-            console.log('Switching to section:', sectionName);
+        function navigateToPage(pageName) {
+            console.log('Navigating to page:', pageName);
             
-            // Hide all sections
-            document.querySelectorAll('.card').forEach(card => {
-                card.classList.remove('active');
-                card.style.display = 'none';
+            // Update URL hash without triggering page reload
+            window.location.hash = pageName;
+            
+            // Hide all pages
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
             });
             
-            // Remove active class from nav buttons
-            document.querySelectorAll('.nav-btn').forEach(btn => {
-                btn.classList.remove('active');
+            // Remove active class from nav links
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
             });
             
-            // Show selected section
-            const section = document.getElementById(sectionName + '-section');
-            if (section) {
-                section.classList.add('active');
-                section.style.display = 'block';
+            // Show selected page
+            const page = document.getElementById(pageName + '-page');
+            if (page) {
+                page.classList.add('active');
             }
             
-            // Add active class to the button - either the one passed or find it by data-section attribute
-            if (buttonElement) {
-                buttonElement.classList.add('active');
-            } else {
-                // When called programmatically, find the corresponding nav button
-                const navButton = document.querySelector(`[data-section="${sectionName}"]`);
-                if (navButton) {
-                    navButton.classList.add('active');
-                }
+            // Add active class to the corresponding nav link
+            const navLink = document.querySelector(`[data-page="${pageName}"]`);
+            if (navLink) {
+                navLink.classList.add('active');
             }
             
-            // Load data for the section
-            switch(sectionName) {
+            // Update page title and subtitle
+            updatePageTitle(pageName);
+            
+            // Load data for the page
+            loadPageData(pageName);
+        }
+        
+        function updatePageTitle(pageName) {
+            const titles = {
+                dashboard: { title: 'Dashboard', subtitle: 'Overview and quick actions' },
+                gamejams: { title: 'Game Jams', subtitle: 'Manage game jam events and configurations' },
+                games: { title: 'Games', subtitle: 'Manage game submissions and featured content' },
+                sponsors: { title: 'Sponsors', subtitle: 'Manage sponsor partnerships and display settings' },
+                frontpage: { title: 'Front Page', subtitle: 'Configure homepage banner and content' },
+                rules: { title: 'Rules', subtitle: 'Upload and manage the WinterJam rulebook' },
+                system: { title: 'System', subtitle: 'Monitor system health and performance' }
+            };
+            
+            const pageInfo = titles[pageName] || { title: 'Admin Panel', subtitle: 'IPMAIA WinterJam' };
+            document.getElementById('page-title').textContent = pageInfo.title;
+            document.getElementById('page-subtitle').textContent = pageInfo.subtitle;
+        }
+        
+        function loadPageData(pageName) {
+            switch(pageName) {
+                case 'dashboard':
+                    loadDashboardData();
+                    break;
                 case 'gamejams':
                     loadGameJams();
                     break;
@@ -248,6 +273,48 @@ document.addEventListener('DOMContentLoaded', function() {
                     loadSystemInfo();
                     break;
             }
+        }
+        
+        async function loadDashboardData() {
+            try {
+                // Load overview statistics
+                const [gamejams, games, sponsors] = await Promise.all([
+                    apiCall('/api/public/gamejams').catch(() => []),
+                    apiCall('/api/public/games/featured').catch(() => []),
+                    apiCall('/api/admin/sponsors').catch(() => [])
+                ]);
+                
+                document.getElementById('dashboard-gamejams-count').textContent = gamejams.length;
+                document.getElementById('dashboard-games-count').textContent = games.length;
+                document.getElementById('dashboard-sponsors-count').textContent = sponsors.length;
+                
+                // Load recent activity
+                loadRecentActivity();
+                
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+            }
+        }
+        
+        async function loadRecentActivity() {
+            // Simulate recent activity (could be enhanced with real data)
+            const activityEl = document.getElementById('dashboard-recent-activity');
+            const now = new Date();
+            
+            activityEl.innerHTML = `
+                <div class="activity-item">
+                    <span class="activity-time">${now.toLocaleTimeString('pt-PT')}</span>
+                    <span class="activity-desc">Dashboard accessed</span>
+                </div>
+                <div class="activity-item">
+                    <span class="activity-time">${new Date(now.getTime() - 300000).toLocaleTimeString('pt-PT')}</span>
+                    <span class="activity-desc">System health checked</span>
+                </div>
+                <div class="activity-item">
+                    <span class="activity-time">${new Date(now.getTime() - 600000).toLocaleTimeString('pt-PT')}</span>
+                    <span class="activity-desc">Game jam data loaded</span>
+                </div>
+            `;
         }
 
         // Game Jams Functions
@@ -1000,28 +1067,6 @@ document.addEventListener('DOMContentLoaded', function() {
             showStatus('✅ System information refreshed', 'success');
         }
 
-        async function testHealth() {
-            try {
-                const result = await apiCall('/health');
-                document.getElementById('response').textContent = JSON.stringify(result, null, 2);
-                showStatus('✅ Health check successful', 'success');
-            } catch (error) {
-                document.getElementById('response').textContent = `Error: ${error.message}`;
-                showStatus(`❌ Health check failed: ${error.message}`, 'error');
-            }
-        }
-
-        async function testAPI() {
-            try {
-                const result = await apiCall('/api/public/gamejams');
-                document.getElementById('response').textContent = JSON.stringify(result, null, 2);
-                showStatus('✅ API test successful', 'success');
-            } catch (error) {
-                document.getElementById('response').textContent = `Error: ${error.message}`;
-                showStatus(`❌ API test failed: ${error.message}`, 'error');
-            }
-        }
-
         function clearCache() {
             if (confirm('Are you sure you want to clear the system cache? This will temporarily slow down some operations.')) {
                 showStatus('🧹 Clearing system cache...', 'info');
@@ -1552,11 +1597,26 @@ document.addEventListener('DOMContentLoaded', function() {
             // ===== END SPONSOR MANAGEMENT FUNCTIONS =====
 
             // Navigation event listeners
-            document.querySelectorAll('[data-section]').forEach(button => {
-                button.addEventListener('click', function() {
-                    const section = this.getAttribute('data-section');
-                    showSection(section, this);
+            document.querySelectorAll('[data-page]').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const page = this.getAttribute('data-page');
+                    navigateToPage(page);
+                    
+                    // Close mobile menu on navigation
+                    const sidebar = document.querySelector('.sidebar');
+                    sidebar.classList.remove('open');
                 });
+            });
+            
+            // Handle browser back/forward navigation
+            window.addEventListener('hashchange', function() {
+                const hash = window.location.hash.substring(1);
+                if (hash) {
+                    navigateToPage(hash);
+                } else {
+                    navigateToPage('dashboard');
+                }
             });
 
             // Add/Cancel button event listeners
@@ -1564,6 +1624,9 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('cancel-gamejam-btn').addEventListener('click', hideGameJamForm);
             document.getElementById('add-game-btn').addEventListener('click', showGameForm);
             document.getElementById('cancel-game-btn').addEventListener('click', hideGameForm);
+            
+            // Mobile menu toggle
+            document.getElementById('mobile-menu-toggle').addEventListener('click', toggleMobileMenu);
             
             // Sponsor event listeners
             document.getElementById('add-sponsor-btn').addEventListener('click', () => showSponsorForm());

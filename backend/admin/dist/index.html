@@ -29,558 +29,696 @@
     </div>
 
     <div class="container" id="admin-content">
-        <!-- Header Section -->
-        <div class="admin-header">
-            <div class="header-main">
-                <div class="header-content">
-                    <h1>🎮 IPMAIA WinterJam</h1>
-                    <p>Admin Dashboard</p>
+        <!-- Sidebar Navigation -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h2>🎮 Admin Panel</h2>
+                <div id="user-info" class="user-info-card"></div>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <a href="#dashboard" class="nav-link active" data-page="dashboard">
+                    <span class="nav-icon">📊</span>
+                    <span class="nav-text">Dashboard</span>
+                </a>
+                <a href="#gamejams" class="nav-link" data-page="gamejams">
+                    <span class="nav-icon">🎮</span>
+                    <span class="nav-text">Game Jams</span>
+                </a>
+                <a href="#games" class="nav-link" data-page="games">
+                    <span class="nav-icon">🎯</span>
+                    <span class="nav-text">Games</span>
+                </a>
+                <a href="#sponsors" class="nav-link" data-page="sponsors">
+                    <span class="nav-icon">🎪</span>
+                    <span class="nav-text">Sponsors</span>
+                </a>
+                <a href="#frontpage" class="nav-link" data-page="frontpage">
+                    <span class="nav-icon">🏠</span>
+                    <span class="nav-text">Front Page</span>
+                </a>
+                <a href="#rules" class="nav-link" data-page="rules">
+                    <span class="nav-icon">📋</span>
+                    <span class="nav-text">Rules</span>
+                </a>
+                <a href="#system" class="nav-link" data-page="system">
+                    <span class="nav-icon">⚙️</span>
+                    <span class="nav-text">System</span>
+                </a>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <button onclick="logout()" class="btn btn-secondary btn-sm logout-btn">
+                    <span class="btn-icon">🚪</span>
+                    Logout
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="main-content">
+            <!-- Header -->
+            <div class="content-header">
+                <div class="header-main">
+                    <div class="header-content">
+                        <button class="mobile-menu-toggle" id="mobile-menu-toggle" style="display: none;">
+                            <span class="btn-icon">☰</span>
+                        </button>
+                        <h1 id="page-title">🎮 IPMAIA WinterJam</h1>
+                        <p id="page-subtitle">Admin Dashboard</p>
+                    </div>
+                    <div class="header-actions">
+                        <div id="status" class="status-banner info">Loading system status...</div>
+                    </div>
                 </div>
-                <div class="header-actions">
-                    <div id="user-info" class="user-info-card"></div>
+            </div>
+
+            <!-- Page Content -->
+            <div class="page-content">
+                <!-- Dashboard Page -->
+                <div id="dashboard-page" class="page active">
+                    <div class="dashboard-overview">
+                        <div class="overview-cards">
+                            <div class="overview-card">
+                                <div class="card-icon">🎮</div>
+                                <div class="card-content">
+                                    <h3 id="dashboard-gamejams-count">-</h3>
+                                    <p>Game Jams</p>
+                                </div>
+                            </div>
+                            <div class="overview-card">
+                                <div class="card-icon">🎯</div>
+                                <div class="card-content">
+                                    <h3 id="dashboard-games-count">-</h3>
+                                    <p>Games</p>
+                                </div>
+                            </div>
+                            <div class="overview-card">
+                                <div class="card-icon">🎪</div>
+                                <div class="card-content">
+                                    <h3 id="dashboard-sponsors-count">-</h3>
+                                    <p>Sponsors</p>
+                                </div>
+                            </div>
+                            <div class="overview-card">
+                                <div class="card-icon">📈</div>
+                                <div class="card-content">
+                                    <h3 id="dashboard-activity">-</h3>
+                                    <p>Recent Activity</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="dashboard-sections">
+                            <div class="dashboard-section">
+                                <h3>Quick Actions</h3>
+                                <div class="quick-actions">
+                                    <button class="btn btn-primary" onclick="navigateToPage('gamejams')">
+                                        <span class="btn-icon">🎮</span>
+                                        Manage Game Jams
+                                    </button>
+                                    <button class="btn btn-primary" onclick="navigateToPage('games')">
+                                        <span class="btn-icon">🎯</span>
+                                        Manage Games
+                                    </button>
+                                    <button class="btn btn-primary" onclick="navigateToPage('sponsors')">
+                                        <span class="btn-icon">🎪</span>
+                                        Manage Sponsors
+                                    </button>
+                                    <button class="btn btn-secondary" onclick="navigateToPage('system')">
+                                        <span class="btn-icon">⚙️</span>
+                                        System Health
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="dashboard-section">
+                                <h3>Recent Activity</h3>
+                                <div id="dashboard-recent-activity" class="activity-list">
+                                    <div class="activity-item">
+                                        <span class="activity-time">Loading...</span>
+                                        <span class="activity-desc">Loading recent activity...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
-            <div id="status" class="status-banner info">Loading system status...</div>
-        </div>
 
-        <!-- Navigation -->
-        <div class="nav-container">
-            <div class="nav">
-                <button class="nav-btn active" data-section="gamejams">🎮 Game Jams</button>
-                <button class="nav-btn" data-section="games">🎯 Games</button>
-                <button class="nav-btn" data-section="sponsors">🎪 Sponsors</button>
-                <button class="nav-btn" data-section="users">👥 Users</button>
-                <button class="nav-btn" data-section="frontpage">🏠 Front Page</button>
-                <button class="nav-btn" data-section="rules">📋 Rules</button>
-                <button class="nav-btn" data-section="system">⚙️ System</button>
-            </div>
-        </div>
+                <!-- Game Jams Page -->
+                <div id="gamejams-page" class="page">
+                    <div class="page-header">
+                        <h2>🎮 Game Jams Management</h2>
+                        <p>Manage game jam events, schedules, and configurations</p>
+                    </div>
+                    
+                    <div class="page-actions">
+                        <button class="btn btn-success" id="add-gamejam-btn">
+                            <span class="btn-icon">+</span>
+                            Add New Game Jam
+                        </button>
+                        <button class="btn btn-primary" id="export-all-btn">
+                            <span class="btn-icon">📥</span>
+                            Export All Data
+                        </button>
+                        <button class="btn btn-primary" id="import-data-btn">
+                            <span class="btn-icon">📤</span>
+                            Import Data
+                        </button>
+                    </div>
+                    
+                    <!-- Hidden file input for import -->
+                    <input type="file" id="import-file-input" accept=".json" style="display: none;" />
+                    
+                    <div id="gamejam-form" class="form-section" style="display: none;">
+                        <h3>📝 Add/Edit Game Jam</h3>
+                        <form id="gamejam-form-element">
+                            <div class="grid">
+                                <div class="form-group">
+                                    <label for="jam-name">Name *</label>
+                                    <input type="text" id="jam-name" name="name" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="jam-slug">Slug (URL único)</label>
+                                    <input type="text" id="jam-slug" name="slug" placeholder="winterjam-2025-dec">
+                                    <small>Identificador único para URL do arquivo. Ex: winterjam-2025-dec</small>
+                                </div>
+                            </div>
 
-        <!-- Game Jams Section -->
-        <div id="gamejams-section" class="card active">
-            <h2>🎮 Gestão de Game Jams</h2>
-            
-            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-                <button class="btn btn-success" id="add-gamejam-btn">+ Adicionar Nova Game Jam</button>
-                <button class="btn btn-primary" id="export-all-btn" style="margin-left: auto;">📥 Exportar Todos os Dados</button>
-                <button class="btn btn-primary" id="import-data-btn">📤 Importar Dados</button>
-            </div>
-            
-            <!-- Hidden file input for import -->
-            <input type="file" id="import-file-input" accept=".json" style="display: none;" />
-            
-            <div id="gamejam-form" class="form-section" style="display: none;">
-                <h3>📝 Add/Edit Game Jam</h3>
-                <form id="gamejam-form-element">
-                    <div class="grid">
-                        <div class="form-group">
-                            <label for="jam-name">Name *</label>
-                            <input type="text" id="jam-name" name="name" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="jam-slug">Slug (URL único)</label>
-                            <input type="text" id="jam-slug" name="slug" placeholder="winterjam-2025-dec">
-                            <small>Identificador único para URL do arquivo. Ex: winterjam-2025-dec</small>
-                        </div>
+                            <div class="grid">
+                                <div class="form-group">
+                                    <label for="jam-theme">Theme *</label>
+                                    <input type="text" id="jam-theme" name="theme" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="jam-archive-url">Archive URL</label>
+                                    <input type="text" id="jam-archive-url" name="archive_url" placeholder="/archive/2025/winter/winterjam-2025-dec">
+                                    <small>URL completo do arquivo. Ex: /archive/2025/winter/winterjam-2025-dec</small>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="jam-description">Description</label>
+                                <textarea id="jam-description" name="description" placeholder="Describe the game jam..."></textarea>
+                            </div>
+                            
+                            <!-- Schedule Section -->
+                            <div style="background: #f8f9ff; border: 2px solid #667eea; border-radius: 8px; padding: 20px; margin: 20px 0;">
+                                <h4 style="color: #667eea; margin-bottom: 20px;">📅 Event Schedule</h4>
+                                
+                                <div class="grid">
+                                    <div class="form-group">
+                                        <label for="jam-start">🎮 Start Date & Time *</label>
+                                        <input type="datetime-local" id="jam-start" name="start_date" required>
+                                        <small>When the jam officially starts</small>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="jam-end">🏁 End Date & Time *</label>
+                                        <input type="datetime-local" id="jam-end" name="end_date" required>
+                                        <small>When the jam officially ends</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="grid">
+                                    <div class="form-group">
+                                        <label for="jam-reception">🚪 Reception Time</label>
+                                        <input type="datetime-local" id="jam-reception" name="reception_datetime">
+                                        <small>Example: 17:00 Receção</small>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="jam-theme-announcement">🎨 Theme Announcement Time</label>
+                                        <input type="datetime-local" id="jam-theme-announcement" name="theme_announcement_datetime">
+                                        <small>Example: 17:30 Anúncio do Tema</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="grid">
+                                    <div class="form-group">
+                                        <label for="jam-evaluation">📊 Project Evaluation Time</label>
+                                        <input type="datetime-local" id="jam-evaluation" name="evaluation_datetime">
+                                        <small>Example: 16:00 Avaliação dos Projetos</small>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="jam-awards">🏆 Awards Ceremony Time</label>
+                                        <input type="datetime-local" id="jam-awards" name="awards_ceremony_datetime">
+                                        <small>Example: 16:30 Cerimónia de Entrega de Prémios</small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Registration Dates Section -->
+                            <div style="background: #fff8f0; border: 2px solid #f59e0b; border-radius: 8px; padding: 20px; margin: 20px 0;">
+                                <h4 style="color: #f59e0b; margin-bottom: 20px;">📝 Registration Period</h4>
+                                
+                                <div class="grid">
+                                    <div class="form-group">
+                                        <label for="jam-reg-start">Registration Start</label>
+                                        <input type="datetime-local" id="jam-reg-start" name="registration_start_date">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="jam-reg-end">Registration End</label>
+                                        <input type="datetime-local" id="jam-reg-end" name="registration_end_date">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="grid">
+                                <div class="form-group">
+                                    <label for="jam-reg-url">Registration URL</label>
+                                    <input type="url" id="jam-reg-url" name="registration_url" placeholder="https://forms.microsoft.com/...">
+                                </div>
+                                <div class="form-group">
+                                    <label for="jam-rules-pdf">Rules PDF URL (relative or absolute)</label>
+                                    <input type="text" id="jam-rules-pdf" name="rules_pdf_url" placeholder="/WinterJam_Rulebook.pdf or https://example.com/rules.pdf">
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="jam-banner">Banner Image URL (relative or absolute)</label>
+                                <input type="text" id="jam-banner" name="banner_image_url" placeholder="/images/banner.jpg or https://example.com/banner.jpg">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" id="jam-active" name="is_active" checked>
+                                    Active Game Jam
+                                </label>
+                            </div>
+                            
+                            <!-- Homepage Content Section -->
+                            <div style="border-top: 2px solid #667eea; margin-top: 30px; padding-top: 30px;">
+                                <h4 style="color: #667eea; margin-bottom: 20px;">Homepage Content</h4>
+                                <p style="color: #6c757d; margin-bottom: 20px; font-size: 0.9rem;">
+                                    Customize the content for the homepage sections. Leave blank to use default content.
+                                </p>
+                                
+                                <div class="form-group">
+                                    <label for="jam-introduction">Introduction Text (optional)</label>
+                                    <textarea id="jam-introduction" name="introduction" rows="4" placeholder="A game jam where game development students and enthusiasts come together to create unique experiences in 45 hours..."></textarea>
+                                    <small>Plain text for the "What is WinterJam?" section on the homepage</small>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="jam-prizes">Prizes Text (optional)</label>
+                                    <textarea id="jam-prizes" name="prizes_content" rows="6" placeholder="1st Place: InstantGaming 10€ gift card (per member) + Certificate&#10;2nd Place: TBD&#10;&#10;All Participants: Event lanyard/keychain + Certificate"></textarea>
+                                    <small>Text content for the "Prizes" section on the homepage. Leave blank to use default prizes.</small>
+                                </div>
+                            </div>
+                            
+                            <!-- Toggle Controls Section -->
+                            <div style="border-top: 2px solid #667eea; margin-top: 30px; padding-top: 30px;">
+                                <h4 style="color: #667eea; margin-bottom: 20px;">👁️ Visibility Controls</h4>
+                                
+                                <div class="grid">
+                                    <div class="form-group">
+                                        <label>
+                                            <input type="checkbox" id="show-theme" name="show_theme" checked>
+                                            Show Theme
+                                        </label>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>
+                                            <input type="checkbox" id="show-description" name="show_description" checked>
+                                            Show Description
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="grid">
+                                    <div class="form-group">
+                                        <label>
+                                            <input type="checkbox" id="show-start-date" name="show_start_date" checked>
+                                            Show Start Date
+                                        </label>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>
+                                            <input type="checkbox" id="show-end-date" name="show_end_date" checked>
+                                            Show End Date
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="date-fallback">When dates are disabled, show:</label>
+                                    <select id="date-fallback" name="date_fallback">
+                                        <option value="TBD">TBD (To Be Determined)</option>
+                                        <option value="Coming Soon">Coming Soon</option>
+                                        <option value="To Be Announced">To Be Announced</option>
+                                        <option value="hidden">Hide Completely</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="grid">
+                                    <div class="form-group">
+                                        <label>
+                                            <input type="checkbox" id="show-registration-dates" name="show_registration_dates" checked>
+                                            Show Registration Dates
+                                        </label>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="registration-date-fallback">Registration date fallback:</label>
+                                        <select id="registration-date-fallback" name="registration_date_fallback">
+                                            <option value="TBD">TBD</option>
+                                            <option value="Coming Soon">Coming Soon</option>
+                                            <option value="hidden">Hide Completely</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <div class="grid">
+                                    <div class="form-group">
+                                        <label>
+                                            <input type="checkbox" id="show-registration-url" name="show_registration_url" checked>
+                                            Show Registration URL
+                                        </label>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>
+                                            <input type="checkbox" id="show-rules-pdf-url" name="show_rules_pdf_url" checked>
+                                            Show Rules PDF URL
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="grid">
+                                    <div class="form-group">
+                                        <label>
+                                            <input type="checkbox" id="show-banner-image" name="show_banner_image" checked>
+                                            Show Banner Image
+                                        </label>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="banner-fallback">When banner is disabled, show:</label>
+                                        <select id="banner-fallback" name="banner_fallback">
+                                            <option value="placeholder">Placeholder</option>
+                                            <option value="hide">Hide Completely</option>
+                                            <option value="default">Default Background</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div style="margin-top: 20px;">
+                                <button type="submit" class="btn btn-success">💾 Save Game Jam</button>
+                                <button type="button" class="btn" id="cancel-gamejam-btn">❌ Cancel</button>
+                            </div>
+                        </form>
                     </div>
+                    
+                    <div id="gamejams-list">
+                        <div class="loading">Loading game jams...</div>
+                    </div>
+                </div>
 
-                    <div class="grid">
-                        <div class="form-group">
-                            <label for="jam-theme">Theme *</label>
-                            <input type="text" id="jam-theme" name="theme" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="jam-archive-url">Archive URL</label>
-                            <input type="text" id="jam-archive-url" name="archive_url" placeholder="/archive/2025/winter/winterjam-2025-dec">
-                            <small>URL completo do arquivo. Ex: /archive/2025/winter/winterjam-2025-dec</small>
-                        </div>
+                <!-- Games Page -->
+                <div id="games-page" class="page">
+                    <div class="page-header">
+                        <h2>🎯 Games Management</h2>
+                        <p>Manage game submissions, teams, and featured content</p>
                     </div>
                     
-                    <div class="form-group">
-                        <label for="jam-description">Description</label>
-                        <textarea id="jam-description" name="description" placeholder="Describe the game jam..."></textarea>
+                    <div class="page-actions">
+                        <button class="btn btn-success" id="add-game-btn">
+                            <span class="btn-icon">+</span>
+                            Add New Game
+                        </button>
                     </div>
                     
-                    <!-- Schedule Section -->
-                    <div style="background: #f8f9ff; border: 2px solid #667eea; border-radius: 8px; padding: 20px; margin: 20px 0;">
-                        <h4 style="color: #667eea; margin-bottom: 20px;">📅 Event Schedule</h4>
-                        
-                        <div class="grid">
-                            <div class="form-group">
-                                <label for="jam-start">🎮 Start Date & Time *</label>
-                                <input type="datetime-local" id="jam-start" name="start_date" required>
-                                <small>When the jam officially starts</small>
+                    <div id="game-form" style="display: none; margin-bottom: 30px; padding: 20px; background: #f8f9fa; border-radius: 10px;">
+                        <h3>Add/Edit Game</h3>
+                        <form id="game-form-element">
+                            <div class="grid">
+                                <div class="form-group">
+                                    <label for="game-title">Game Title *</label>
+                                    <input type="text" id="game-title" name="title" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="game-jam-select">Game Jam *</label>
+                                    <select id="game-jam-select" name="game_jam_id" required>
+                                        <option value="">Select a game jam...</option>
+                                    </select>
+                                </div>
                             </div>
+                            
                             <div class="form-group">
-                                <label for="jam-end">🏁 End Date & Time *</label>
-                                <input type="datetime-local" id="jam-end" name="end_date" required>
-                                <small>When the jam officially ends</small>
+                                <label for="game-description">Description</label>
+                                <textarea id="game-description" name="description" placeholder="Describe the game..."></textarea>
                             </div>
-                        </div>
-                        
-                        <div class="grid">
+                            
+                            <div class="grid">
+                                <div class="form-group">
+                                    <label for="game-team-name">Team Name *</label>
+                                    <input type="text" id="game-team-name" name="team_name" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="game-team-members">Team Members (comma-separated)</label>
+                                    <input type="text" id="game-team-members" name="team_members" placeholder="Alice Silva, Bob Santos">
+                                </div>
+                            </div>
+                            
+                            <div class="grid">
+                                <div class="form-group">
+                                    <label for="game-github">GitHub URL</label>
+                                    <input type="url" id="game-github" name="github_url" placeholder="https://github.com/...">
+                                </div>
+                                <div class="form-group">
+                                    <label for="game-itch">Itch.io URL</label>
+                                    <input type="url" id="game-itch" name="itch_url" placeholder="https://example.itch.io/game">
+                                </div>
+                            </div>
+                            
                             <div class="form-group">
-                                <label for="jam-reception">🚪 Reception Time</label>
-                                <input type="datetime-local" id="jam-reception" name="reception_datetime">
-                                <small>Example: 17:00 Receção</small>
+                                <label for="game-tags">Tags (comma-separated)</label>
+                                <input type="text" id="game-tags" name="tags" placeholder="adventure, puzzle, 2d">
                             </div>
+                            
                             <div class="form-group">
-                                <label for="jam-theme-announcement">🎨 Theme Announcement Time</label>
-                                <input type="datetime-local" id="jam-theme-announcement" name="theme_announcement_datetime">
-                                <small>Example: 17:30 Anúncio do Tema</small>
+                                <label for="game-thumbnail">Thumbnail URL (relative or absolute)</label>
+                                <input type="text" id="game-thumbnail" name="thumbnail_url" placeholder="/images/game-thumb.jpg or https://example.com/thumbnail.jpg">
                             </div>
-                        </div>
-                        
-                        <div class="grid">
+                            
                             <div class="form-group">
-                                <label for="jam-evaluation">📊 Project Evaluation Time</label>
-                                <input type="datetime-local" id="jam-evaluation" name="evaluation_datetime">
-                                <small>Example: 16:00 Avaliação dos Projetos</small>
+                                <label for="game-instructions">Instructions</label>
+                                <textarea id="game-instructions" name="instructions" placeholder="How to play..."></textarea>
                             </div>
+                            
                             <div class="form-group">
-                                <label for="jam-awards">🏆 Awards Ceremony Time</label>
-                                <input type="datetime-local" id="jam-awards" name="awards_ceremony_datetime">
-                                <small>Example: 16:30 Cerimónia de Entrega de Prémios</small>
+                                <label for="game-lore">Lore/Story</label>
+                                <textarea id="game-lore" name="lore" placeholder="Game backstory..."></textarea>
                             </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Registration Dates Section -->
-                    <div style="background: #fff8f0; border: 2px solid #f59e0b; border-radius: 8px; padding: 20px; margin: 20px 0;">
-                        <h4 style="color: #f59e0b; margin-bottom: 20px;">📝 Registration Period</h4>
-                        
-                        <div class="grid">
+                            
                             <div class="form-group">
-                                <label for="jam-reg-start">Registration Start</label>
-                                <input type="datetime-local" id="jam-reg-start" name="registration_start_date">
+                                <label for="game-ranking">Ranking</label>
+                                <input type="number" id="game-ranking" name="ranking" placeholder="1">
                             </div>
-                            <div class="form-group">
-                                <label for="jam-reg-end">Registration End</label>
-                                <input type="datetime-local" id="jam-reg-end" name="registration_end_date">
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="grid">
-                        <div class="form-group">
-                            <label for="jam-reg-url">Registration URL</label>
-                            <input type="url" id="jam-reg-url" name="registration_url" placeholder="https://forms.microsoft.com/...">
-                        </div>
-                        <div class="form-group">
-                            <label for="jam-rules-pdf">Rules PDF URL (relative or absolute)</label>
-                            <input type="text" id="jam-rules-pdf" name="rules_pdf_url" placeholder="/WinterJam_Rulebook.pdf or https://example.com/rules.pdf">
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="jam-banner">Banner Image URL (relative or absolute)</label>
-                        <input type="text" id="jam-banner" name="banner_image_url" placeholder="/images/banner.jpg or https://example.com/banner.jpg">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>
-                            <input type="checkbox" id="jam-active" name="is_active" checked>
-                            Active Game Jam
-                        </label>
-                    </div>
-                    
-                    <!-- Homepage Content Section -->
-                    <div style="border-top: 2px solid #667eea; margin-top: 30px; padding-top: 30px;">
-                        <h4 style="color: #667eea; margin-bottom: 20px;">Homepage Content</h4>
-                        <p style="color: #6c757d; margin-bottom: 20px; font-size: 0.9rem;">
-                            Customize the content for the homepage sections. Leave blank to use default content.
-                        </p>
-                        
-                        <div class="form-group">
-                            <label for="jam-introduction">Introduction Text (optional)</label>
-                            <textarea id="jam-introduction" name="introduction" rows="4" placeholder="A game jam where game development students and enthusiasts come together to create unique experiences in 45 hours..."></textarea>
-                            <small>Plain text for the "What is WinterJam?" section on the homepage</small>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="jam-prizes">Prizes Text (optional)</label>
-                            <textarea id="jam-prizes" name="prizes_content" rows="6" placeholder="1st Place: InstantGaming 10€ gift card (per member) + Certificate&#10;2nd Place: TBD&#10;&#10;All Participants: Event lanyard/keychain + Certificate"></textarea>
-                            <small>Text content for the "Prizes" section on the homepage. Leave blank to use default prizes.</small>
-                        </div>
-                    </div>
-                    
-                    <!-- Toggle Controls Section -->
-                    <div style="border-top: 2px solid #667eea; margin-top: 30px; padding-top: 30px;">
-                        <h4 style="color: #667eea; margin-bottom: 20px;">👁️ Visibility Controls</h4>
-                        
-                        <div class="grid">
+                            
                             <div class="form-group">
                                 <label>
-                                    <input type="checkbox" id="show-theme" name="show_theme" checked>
-                                    Show Theme
+                                    <input type="checkbox" id="game-featured" name="is_featured">
+                                    Featured Game
                                 </label>
                             </div>
-                            <div class="form-group">
-                                <label>
-                                    <input type="checkbox" id="show-description" name="show_description" checked>
-                                    Show Description
-                                </label>
+                            
+                            <!-- Toggle Controls Section -->
+                            <div style="border-top: 2px solid #667eea; margin-top: 30px; padding-top: 30px;">
+                                <h4 style="color: #667eea; margin-bottom: 20px;">👁️ Visibility Controls</h4>
+                                
+                                <div class="grid">
+                                    <div class="form-group">
+                                        <label>
+                                            <input type="checkbox" id="show-title" name="show_title" checked>
+                                            Show Title
+                                        </label>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>
+                                            <input type="checkbox" id="show-description" name="show_description" checked>
+                                            Show Description
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="grid">
+                                    <div class="form-group">
+                                        <label>
+                                            <input type="checkbox" id="show-team-name" name="show_team_name" checked>
+                                            Show Team Name
+                                        </label>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>
+                                            <input type="checkbox" id="show-team-members" name="show_team_members" checked>
+                                            Show Team Members
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="grid">
+                                    <div class="form-group">
+                                        <label>
+                                            <input type="checkbox" id="show-github-url" name="show_github_url" checked>
+                                            Show GitHub URL
+                                        </label>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>
+                                            <input type="checkbox" id="show-itch-url" name="show_itch_url" checked>
+                                            Show Itch.io URL
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="grid">
+                                    <div class="form-group">
+                                        <label>
+                                            <input type="checkbox" id="show-screenshots" name="show_screenshots" checked>
+                                            Show Screenshots
+                                        </label>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="screenshot-fallback">When screenshots are disabled:</label>
+                                        <select id="screenshot-fallback" name="screenshot_fallback">
+                                            <option value="placeholder">Show Placeholder</option>
+                                            <option value="hide">Hide Completely</option>
+                                            <option value="default">Default Image</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <div class="grid">
+                                    <div class="form-group">
+                                        <label>
+                                            <input type="checkbox" id="show-tags" name="show_tags" checked>
+                                            Show Tags
+                                        </label>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>
+                                            <input type="checkbox" id="show-thumbnail" name="show_thumbnail" checked>
+                                            Show Thumbnail
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="thumbnail-fallback">When thumbnail is disabled:</label>
+                                    <select id="thumbnail-fallback" name="thumbnail_fallback">
+                                        <option value="placeholder">Show Placeholder</option>
+                                        <option value="hide">Hide Completely</option>
+                                        <option value="default">Default Image</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="grid">
+                                    <div class="form-group">
+                                        <label>
+                                            <input type="checkbox" id="show-instructions" name="show_instructions" checked>
+                                            Show Instructions
+                                        </label>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>
+                                            <input type="checkbox" id="show-lore" name="show_lore" checked>
+                                            Show Lore
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label>
+                                        <input type="checkbox" id="show-ranking" name="show_ranking" checked>
+                                        Show Ranking
+                                    </label>
+                                </div>
                             </div>
-                        </div>
-                        
-                        <div class="grid">
-                            <div class="form-group">
-                                <label>
-                                    <input type="checkbox" id="show-start-date" name="show_start_date" checked>
-                                    Show Start Date
-                                </label>
+                            
+                            <div style="margin-top: 20px;">
+                                <button type="submit" class="btn btn-success">💾 Save Game</button>
+                                <button type="button" class="btn" id="cancel-game-btn">❌ Cancel</button>
                             </div>
-                            <div class="form-group">
-                                <label>
-                                    <input type="checkbox" id="show-end-date" name="show_end_date" checked>
-                                    Show End Date
-                                </label>
-                            </div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="date-fallback">When dates are disabled, show:</label>
-                            <select id="date-fallback" name="date_fallback">
-                                <option value="TBD">TBD (To Be Determined)</option>
-                                <option value="Coming Soon">Coming Soon</option>
-                                <option value="To Be Announced">To Be Announced</option>
-                                <option value="hidden">Hide Completely</option>
-                            </select>
-                        </div>
-                        
-                        <div class="grid">
-                            <div class="form-group">
-                                <label>
-                                    <input type="checkbox" id="show-registration-dates" name="show_registration_dates" checked>
-                                    Show Registration Dates
-                                </label>
-                            </div>
-                            <div class="form-group">
-                                <label for="registration-date-fallback">Registration date fallback:</label>
-                                <select id="registration-date-fallback" name="registration_date_fallback">
-                                    <option value="TBD">TBD</option>
-                                    <option value="Coming Soon">Coming Soon</option>
-                                    <option value="hidden">Hide Completely</option>
-                                </select>
-                            </div>
-                        </div>
-                        
-                        <div class="grid">
-                            <div class="form-group">
-                                <label>
-                                    <input type="checkbox" id="show-registration-url" name="show_registration_url" checked>
-                                    Show Registration URL
-                                </label>
-                            </div>
-                            <div class="form-group">
-                                <label>
-                                    <input type="checkbox" id="show-rules-pdf-url" name="show_rules_pdf_url" checked>
-                                    Show Rules PDF URL
-                                </label>
-                            </div>
-                        </div>
-                        
-                        <div class="grid">
-                            <div class="form-group">
-                                <label>
-                                    <input type="checkbox" id="show-banner-image" name="show_banner_image" checked>
-                                    Show Banner Image
-                                </label>
-                            </div>
-                            <div class="form-group">
-                                <label for="banner-fallback">When banner is disabled, show:</label>
-                                <select id="banner-fallback" name="banner_fallback">
-                                    <option value="placeholder">Placeholder</option>
-                                    <option value="hide">Hide Completely</option>
-                                    <option value="default">Default Background</option>
-                                </select>
-                            </div>
-                        </div>
+                        </form>
                     </div>
                     
-                    <div style="margin-top: 20px;">
-                        <button type="submit" class="btn btn-success">💾 Save Game Jam</button>
-                        <button type="button" class="btn" id="cancel-gamejam-btn">❌ Cancel</button>
+                    <div id="games-list">
+                        <div class="loading">Loading games...</div>
                     </div>
-                </form>
-            </div>
-            
-            <div id="gamejams-list">
-                <div class="loading">Loading game jams...</div>
-            </div>
-        </div>
+                </div>
 
-        <!-- Games Section -->
-        <div id="games-section" class="card" style="display: none;">
-            <h2>🎯 Games Management</h2>
-            
-            <button class="btn btn-success" id="add-game-btn">+ Add New Game</button>
-            
-            <div id="game-form" style="display: none; margin-top: 20px; padding: 20px; background: #f8f9fa; border-radius: 10px;">
-                <h3>Add/Edit Game</h3>
-                <form id="game-form-element">
-                    <div class="grid">
-                        <div class="form-group">
-                            <label for="game-title">Game Title *</label>
-                            <input type="text" id="game-title" name="title" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="game-jam-select">Game Jam *</label>
-                            <select id="game-jam-select" name="game_jam_id" required>
-                                <option value="">Select a game jam...</option>
-                            </select>
-                        </div>
+                <!-- Sponsors Page -->
+                <div id="sponsors-page" class="page">
+                    <div class="page-header">
+                        <h2>🎪 Sponsors Management</h2>
+                        <p>Manage sponsor partnerships and display settings</p>
                     </div>
                     
-                    <div class="form-group">
-                        <label for="game-description">Description</label>
-                        <textarea id="game-description" name="description" placeholder="Describe the game..."></textarea>
+                    <div class="page-actions">
+                        <button class="btn btn-success" id="add-sponsor-btn">
+                            <span class="btn-icon">+</span>
+                            Add Sponsor
+                        </button>
+                        <button class="btn btn-primary" id="export-sponsors-btn">
+                            <span class="btn-icon">📥</span>
+                            Export Sponsors
+                        </button>
                     </div>
                     
-                    <div class="grid">
-                        <div class="form-group">
-                            <label for="game-team-name">Team Name *</label>
-                            <input type="text" id="game-team-name" name="team_name" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="game-team-members">Team Members (comma-separated)</label>
-                            <input type="text" id="game-team-members" name="team_members" placeholder="Alice Silva, Bob Santos">
-                        </div>
-                    </div>
-                    
-                    <div class="grid">
-                        <div class="form-group">
-                            <label for="game-github">GitHub URL</label>
-                            <input type="url" id="game-github" name="github_url" placeholder="https://github.com/...">
-                        </div>
-                        <div class="form-group">
-                            <label for="game-itch">Itch.io URL</label>
-                            <input type="url" id="game-itch" name="itch_url" placeholder="https://example.itch.io/game">
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="game-tags">Tags (comma-separated)</label>
-                        <input type="text" id="game-tags" name="tags" placeholder="adventure, puzzle, 2d">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="game-thumbnail">Thumbnail URL (relative or absolute)</label>
-                        <input type="text" id="game-thumbnail" name="thumbnail_url" placeholder="/images/game-thumb.jpg or https://example.com/thumbnail.jpg">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="game-instructions">Instructions</label>
-                        <textarea id="game-instructions" name="instructions" placeholder="How to play..."></textarea>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="game-lore">Lore/Story</label>
-                        <textarea id="game-lore" name="lore" placeholder="Game backstory..."></textarea>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="game-ranking">Ranking</label>
-                        <input type="number" id="game-ranking" name="ranking" placeholder="1">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>
-                            <input type="checkbox" id="game-featured" name="is_featured">
-                            Featured Game
-                        </label>
-                    </div>
-                    
-                    <!-- Toggle Controls Section -->
-                    <div style="border-top: 2px solid #667eea; margin-top: 30px; padding-top: 30px;">
-                        <h4 style="color: #667eea; margin-bottom: 20px;">👁️ Visibility Controls</h4>
-                        
-                        <div class="grid">
+                    <div id="sponsor-form" style="display: none; margin-bottom: 30px; padding: 20px; background: #f8f9fa; border-radius: 10px;">
+                        <h3>Add/Edit Sponsor</h3>
+                        <form id="sponsor-form-element">
+                            <input type="hidden" id="sponsor-id" name="id">
+                            
+                            <div class="grid">
+                                <div class="form-group">
+                                    <label for="sponsor-name">Nome do Patrocinador *</label>
+                                    <input type="text" id="sponsor-name" name="name" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="sponsor-tier">Nível *</label>
+                                    <select id="sponsor-tier" name="tier" required>
+                                        <option value="">Selecionar nível...</option>
+                                        <option value="platinum">🏆 Platinum</option>
+                                        <option value="gold">⭐ Gold</option>
+                                        <option value="silver">🥈 Silver</option>
+                                        <option value="bronze">🥉 Bronze</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="grid">
+                                <div class="form-group">
+                                    <label for="sponsor-logo">URL do Logo</label>
+                                    <input type="url" id="sponsor-logo" name="logo_url" placeholder="https://example.com/logo.png">
+                                </div>
+                                <div class="form-group">
+                                    <label for="sponsor-website">Website</label>
+                                    <input type="url" id="sponsor-website" name="website_url" placeholder="https://example.com">
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="sponsor-description">Descrição</label>
+                                <textarea id="sponsor-description" name="description" rows="3" placeholder="Breve descrição do patrocinador..."></textarea>
+                            </div>
+                            
                             <div class="form-group">
                                 <label>
-                                    <input type="checkbox" id="show-title" name="show_title" checked>
-                                    Show Title
+                                    <input type="checkbox" id="sponsor-active" name="is_active" checked>
+                                    Patrocinador Ativo
                                 </label>
                             </div>
-                            <div class="form-group">
-                                <label>
-                                    <input type="checkbox" id="show-description" name="show_description" checked>
-                                    Show Description
-                                </label>
+                            
+                            <div style="margin-top: 20px;">
+                                <button type="submit" class="btn btn-success">💾 Guardar Patrocinador</button>
+                                <button type="button" class="btn" id="cancel-sponsor-btn">❌ Cancelar</button>
                             </div>
-                        </div>
-                        
-                        <div class="grid">
-                            <div class="form-group">
-                                <label>
-                                    <input type="checkbox" id="show-team-name" name="show_team_name" checked>
-                                    Show Team Name
-                                </label>
-                            </div>
-                            <div class="form-group">
-                                <label>
-                                    <input type="checkbox" id="show-team-members" name="show_team_members" checked>
-                                    Show Team Members
-                                </label>
-                            </div>
-                        </div>
-                        
-                        <div class="grid">
-                            <div class="form-group">
-                                <label>
-                                    <input type="checkbox" id="show-github-url" name="show_github_url" checked>
-                                    Show GitHub URL
-                                </label>
-                            </div>
-                            <div class="form-group">
-                                <label>
-                                    <input type="checkbox" id="show-itch-url" name="show_itch_url" checked>
-                                    Show Itch.io URL
-                                </label>
-                            </div>
-                        </div>
-                        
-                        <div class="grid">
-                            <div class="form-group">
-                                <label>
-                                    <input type="checkbox" id="show-screenshots" name="show_screenshots" checked>
-                                    Show Screenshots
-                                </label>
-                            </div>
-                            <div class="form-group">
-                                <label for="screenshot-fallback">When screenshots are disabled:</label>
-                                <select id="screenshot-fallback" name="screenshot_fallback">
-                                    <option value="placeholder">Show Placeholder</option>
-                                    <option value="hide">Hide Completely</option>
-                                    <option value="default">Default Image</option>
-                                </select>
-                            </div>
-                        </div>
-                        
-                        <div class="grid">
-                            <div class="form-group">
-                                <label>
-                                    <input type="checkbox" id="show-tags" name="show_tags" checked>
-                                    Show Tags
-                                </label>
-                            </div>
-                            <div class="form-group">
-                                <label>
-                                    <input type="checkbox" id="show-thumbnail" name="show_thumbnail" checked>
-                                    Show Thumbnail
-                                </label>
-                            </div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="thumbnail-fallback">When thumbnail is disabled:</label>
-                            <select id="thumbnail-fallback" name="thumbnail_fallback">
-                                <option value="placeholder">Show Placeholder</option>
-                                <option value="hide">Hide Completely</option>
-                                <option value="default">Default Image</option>
-                            </select>
-                        </div>
-                        
-                        <div class="grid">
-                            <div class="form-group">
-                                <label>
-                                    <input type="checkbox" id="show-instructions" name="show_instructions" checked>
-                                    Show Instructions
-                                </label>
-                            </div>
-                            <div class="form-group">
-                                <label>
-                                    <input type="checkbox" id="show-lore" name="show_lore" checked>
-                                    Show Lore
-                                </label>
-                            </div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label>
-                                <input type="checkbox" id="show-ranking" name="show_ranking" checked>
-                                Show Ranking
-                            </label>
-                        </div>
+                        </form>
                     </div>
                     
-                    <div style="margin-top: 20px;">
-                        <button type="submit" class="btn btn-success">💾 Save Game</button>
-                        <button type="button" class="btn" id="cancel-game-btn">❌ Cancel</button>
+                    <div id="sponsors-list">
+                        <div class="loading">A carregar patrocinadores...</div>
                     </div>
-                </form>
-            </div>
-            
-            <div id="games-list">
-                <div class="loading">Loading games...</div>
-            </div>
-        </div>
-
-        <!-- Sponsors Section -->
-        <div id="sponsors-section" class="card" style="display: none;">
-            <h2>🎪 Gestão de Patrocinadores</h2>
-            
-            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-                <button class="btn btn-success" id="add-sponsor-btn">+ Adicionar Patrocinador</button>
-                <button class="btn btn-primary" id="export-sponsors-btn" style="margin-left: auto;">📥 Exportar Patrocinadores</button>
-            </div>
-            
-            <div id="sponsor-form" style="display: none; margin-bottom: 30px; padding: 20px; background: #f8f9fa; border-radius: 10px;">
-                <h3>Adicionar/Editar Patrocinador</h3>
-                <form id="sponsor-form-element">
-                    <input type="hidden" id="sponsor-id" name="id">
-                    
-                    <div class="grid">
-                        <div class="form-group">
-                            <label for="sponsor-name">Nome do Patrocinador *</label>
-                            <input type="text" id="sponsor-name" name="name" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="sponsor-tier">Nível *</label>
-                            <select id="sponsor-tier" name="tier" required>
-                                <option value="">Selecionar nível...</option>
-                                <option value="platinum">🏆 Platinum</option>
-                                <option value="gold">⭐ Gold</option>
-                                <option value="silver">🥈 Silver</option>
-                                <option value="bronze">🥉 Bronze</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div class="grid">
-                        <div class="form-group">
-                            <label for="sponsor-logo">URL do Logo</label>
-                            <input type="url" id="sponsor-logo" name="logo_url" placeholder="https://example.com/logo.png">
-                        </div>
-                        <div class="form-group">
-                            <label for="sponsor-website">Website</label>
-                            <input type="url" id="sponsor-website" name="website_url" placeholder="https://example.com">
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="sponsor-description">Descrição</label>
-                        <textarea id="sponsor-description" name="description" rows="3" placeholder="Breve descrição do patrocinador..."></textarea>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>
-                            <input type="checkbox" id="sponsor-active" name="is_active" checked>
-                            Patrocinador Ativo
-                        </label>
-                    </div>
-                    
-                    <div style="margin-top: 20px;">
-                        <button type="submit" class="btn btn-success">💾 Guardar Patrocinador</button>
-                        <button type="button" class="btn" id="cancel-sponsor-btn">❌ Cancelar</button>
-                    </div>
-                </form>
-            </div>
-            
-            <div id="sponsors-list">
-                <div class="loading">A carregar patrocinadores...</div>
-            </div>
-        </div>
+                </div>
 
         <!-- Users Section -->
         <div id="users-section" class="card" style="display: none;">
@@ -590,263 +728,273 @@
             </div>
         </div>
 
-        <!-- Front Page Section -->
-        <div id="frontpage-section" class="card" style="display: none;">
-            <h2>🏠 Página Inicial - Imagem de Banner</h2>
-            <p style="margin-bottom: 30px; color: #6c757d;">
-                Carregue e gerencie a imagem de fundo da página inicial.
-            </p>
-            
-            <div id="frontpage-loading" class="info status">A carregar configurações...</div>
-            
-            <div id="frontpage-content" style="display: none;">
-                <!-- Banner Image Upload Section -->
-                <div id="current-banner-info" style="background: #f8f9ff; border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px; margin-bottom: 30px;">
-                    <h3 style="margin-bottom: 15px; color: #667eea;">Imagem Atual</h3>
-                    <div id="banner-status">
-                        <p style="color: #6c757d;">A carregar...</p>
-                    </div>
-                </div>
-                
-                <form id="banner-upload-form" enctype="multipart/form-data">
-                    <div class="form-group">
-                        <label for="banner-image-file">Carregar Nova Imagem</label>
-                        <input type="file" id="banner-image-file" name="image" accept="image/jpeg,image/jpg,image/png,image/webp" required style="padding: 10px; border: 2px dashed #667eea; border-radius: 8px; background: #f8f9ff;" />
-                        <small>Formatos permitidos: JPG, PNG, WebP. Tamanho máximo: 5MB</small>
+                <!-- Front Page -->
+                <div id="frontpage-page" class="page">
+                    <div class="page-header">
+                        <h2>🏠 Front Page Settings</h2>
+                        <p>Configure homepage banner image and content settings</p>
                     </div>
                     
-                    <div class="form-actions" style="margin-top: 20px;">
-                        <button type="submit" class="btn btn-primary">📤 Carregar Imagem</button>
+                    <div id="frontpage-loading" class="info status">A carregar configurações...</div>
+                    
+                    <div id="frontpage-content" style="display: none;">
+                        <!-- Banner Image Upload Section -->
+                        <div class="content-section">
+                            <h3>🖼️ Banner Image</h3>
+                            <p style="margin-bottom: 20px; color: #6c757d;">
+                                Upload and manage the background image for the homepage.
+                            </p>
+                            
+                            <div id="current-banner-info" style="background: #f8f9ff; border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px; margin-bottom: 30px;">
+                                <h4 style="margin-bottom: 15px; color: #667eea;">Current Image</h4>
+                                <div id="banner-status">
+                                    <p style="color: #6c757d;">Loading...</p>
+                                </div>
+                            </div>
+                            
+                            <form id="banner-upload-form" enctype="multipart/form-data">
+                                <div class="form-group">
+                                    <label for="banner-image-file">Upload New Image</label>
+                                    <input type="file" id="banner-image-file" name="image" accept="image/jpeg,image/jpg,image/png,image/webp" required style="padding: 10px; border: 2px dashed #667eea; border-radius: 8px; background: #f8f9ff;" />
+                                    <small>Supported formats: JPG, PNG, WebP. Maximum size: 5MB</small>
+                                </div>
+                                
+                                <div class="form-actions" style="margin-top: 20px;">
+                                    <button type="submit" class="btn btn-primary">📤 Upload Image</button>
+                                </div>
+                            </form>
+                        </div>
+                        
+                        <!-- Hidden form for backend compatibility - keeps existing settings functionality working -->
+                        <form id="frontpage-form" style="display: none;">
+                            <div class="settings-section">
+                                <div id="hero-settings"></div>
+                            </div>
+                            <div class="settings-section">
+                                <div id="general-settings"></div>
+                            </div>
+                            <div class="settings-section">
+                                <div id="buttons-settings"></div>
+                            </div>
+                            <div class="settings-section">
+                                <div id="advanced-settings"></div>
+                            </div>
+                        </form>
                     </div>
-                </form>
-                
-                <!-- Hidden form for backend compatibility - keeps existing settings functionality working -->
-                <form id="frontpage-form" style="display: none;">
-                    <div class="settings-section">
-                        <div id="hero-settings"></div>
+                </div>
+
+                <!-- Rules Page -->
+                <div id="rules-page" class="page">
+                    <div class="page-header">
+                        <h2>📋 Rules Management</h2>
+                        <p>Upload and manage the WinterJam rulebook PDF</p>
                     </div>
-                    <div class="settings-section">
-                        <div id="general-settings"></div>
+                    
+                    <div class="content-section">
+                        <div id="current-rules-info" style="background: #f8f9ff; border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px; margin-bottom: 30px;">
+                            <h4 style="margin-bottom: 15px; color: #667eea;">Current Rulebook</h4>
+                            <div id="rules-status">
+                                <p style="color: #6c757d;">Loading...</p>
+                            </div>
+                        </div>
+                        
+                        <form id="rules-form-element" enctype="multipart/form-data">
+                            <div class="form-group">
+                                <label for="rules-pdf-file">Upload New PDF</label>
+                                <input type="file" id="rules-pdf-file" name="pdf" accept=".pdf" required style="padding: 10px; border: 2px dashed #667eea; border-radius: 8px; background: #f8f9ff;" />
+                                <small>The PDF will be available at: <strong>https://ipmaia-winterjam.pt/WinterJam_Rulebook.pdf</strong></small>
+                            </div>
+                            
+                            <div class="form-actions" style="margin-top: 20px;">
+                                <button type="submit" class="btn btn-primary">📤 Upload PDF</button>
+                            </div>
+                        </form>
                     </div>
-                    <div class="settings-section">
-                        <div id="buttons-settings"></div>
-                    </div>
-                    <div class="settings-section">
-                        <div id="advanced-settings"></div>
-                    </div>
-                </form>
+                </div>
             </div>
         </div>
 
-        <!-- Rules Section -->
-        <div id="rules-section" class="card" style="display: none;">
-            <h2>Rules Management</h2>
-            <p style="margin-bottom: 30px; color: #6c757d;">
-                Upload or replace the WinterJam rulebook PDF. Only one rulebook is stored at a time.
-            </p>
-            
-            <div id="current-rules-info" style="background: #f8f9ff; border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px; margin-bottom: 30px;">
-                <h3 style="margin-bottom: 15px; color: #667eea;">Current Rulebook</h3>
-                <div id="rules-status">
-                    <p style="color: #6c757d;">Loading...</p>
-                </div>
-            </div>
-            
-            <form id="rules-form-element" enctype="multipart/form-data">
-                <div class="form-group">
-                    <label for="rules-pdf-file">Upload New PDF</label>
-                    <input type="file" id="rules-pdf-file" name="pdf" accept=".pdf" required style="padding: 10px; border: 2px dashed #667eea; border-radius: 8px; background: #f8f9ff;" />
-                    <small>The PDF will be available at: <strong>https://ipmaia-winterjam.pt/WinterJam_Rulebook.pdf</strong></small>
-                </div>
-                
-                <div class="form-actions" style="margin-top: 20px;">
-                    <button type="submit" class="btn btn-primary">Upload PDF</button>
-                </div>
-            </form>
-        </div>
-            </div>
-        </div>
-
-        <!-- System Section -->
-        <div id="system-section" class="card" style="display: none;">
-            <h2>⚙️ System Dashboard</h2>
-            <p style="margin-bottom: 30px; color: #6c757d;">
-                Monitor system health, performance, and manage administrative functions.
-            </p>
-            
-            <!-- System Overview Cards -->
-            <div class="system-overview-grid">
-                <div class="system-card">
-                    <div class="system-card-header">
-                        <div class="system-icon">🖥️</div>
-                        <h3>System Status</h3>
+                <!-- System Page -->
+                <div id="system-page" class="page" style="background: linear-gradient(135deg, #f8f9ff 0%, #e8f2ff 100%);">
+                    <div class="page-header">
+                        <h2>⚙️ System Dashboard</h2>
+                        <p>Monitor system health, performance, and manage administrative functions</p>
                     </div>
-                    <div class="system-card-content">
-                        <div id="system-status" class="status-indicator">
-                            <span class="status-dot status-loading"></span>
-                            <span class="status-text">Checking...</span>
-                        </div>
-                        <div class="system-metrics">
-                            <div class="metric">
-                                <span class="metric-label">Uptime</span>
-                                <span id="system-uptime" class="metric-value">-</span>
+                    
+                    <!-- System Overview Cards -->
+                    <div class="system-overview-grid">
+                        <div class="system-card">
+                            <div class="system-card-header">
+                                <div class="system-icon">🖥️</div>
+                                <h3>System Status</h3>
                             </div>
-                            <div class="metric">
-                                <span class="metric-label">Version</span>
-                                <span id="system-version" class="metric-value">-</span>
+                            <div class="system-card-content">
+                                <div id="system-status" class="status-indicator">
+                                    <span class="status-dot status-loading"></span>
+                                    <span class="status-text">Checking...</span>
+                                </div>
+                                <div class="system-metrics">
+                                    <div class="metric">
+                                        <span class="metric-label">Uptime</span>
+                                        <span id="system-uptime" class="metric-value">-</span>
+                                    </div>
+                                    <div class="metric">
+                                        <span class="metric-label">Version</span>
+                                        <span id="system-version" class="metric-value">-</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </div>
-                
-                <div class="system-card">
-                    <div class="system-card-header">
-                        <div class="system-icon">🗄️</div>
-                        <h3>Database</h3>
-                    </div>
-                    <div class="system-card-content">
-                        <div id="db-status" class="status-indicator">
-                            <span class="status-dot status-loading"></span>
-                            <span class="status-text">Checking...</span>
+                        
+                        <div class="system-card">
+                            <div class="system-card-header">
+                                <div class="system-icon">🗄️</div>
+                                <h3>Database</h3>
+                            </div>
+                            <div class="system-card-content">
+                                <div id="db-status" class="status-indicator">
+                                    <span class="status-dot status-loading"></span>
+                                    <span class="status-text">Checking...</span>
+                                </div>
+                                <div class="system-metrics">
+                                    <div class="metric">
+                                        <span class="metric-label">Game Jams</span>
+                                        <span id="db-gamejams" class="metric-value">-</span>
+                                    </div>
+                                    <div class="metric">
+                                        <span class="metric-label">Games</span>
+                                        <span id="db-games" class="metric-value">-</span>
+                                    </div>
+                                    <div class="metric">
+                                        <span class="metric-label">Sponsors</span>
+                                        <span id="db-sponsors" class="metric-value">-</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="system-metrics">
-                            <div class="metric">
-                                <span class="metric-label">Game Jams</span>
-                                <span id="db-gamejams" class="metric-value">-</span>
+                        
+                        <div class="system-card">
+                            <div class="system-card-header">
+                                <div class="system-icon">📊</div>
+                                <h3>Performance</h3>
                             </div>
-                            <div class="metric">
-                                <span class="metric-label">Games</span>
-                                <span id="db-games" class="metric-value">-</span>
-                            </div>
-                            <div class="metric">
-                                <span class="metric-label">Sponsors</span>
-                                <span id="db-sponsors" class="metric-value">-</span>
+                            <div class="system-card-content">
+                                <div class="system-metrics">
+                                    <div class="metric">
+                                        <span class="metric-label">Response Time</span>
+                                        <span id="perf-response-time" class="metric-value">-</span>
+                                    </div>
+                                    <div class="metric">
+                                        <span class="metric-label">Memory Usage</span>
+                                        <span id="perf-memory" class="metric-value">-</span>
+                                    </div>
+                                    <div class="metric">
+                                        <span class="metric-label">Last Updated</span>
+                                        <span id="perf-last-update" class="metric-value">-</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-                
-                <div class="system-card">
-                    <div class="system-card-header">
-                        <div class="system-icon">📊</div>
-                        <h3>Performance</h3>
-                    </div>
-                    <div class="system-card-content">
-                        <div class="system-metrics">
-                            <div class="metric">
-                                <span class="metric-label">Response Time</span>
-                                <span id="perf-response-time" class="metric-value">-</span>
+                    
+                    <!-- Quick Actions & API Testing -->
+                    <div class="system-actions-section">
+                        <div class="system-card">
+                            <div class="system-card-header">
+                                <div class="system-icon">🔧</div>
+                                <h3>Quick Actions</h3>
                             </div>
-                            <div class="metric">
-                                <span class="metric-label">Memory Usage</span>
-                                <span id="perf-memory" class="metric-value">-</span>
+                            <div class="system-card-content">
+                                <div class="action-buttons-grid">
+                                    <button class="btn btn-primary" onclick="testHealth()">
+                                        <span class="btn-icon">❤️</span>
+                                        Health Check
+                                    </button>
+                                    <button class="btn btn-primary" onclick="testAPI()">
+                                        <span class="btn-icon">🔗</span>
+                                        Test API
+                                    </button>
+                                    <button class="btn btn-secondary" onclick="testDatabase()">
+                                        <span class="btn-icon">🗄️</span>
+                                        Test Database
+                                    </button>
+                                    <button class="btn btn-warning" onclick="clearCache()">
+                                        <span class="btn-icon">🧹</span>
+                                        Clear Cache
+                                    </button>
+                                    <button class="btn btn-info" onclick="refreshSystemInfo()">
+                                        <span class="btn-icon">🔄</span>
+                                        Refresh Data
+                                    </button>
+                                </div>
                             </div>
-                            <div class="metric">
-                                <span class="metric-label">Last Updated</span>
-                                <span id="perf-last-update" class="metric-value">-</span>
+                        </div>
+                        
+                        <div class="system-card">
+                            <div class="system-card-header">
+                                <div class="system-icon">🔗</div>
+                                <h3>API Endpoints</h3>
+                            </div>
+                            <div class="system-card-content">
+                                <div class="api-endpoints-list">
+                                    <div class="api-endpoint">
+                                        <code>GET /health</code>
+                                        <span class="endpoint-desc">System health status</span>
+                                    </div>
+                                    <div class="api-endpoint">
+                                        <code>GET /api/public/gamejams</code>
+                                        <span class="endpoint-desc">List all game jams</span>
+                                    </div>
+                                    <div class="api-endpoint">
+                                        <code>GET /api/public/games/featured</code>
+                                        <span class="endpoint-desc">Featured games</span>
+                                    </div>
+                                    <div class="api-endpoint">
+                                        <code>GET /api/public/games/search</code>
+                                        <span class="endpoint-desc">Search games</span>
+                                    </div>
+                                    <div class="api-endpoint">
+                                        <code>GET /api/public/archive/:year</code>
+                                        <span class="endpoint-desc">Archive data</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
-            
-            <!-- Quick Actions & API Testing -->
-            <div class="system-actions-section">
-                <div class="system-card">
-                    <div class="system-card-header">
-                        <div class="system-icon">🔧</div>
-                        <h3>Quick Actions</h3>
-                    </div>
-                    <div class="system-card-content">
-                        <div class="action-buttons-grid">
-                            <button class="btn btn-primary" onclick="testHealth()">
-                                <span class="btn-icon">❤️</span>
-                                Health Check
-                            </button>
-                            <button class="btn btn-primary" onclick="testAPI()">
-                                <span class="btn-icon">🔗</span>
-                                Test API
-                            </button>
-                            <button class="btn btn-secondary" onclick="testDatabase()">
-                                <span class="btn-icon">🗄️</span>
-                                Test Database
-                            </button>
-                            <button class="btn btn-warning" onclick="clearCache()">
-                                <span class="btn-icon">🧹</span>
-                                Clear Cache
-                            </button>
-                            <button class="btn btn-info" onclick="refreshSystemInfo()">
-                                <span class="btn-icon">🔄</span>
-                                Refresh Data
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="system-card">
-                    <div class="system-card-header">
-                        <div class="system-icon">🔗</div>
-                        <h3>API Endpoints</h3>
-                    </div>
-                    <div class="system-card-content">
-                        <div class="api-endpoints-list">
-                            <div class="api-endpoint">
-                                <code>GET /health</code>
-                                <span class="endpoint-desc">System health status</span>
+                    
+                    <!-- System Response & Logs -->
+                    <div class="system-response-section">
+                        <div class="system-card">
+                            <div class="system-card-header">
+                                <div class="system-icon">📝</div>
+                                <h3>System Response</h3>
                             </div>
-                            <div class="api-endpoint">
-                                <code>GET /api/public/gamejams</code>
-                                <span class="endpoint-desc">List all game jams</span>
-                            </div>
-                            <div class="api-endpoint">
-                                <code>GET /api/public/games/featured</code>
-                                <span class="endpoint-desc">Featured games</span>
-                            </div>
-                            <div class="api-endpoint">
-                                <code>GET /api/public/games/search</code>
-                                <span class="endpoint-desc">Search games</span>
-                            </div>
-                            <div class="api-endpoint">
-                                <code>GET /api/public/archive/:year</code>
-                                <span class="endpoint-desc">Archive data</span>
+                            <div class="system-card-content">
+                                <pre id="response" class="system-response-output">System ready... Click a test button above to see responses.</pre>
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
-            
-            <!-- System Response & Logs -->
-            <div class="system-response-section">
-                <div class="system-card">
-                    <div class="system-card-header">
-                        <div class="system-icon">📝</div>
-                        <h3>System Response</h3>
-                    </div>
-                    <div class="system-card-content">
-                        <pre id="response" class="system-response-output">System ready... Click a test button above to see responses.</pre>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Recent Activity -->
-            <div class="system-activity-section">
-                <div class="system-card">
-                    <div class="system-card-header">
-                        <div class="system-icon">📈</div>
-                        <h3>Recent Activity</h3>
-                    </div>
-                    <div class="system-card-content">
-                        <div id="recent-activity" class="activity-list">
-                            <div class="activity-item">
-                                <span class="activity-time">Loading...</span>
-                                <span class="activity-desc">System dashboard initialized</span>
+                    
+                    <!-- Recent Activity -->
+                    <div class="system-activity-section">
+                        <div class="system-card">
+                            <div class="system-card-header">
+                                <div class="system-icon">📈</div>
+                                <h3>Recent Activity</h3>
+                            </div>
+                            <div class="system-card-content">
+                                <div id="recent-activity" class="activity-list">
+                                    <div class="activity-item">
+                                        <span class="activity-time">Loading...</span>
+                                        <span class="activity-desc">System dashboard initialized</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
     <script src="/admin/admin.js"></script>
 </body>
