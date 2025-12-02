@@ -5,13 +5,18 @@ import { Download, FileText } from 'lucide-react';
 import Background from "../../components/Background";
 import { useBackground } from "../../contexts/BackgroundContext";
 import { useFrontPageSettings } from "../../hooks/useFrontPageSettings";
+import { useLatestArchive } from "../../hooks/useLatestArchive";
 
 export default function Page() {
   const [pdfUrl, setPdfUrl] = useState('/WinterJam_Rulebook.pdf');
   const [currentGameJam, setCurrentGameJam] = useState(null);
   const { frontPageSettings } = useFrontPageSettings();
+  const latestArchiveUrl = useLatestArchive();
   const [hasEventEnded, setHasEventEnded] = useState(false);
   const [hasEventStarted, setHasEventStarted] = useState(false);
+  const [registrationOpen, setRegistrationOpen] = useState(false);
+  const [registrationClosed, setRegistrationClosed] = useState(false);
+  const [noActiveJam, setNoActiveJam] = useState(false);
   const { bannerImage } = useBackground();
 
   useEffect(() => {
@@ -37,8 +42,17 @@ export default function Page() {
           const now = new Date();
           const startDate = new Date(gameJam.start_date);
           const endDate = new Date(gameJam.end_date);
+          const regStart = gameJam.registration_start_date ? new Date(gameJam.registration_start_date) : null;
+          const regEnd = gameJam.registration_end_date ? new Date(gameJam.registration_end_date) : null;
+          
           setHasEventStarted(now >= startDate);
           setHasEventEnded(now > endDate);
+          setRegistrationOpen(regStart && now >= regStart);
+          setRegistrationClosed(regEnd && now > regEnd);
+          setNoActiveJam(false);
+        } else {
+          // No active game jam found
+          setNoActiveJam(true);
         }
       } catch (error) {
         // Keep default values on error
@@ -436,24 +450,36 @@ export default function Page() {
             Inscreve-te agora e faz parte da WinterJam 2025!
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            {hasEventEnded ? (
+            {noActiveJam ? (
+              <a
+                href={latestArchiveUrl}
+                className="inline-flex items-center gap-2 px-8 py-4 bg-gray-900 text-white font-bold rounded-xl hover:bg-gray-800 transition-all duration-300 shadow-lg hover:scale-105"
+              >
+                📁 Ver Arquivo do Último Evento
+              </a>
+            ) : registrationClosed || hasEventEnded ? (
               <span className="inline-flex items-center gap-2 px-8 py-4 bg-gray-500 text-white font-bold rounded-xl cursor-not-allowed">
                 ✍️ Inscrições Encerradas
               </span>
-            ) : hasEventStarted ? (
+            ) : registrationOpen ? (
               <a
-                href={frontPageSettings.button_during_event_url || "/rules"}
+                href={
+                  hasEventStarted
+                    ? frontPageSettings.button_during_event_url || "/rules"
+                    : frontPageSettings.button_before_start_url || "/enlist-now"
+                }
                 className="inline-flex items-center gap-2 px-8 py-4 bg-gray-900 text-white font-bold rounded-xl hover:bg-gray-800 transition-all duration-300 shadow-lg hover:scale-105"
               >
-                ✍️ Evento em Progresso - {frontPageSettings.button_during_event_text || "Ver Regras"}
+                ✍️ {
+                  hasEventStarted
+                    ? `Evento em Progresso - ${frontPageSettings.button_during_event_text || "Ver Regras"}`
+                    : frontPageSettings.button_before_start_text || "Inscrever-me Agora"
+                }
               </a>
             ) : (
-              <a
-                href={frontPageSettings.button_before_start_url || "/enlist-now"}
-                className="inline-flex items-center gap-2 px-8 py-4 bg-gray-900 text-white font-bold rounded-xl hover:bg-gray-800 transition-all duration-300 shadow-lg hover:scale-105"
-              >
-                ✍️ {frontPageSettings.button_before_start_text || "Inscrever-me Agora"}
-              </a>
+              <span className="inline-flex items-center gap-2 px-8 py-4 bg-gray-400 text-white font-bold rounded-xl cursor-not-allowed">
+                ✍️ Em Breve
+              </span>
             )}
             <a
               href="/contact"

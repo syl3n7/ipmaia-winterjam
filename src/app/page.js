@@ -24,6 +24,8 @@ const nl2br = (text) => {
 export default function Home() {
   const [hasEventStarted, setHasEventStarted] = useState(false);
   const [hasEventEnded, setHasEventEnded] = useState(false);
+  const [registrationOpen, setRegistrationOpen] = useState(false);
+  const [registrationClosed, setRegistrationClosed] = useState(false);
   const [currentTime, setCurrentTime] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [fetchError, setFetchError] = useState(false);
@@ -86,6 +88,16 @@ export default function Home() {
           // Use dates from backend
           eventStart = new Date(gameJam.start_date);
           eventEnd = new Date(gameJam.end_date);
+          const regStart = gameJam.registration_start_date ? new Date(gameJam.registration_start_date) : null;
+          const regEnd = gameJam.registration_end_date ? new Date(gameJam.registration_end_date) : null;
+          
+          const hasStarted = now >= eventStart;
+          const hasEnded = now >= eventEnd;
+          const regIsOpen = regStart && now >= regStart;
+          const regIsClosed = regEnd && now > regEnd;
+          
+          setRegistrationOpen(regIsOpen);
+          setRegistrationClosed(regIsClosed);
         } else {
           // Fallback to hardcoded dates if backend data unavailable
           eventStart = new Date('2025-02-14T17:00:00Z');

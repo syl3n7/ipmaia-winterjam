@@ -6,6 +6,7 @@ import { ChevronDown } from "lucide-react";
 import { useState, useEffect } from "react";
 import { getAllGameJams } from "../data/gameJamData";
 import { useFrontPageSettings } from "../hooks/useFrontPageSettings";
+import { useLatestArchive } from "../hooks/useLatestArchive";
 
 const MainNavbar = () => {
   const pathname = usePathname();
@@ -15,8 +16,12 @@ const MainNavbar = () => {
   const [isLoadingArchive, setIsLoadingArchive] = useState(true);
   const [latestArchiveUrl, setLatestArchiveUrl] = useState('/archive');
   const { frontPageSettings } = useFrontPageSettings();
+  const latestArchiveUrlFromHook = useLatestArchive();
   const [hasEventStarted, setHasEventStarted] = useState(false);
   const [hasEventEnded, setHasEventEnded] = useState(false);
+  const [registrationOpen, setRegistrationOpen] = useState(false);
+  const [registrationClosed, setRegistrationClosed] = useState(false);
+  const [noActiveJam, setNoActiveJam] = useState(false);
 
   const navbarClassName = isGamesPage
     ? "bg-black/30 backdrop-blur-md border-b border-white/10 sticky top-0 z-50 shadow-lg"
@@ -87,11 +92,21 @@ const MainNavbar = () => {
           const now = new Date();
           const startDate = new Date(currentJam.start_date);
           const endDate = new Date(currentJam.end_date);
+          const regStart = currentJam.registration_start_date ? new Date(currentJam.registration_start_date) : null;
+          const regEnd = currentJam.registration_end_date ? new Date(currentJam.registration_end_date) : null;
+          
           setHasEventStarted(now >= startDate);
           setHasEventEnded(now > endDate);
+          setRegistrationOpen(regStart && now >= regStart);
+          setRegistrationClosed(regEnd && now > regEnd);
+          setNoActiveJam(false);
+        } else {
+          // No active game jam found
+          setNoActiveJam(true);
         }
       } catch (error) {
         // Keep defaults
+        setNoActiveJam(true);
       }
     };
 
@@ -159,11 +174,18 @@ const MainNavbar = () => {
           
           {/* Dynamic Button - Stands out on desktop and mobile */}
           <div className="mt-2 md:mt-0 md:ml-2">
-            {hasEventEnded ? (
+            {noActiveJam ? (
+              <Link
+                href={latestArchiveUrlFromHook}
+                className="block w-full md:inline-flex items-center justify-center gap-2 px-4 py-3 md:py-2 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white text-sm font-bold rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 border border-orange-400 text-center"
+              >
+                📁 Ver Arquivo
+              </Link>
+            ) : registrationClosed || hasEventEnded ? (
               <span className="block w-full md:inline-flex items-center justify-center gap-2 px-4 py-3 md:py-2 bg-gray-500 text-white text-sm font-bold rounded-lg border border-gray-400 text-center cursor-not-allowed">
                 ✍️ Inscrições Encerradas
               </span>
-            ) : (
+            ) : registrationOpen ? (
               <Link 
                 href={
                   hasEventStarted
@@ -178,6 +200,10 @@ const MainNavbar = () => {
                     : frontPageSettings.button_before_start_text || "Inscrever Agora"
                 }
               </Link>
+            ) : (
+              <span className="block w-full md:inline-flex items-center justify-center gap-2 px-4 py-3 md:py-2 bg-gray-400 text-white text-sm font-bold rounded-lg border border-gray-300 text-center cursor-not-allowed">
+                ✍️ Em Breve
+              </span>
             )}
           </div>
         </div>
