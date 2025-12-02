@@ -77,11 +77,8 @@ export default function Home() {
         // Use local browser time
         const now = new Date();
         
-        // Fetch front page settings and current game jam data in parallel
-        const [settings, gameJam] = await Promise.all([
-          fetchFrontPageSettings(),
-          fetchCurrentGameJam()
-        ]);
+        // Fetch current game jam data
+        const gameJam = await fetchCurrentGameJam();
         
         let eventStart, eventEnd;
         
