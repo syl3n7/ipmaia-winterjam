@@ -424,25 +424,35 @@ export default function Home() {
                 >
                   {frontPageSettings.button_after_event_text || "Avaliação a Decorrer - Ver Jogos Submetidos"} <ArrowRight size={20} />
                 </Link>
-              ) : hasEventStarted ? (
-                <div className="space-y-4">
-                  <div className="inline-block bg-green-500/80 text-white px-4 py-2 rounded-md mb-4">
-                    {frontPageSettings.status_event_running || "Evento a decorrer!"}
-                  </div>
+              ) : registrationClosed ? (
+                <span className="bg-gray-500 text-white font-bold py-4 px-8 rounded-lg text-xl inline-flex items-center gap-2 cursor-not-allowed">
+                  Inscrições Encerradas
+                </span>
+              ) : registrationOpen ? (
+                <>
+                  {hasEventStarted && (
+                    <div className="inline-block bg-green-500/80 text-white px-4 py-2 rounded-md mb-4">
+                      {frontPageSettings.status_event_running || "Evento a decorrer!"}
+                    </div>
+                  )}
                   <Link 
-                    href={frontPageSettings.button_during_event_url || "/rules"}
+                    href={
+                      hasEventStarted
+                        ? frontPageSettings.button_during_event_url || "/rules"
+                        : frontPageSettings.button_before_start_url || "/enlist-now"
+                    }
                     className="bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 px-8 rounded-lg text-xl inline-flex items-center gap-2 transition-all hover:scale-105"
                   >
-                    Evento em Progresso - {frontPageSettings.button_during_event_text || "Ver Regras"} <ArrowRight size={20} />
+                    {hasEventStarted
+                      ? `Evento em Progresso - ${frontPageSettings.button_during_event_text || "Ver Regras"}`
+                      : frontPageSettings.button_before_start_text || "Inscrever Agora"
+                    } <ArrowRight size={20} />
                   </Link>
-                </div>
+                </>
               ) : (
-                <Link 
-                  href={frontPageSettings.button_before_start_url || "/enlist-now"}
-                  className="bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 px-8 rounded-lg text-xl inline-flex items-center gap-2 transition-all hover:scale-105"
-                >
-                  {frontPageSettings.button_before_start_text || "Inscrever Agora"} <ArrowRight size={20} />
-                </Link>
+                <span className="bg-gray-400 text-white font-bold py-4 px-8 rounded-lg text-xl inline-flex items-center gap-2 cursor-not-allowed">
+                  Em Breve
+                </span>
               )}
 
               {fetchError && (
