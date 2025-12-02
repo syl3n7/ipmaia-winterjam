@@ -4,10 +4,14 @@ import React, { useState, useEffect } from 'react';
 import { Download, FileText } from 'lucide-react';
 import Background from "../../components/Background";
 import { useBackground } from "../../contexts/BackgroundContext";
+import { useFrontPageSettings } from "../../hooks/useFrontPageSettings";
 
 export default function Page() {
   const [pdfUrl, setPdfUrl] = useState('/WinterJam_Rulebook.pdf');
   const [currentGameJam, setCurrentGameJam] = useState(null);
+  const { frontPageSettings } = useFrontPageSettings();
+  const [hasEventEnded, setHasEventEnded] = useState(false);
+  const [hasEventStarted, setHasEventStarted] = useState(false);
   const { bannerImage } = useBackground();
 
   useEffect(() => {
@@ -27,6 +31,15 @@ export default function Page() {
         const { gameJamApi } = await import('../../utils/api');
         const gameJam = await gameJamApi.getCurrent();
         setCurrentGameJam(gameJam);
+
+        // Check if event has ended
+        if (gameJam) {
+          const now = new Date();
+          const startDate = new Date(gameJam.start_date);
+          const endDate = new Date(gameJam.end_date);
+          setHasEventStarted(now >= startDate);
+          setHasEventEnded(now > endDate);
+        }
       } catch (error) {
         // Keep default values on error
       }
@@ -423,12 +436,25 @@ export default function Page() {
             Inscreve-te agora e faz parte da WinterJam 2025!
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <a
-              href="/enlist-now"
-              className="inline-flex items-center gap-2 px-8 py-4 bg-gray-900 text-white font-bold rounded-xl hover:bg-gray-800 transition-all duration-300 shadow-lg hover:scale-105"
-            >
-              ✍️ Inscrever-me Agora
-            </a>
+            {hasEventEnded ? (
+              <span className="inline-flex items-center gap-2 px-8 py-4 bg-gray-500 text-white font-bold rounded-xl cursor-not-allowed">
+                ✍️ Inscrições Encerradas
+              </span>
+            ) : hasEventStarted ? (
+              <a
+                href={frontPageSettings.button_during_event_url || "/rules"}
+                className="inline-flex items-center gap-2 px-8 py-4 bg-gray-900 text-white font-bold rounded-xl hover:bg-gray-800 transition-all duration-300 shadow-lg hover:scale-105"
+              >
+                ✍️ Evento em Progresso - {frontPageSettings.button_during_event_text || "Ver Regras"}
+              </a>
+            ) : (
+              <a
+                href={frontPageSettings.button_before_start_url || "/enlist-now"}
+                className="inline-flex items-center gap-2 px-8 py-4 bg-gray-900 text-white font-bold rounded-xl hover:bg-gray-800 transition-all duration-300 shadow-lg hover:scale-105"
+              >
+                ✍️ {frontPageSettings.button_before_start_text || "Inscrever-me Agora"}
+              </a>
+            )}
             <a
               href="/contact"
               className="inline-flex items-center gap-2 px-8 py-4 bg-white text-gray-900 font-semibold rounded-xl hover:bg-gray-50 transition-all duration-300 border-2 border-gray-300"

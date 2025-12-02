@@ -5,6 +5,7 @@ import { Navbar, NavbarBrand, NavbarCollapse, NavbarLink, NavbarToggle } from "f
 import { ChevronDown } from "lucide-react";
 import { useState, useEffect } from "react";
 import { getAllGameJams } from "../data/gameJamData";
+import { useFrontPageSettings } from "../hooks/useFrontPageSettings";
 
 const MainNavbar = () => {
   const pathname = usePathname();
@@ -12,6 +13,10 @@ const MainNavbar = () => {
   const [isArchiveOpen, setIsArchiveOpen] = useState(false);
   const [archiveItems, setArchiveItems] = useState([]);
   const [isLoadingArchive, setIsLoadingArchive] = useState(true);
+  const [latestArchiveUrl, setLatestArchiveUrl] = useState('/archive');
+  const { frontPageSettings } = useFrontPageSettings();
+  const [hasEventStarted, setHasEventStarted] = useState(false);
+  const [hasEventEnded, setHasEventEnded] = useState(false);
 
   const navbarClassName = isGamesPage
     ? "bg-black/30 backdrop-blur-md border-b border-white/10 sticky top-0 z-50 shadow-lg"
@@ -54,6 +59,12 @@ const MainNavbar = () => {
           };
         });
         
+        // Set latest archive URL
+        if (inactiveJams.length > 0) {
+          inactiveJams.sort((a, b) => new Date(b.end_date) - new Date(a.end_date));
+          setLatestArchiveUrl(`/archive/${inactiveJams[0].id}`);
+        }
+        
         setArchiveItems(archiveItemsFromAPI);
       } catch (error) {
         // Set empty array on error
@@ -64,6 +75,27 @@ const MainNavbar = () => {
     };
 
     fetchGameJams();
+  }, []);
+
+  // Determine button state based on current game jam
+  useEffect(() => {
+    const checkEventStatus = async () => {
+      try {
+        const { gameJamApi } = await import('../utils/api');
+        const currentJam = await gameJamApi.getCurrent();
+        if (currentJam) {
+          const now = new Date();
+          const startDate = new Date(currentJam.start_date);
+          const endDate = new Date(currentJam.end_date);
+          setHasEventStarted(now >= startDate);
+          setHasEventEnded(now > endDate);
+        }
+      } catch (error) {
+        // Keep defaults
+      }
+    };
+
+    checkEventStatus();
   }, []);
 
   return (
@@ -125,14 +157,28 @@ const MainNavbar = () => {
             Contacto
           </NavbarLink>
           
-          {/* Inscrever Agora Button - Stands out on desktop and mobile */}
+          {/* Dynamic Button - Stands out on desktop and mobile */}
           <div className="mt-2 md:mt-0 md:ml-2">
-            <Link 
-              href="/enlist-now"
-              className="block w-full md:inline-flex items-center justify-center gap-2 px-4 py-3 md:py-2 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white text-sm font-bold rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 border border-orange-400 text-center"
-            >
-              ✍️ Inscrever Agora
-            </Link>
+            {hasEventEnded ? (
+              <span className="block w-full md:inline-flex items-center justify-center gap-2 px-4 py-3 md:py-2 bg-gray-500 text-white text-sm font-bold rounded-lg border border-gray-400 text-center cursor-not-allowed">
+                ✍️ Inscrições Encerradas
+              </span>
+            ) : (
+              <Link 
+                href={
+                  hasEventStarted
+                    ? frontPageSettings.button_during_event_url || "/rules"
+                    : frontPageSettings.button_before_start_url || "/enlist-now"
+                }
+                className="block w-full md:inline-flex items-center justify-center gap-2 px-4 py-3 md:py-2 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white text-sm font-bold rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 border border-orange-400 text-center"
+              >
+                ✍️ {
+                  hasEventStarted
+                    ? `Evento em Progresso - ${frontPageSettings.button_during_event_text || "Ver Regras"}`
+                    : frontPageSettings.button_before_start_text || "Inscrever Agora"
+                }
+              </Link>
+            )}
           </div>
         </div>
       </NavbarCollapse>

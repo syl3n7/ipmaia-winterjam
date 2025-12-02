@@ -4,6 +4,8 @@ import Link from 'next/link';
 import Background from '../components/Background';
 import Sponsor from '../components/Sponsor';
 import { Clock, ArrowRight, Calendar, Target, Trophy, Users, Info, Lightbulb } from 'lucide-react';
+import { useFrontPageSettings } from '../hooks/useFrontPageSettings';
+import { useLatestArchive } from '../hooks/useLatestArchive';
 
 // Helper function to convert line breaks to HTML (with HTML escaping for XSS protection)
 const nl2br = (text) => {
@@ -26,40 +28,9 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
   const [fetchError, setFetchError] = useState(false);
   const [currentGameJam, setCurrentGameJam] = useState(null);
-  const [frontPageSettings, setFrontPageSettings] = useState({});
   const [sponsors, setSponsors] = useState([]);
-
-  // Fetch front page settings from admin-controlled API
-  const fetchFrontPageSettings = async () => {
-    try {
-      const apiUrl = typeof window === 'undefined' 
-        ? (process.env.NEXT_PUBLIC_API_URL || 'http://backend:3001/api')
-        : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api');
-      const response = await fetch(`${apiUrl}/frontpage/settings`);
-      if (!response.ok) throw new Error('Failed to fetch front page settings');
-      const settings = await response.json();
-      setFrontPageSettings(settings);
-      return settings;
-    } catch (error) {
-      // Return fallback settings if API fails
-      return {
-        hero_title: 'IPMAIA WinterJam',
-        hero_description: 'Uma game jam onde estudantes de desenvolvimento de jogos criam experiências únicas em 45 horas.',
-        hero_background_image: null, // Only use API images, no fallback to old image
-        show_event_dates: false,
-        show_theme: false,
-        show_required_object: false,
-        button_before_start_text: 'Inscrever Agora',
-        button_before_start_url: '/enlist-now',
-        button_during_event_text: 'Ver Regras',
-        button_during_event_url: '/rules',
-        button_after_event_text: 'Ver Jogos Submetidos',
-        button_after_event_url: '/archive/2025/winter',
-        status_event_running: 'Evento a decorrer!',
-        status_fallback_message: 'Estamos a usar informação guardada. Algumas funcionalidades podem não refletir o tempo atual.'
-      };
-    }
-  };
+  const { frontPageSettings } = useFrontPageSettings();
+  const latestArchiveUrl = useLatestArchive();
 
   // Fetch current game jam data from backend
   const fetchCurrentGameJam = async () => {
@@ -439,10 +410,10 @@ export default function Home() {
                 </div>
               ) : hasEventEnded ? (
                 <Link 
-                  href={frontPageSettings.button_after_event_url || "/archive/2025/winter"}
+                  href={latestArchiveUrl}
                   className="bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 px-8 rounded-lg text-xl inline-flex items-center gap-2 transition-all hover:scale-105"
                 >
-                  {frontPageSettings.button_after_event_text || "Ver Jogos Submetidos"} <ArrowRight size={20} />
+                  {frontPageSettings.button_after_event_text || "Avaliação a Decorrer - Ver Jogos Submetidos"} <ArrowRight size={20} />
                 </Link>
               ) : hasEventStarted ? (
                 <div className="space-y-4">
@@ -453,7 +424,7 @@ export default function Home() {
                     href={frontPageSettings.button_during_event_url || "/rules"}
                     className="bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 px-8 rounded-lg text-xl inline-flex items-center gap-2 transition-all hover:scale-105"
                   >
-                    {frontPageSettings.button_during_event_text || "Ver Regras"} <ArrowRight size={20} />
+                    Evento em Progresso - {frontPageSettings.button_during_event_text || "Ver Regras"} <ArrowRight size={20} />
                   </Link>
                 </div>
               ) : (

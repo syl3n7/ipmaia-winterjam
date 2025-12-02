@@ -3,7 +3,6 @@ import "./globals.css";
 import React from "react";
 import Footer from "../components/footer";
 import MainNavbar from "../components/navbar";
-import FloatingSponsor from "../components/FloatingSponsor";
 import Script from "next/script";
 import { BackgroundProvider } from "../contexts/BackgroundContext";
 
