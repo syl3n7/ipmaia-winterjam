@@ -127,6 +127,31 @@ router.get('/pdf-url', async (req, res) => {
   }
 });
 
+// Get last updated timestamp (public)
+router.get('/last-updated', async (req, res) => {
+  try {
+    const rules = await Rules.getActive();
+    
+    if (!rules) {
+      return res.json({ 
+        lastUpdated: null,
+        message: 'No rules uploaded yet'
+      });
+    }
+    
+    res.json({ 
+      lastUpdated: rules.updated_at || rules.created_at,
+      message: 'Last updated timestamp retrieved successfully'
+    });
+  } catch (error) {
+    console.error('Error fetching last updated:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch last updated',
+      message: 'Erro ao carregar última atualização'
+    });
+  }
+});
+
 // Download/serve PDF file (public)
 router.get('/download', async (req, res) => {
   try {
