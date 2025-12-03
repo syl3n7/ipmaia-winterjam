@@ -31,15 +31,18 @@ mkdir -p backend/uploads/sponsors
 # Make scripts executable
 chmod +x backend/scripts/*.js 2>/dev/null || true
 
-# Enable maintenance mode
+# Enable maintenance mode (nginx must stay up to show maintenance page)
 echo -e "${YELLOW}🚧 Enabling maintenance mode...${NC}"
+docker compose -f docker-compose.prod.yml up -d nginx 2>/dev/null || true
+sleep 2
 docker compose -f docker-compose.prod.yml exec -T nginx touch /etc/nginx/maintenance.on 2>/dev/null || true
 docker compose -f docker-compose.prod.yml exec -T nginx nginx -s reload 2>/dev/null || true
 sleep 2
 
-# Stop existing containers (if any)
-echo -e "${YELLOW}🛑 Stopping existing containers...${NC}"
-docker compose -f docker-compose.prod.yml down --volumes --remove-orphans 2>/dev/null || true
+# Stop application services (keep nginx up for maintenance page)
+echo -e "${YELLOW}🛑 Stopping application services...${NC}"
+docker compose -f docker-compose.prod.yml stop backend frontend db 2>/dev/null || true
+docker compose -f docker-compose.prod.yml rm -f backend frontend db 2>/dev/null || true
 
 # Remove old images (optional - uncomment to clean up)
 # echo -e "${YELLOW}🧹 Cleaning up old images...${NC}"
