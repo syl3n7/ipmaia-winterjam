@@ -627,6 +627,51 @@ router.put('/users/:id/toggle', requireSuperAdmin, async (req, res) => {
   }
 });
 
+// Delete user from local database
+router.delete('/users/:id', requireSuperAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { email } = req.body;
+    
+    // Prevent deleting own account
+    if (req.session.email && req.session.email === email) {
+      return res.status(403).json({ error: 'Cannot delete your own account' });
+    }
+    
+    // Check if user exists
+    const existingUser = await pool.query(
+      'SELECT username FROM users WHERE id = $1',
+      [id]
+    );
+    
+    if (existingUser.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    // Delete the user
+    await pool.query('DELETE FROM users WHERE id = $1', [id]);
+    
+    // Log the deletion
+    const { logAudit } = require('../utils/auditLog');
+    await logAudit({
+      userId: req.session.userId,
+      username: req.session.username || req.session.email,
+      action: 'DELETE_USER',
+      tableName: 'users',
+      recordId: id,
+      description: `Deleted user: ${email} (${existingUser.rows[0].username})`,
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent')
+    });
+    
+    console.log(`✅ User ${email} deleted by super admin ${req.session.username}`);
+    res.json({ success: true, message: 'User deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    res.status(500).json({ error: 'Failed to delete user' });
+  }
+});
+
 // Sync users from PocketID to local database
 router.post('/users/sync-from-pocketid', requireSuperAdmin, async (req, res) => {
   try {
@@ -650,11 +695,9 @@ router.post('/users/sync-from-pocketid', requireSuperAdmin, async (req, res) => 
       const groupNames = pocketUser.groupNames || [];
       
       // Determine role from PocketID groups
-      let role = 'user';
+      let role = 'admin'; // Default to admin since we only sync admin/ipmaia users
       if (groupNames.includes('admin') && pocketUser.email === process.env.OIDC_ADMIN_EMAIL) {
         role = 'super_admin';
-      } else if (groupNames.includes('admin') || groupNames.includes('ipmaia') || groupNames.includes('users')) {
-        role = 'admin';
       }
 
       // Prepare username from PocketID data

@@ -140,6 +140,39 @@ export default function AdminUsers() {
     }
   };
 
+  const handleDeleteUser = async (userId, userEmail, username) => {
+    if (!confirm(`⚠️ PERMANENT DELETE\n\nAre you sure you want to permanently delete ${username} (${userEmail})?\n\nThis will:\n• Remove the user from the local database\n• Cannot be undone\n• Does not affect PocketID (can be re-synced)\n\nType DELETE to confirm`)) {
+      return;
+    }
+
+    // Extra confirmation
+    const confirmation = prompt('Type DELETE in capital letters to confirm:');
+    if (confirmation !== 'DELETE') {
+      alert('Delete cancelled - confirmation did not match');
+      return;
+    }
+
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/users/${userId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ email: userEmail }),
+      });
+
+      if (response.ok) {
+        alert(`✅ User ${username} deleted successfully!`);
+        await fetchUsers();
+      } else {
+        const error = await response.json();
+        alert(`❌ Failed to delete user: ${error.error || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      alert('❌ Failed to delete user');
+    }
+  };
+
   if (!isSuperAdmin) {
     return (
       <div className="text-white">
@@ -317,6 +350,13 @@ export default function AdminUsers() {
                           className={`px-2 py-1 rounded text-xs ${u.is_active ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'} text-white`}
                         >
                           {u.is_active ? 'Deactivate' : 'Activate'}
+                        </button>
+                        <button
+                          onClick={() => handleDeleteUser(u.id, u.email, u.username)}
+                          className="px-2 py-1 rounded text-xs bg-red-800 hover:bg-red-900 text-white"
+                          title="Permanently delete user"
+                        >
+                          🗑️ Delete
                         </button>
                       </>
                     )}

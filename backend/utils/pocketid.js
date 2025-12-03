@@ -96,10 +96,9 @@ class PocketIDClient {
         console.log(`   Groups: ${userGroups.map(g => g.name).join(', ') || 'none'}`);
         const groupNames = userGroups.map(g => g.name.toLowerCase());
         
-        // Only include users with admin, ipmaia, or users groups
+        // Only include users with admin or ipmaia groups
         if (groupNames.includes('admin') || 
-            groupNames.includes('ipmaia') || 
-            groupNames.includes('users')) {
+            groupNames.includes('ipmaia')) {
           console.log(`   ✅ User matches criteria - adding to sync list`);
           adminUsers.push({
             ...user,
@@ -107,11 +106,11 @@ class PocketIDClient {
             groupNames: groupNames
           });
         } else {
-          console.log(`   ⏭️  User doesn't match criteria (admin/ipmaia/users) - skipping`);
+          console.log(`   ⏭️  User doesn't match criteria (admin/ipmaia only) - skipping`);
         }
       }
 
-      console.log(`✅ Found ${adminUsers.length} users matching criteria (admin/ipmaia/users groups)`);
+      console.log(`✅ Found ${adminUsers.length} users matching criteria (admin/ipmaia groups only)`);
       return adminUsers;
     } catch (error) {
       console.error('❌ Failed to fetch admin users from PocketID:', error);
