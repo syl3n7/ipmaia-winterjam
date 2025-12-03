@@ -309,16 +309,15 @@ export default function Page() {
                 </ol>
               </div>
 
-              {/* Entrada Livre */}
+              {/* Obrigações Logísticas e Financeiras */}
               <div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-3">🎟️ Entrada Livre</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-3">💰 Obrigações Logísticas e Financeiras</h3>
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <ol className="list-decimal list-inside space-y-2 text-gray-700">
-                    <li>A participação é gratuita e aberta ao público em geral, incluindo alunos e alumni do IPMAIA. A game jam decorre principalmente em formato presencial, sendo permitido que apenas um membro da equipa participe online. A maioria dos elementos deve estar presente nas instalações do IPMaia.</li>
+                  <ol className="list-decimal list-inside space-y-3 text-gray-700">
+                    <li><strong>Confirmação de Refeições:</strong> Os participantes que confirmarem a sua presença em refeições organizadas pela Game Jam (ex: jantar de sexta-feira) e não comparecerem, ficam obrigados ao pagamento do custo da mesma, no valor de 1,50 € (um euro e cinquenta cêntimos).</li>
+                    <li><strong>Entrada Livre:</strong> A participação é gratuita e aberta ao público em geral, incluindo alunos e alumni do IPMAIA. A game jam decorre principalmente em formato presencial, sendo permitido que apenas um membro da equipa participe online. A maioria dos elementos deve estar presente nas instalações do IPMaia.</li>
+                    <li><strong>Organização e Comunicação:</strong> A organização e comunicação do evento serão feitas através do servidor de Discord da game jam. Caso a equipa deseje desenvolver o projeto presencialmente nas instalações, deve informar previamente os organizadores.</li>
                   </ol>
-                  <p className="text-gray-700 mt-3">
-                    A organização e comunicação do evento serão feitas através do servidor de Discord da game jam. Caso a equipa deseje desenvolver o projeto presencialmente nas instalações, deve informar previamente os organizadores.
-                  </p>
                 </div>
               </div>
               
