@@ -125,7 +125,10 @@ app.use((req, res, next) => {
   if (req.path.startsWith('/api/admin') || 
       req.path.startsWith('/api/rules/admin') || 
       req.path.startsWith('/api/frontpage/admin') ||
-      req.path.startsWith('/api/sponsors/upload-logo')) {
+      req.path.startsWith('/api/sponsors/upload-logo') ||
+      req.path.startsWith('/api/sponsors/admin') ||
+      (req.path.match(/^\/api\/sponsors\/\d+$/) && (req.method === 'PUT' || req.method === 'DELETE')) ||
+      (req.path === '/api/sponsors' && req.method === 'POST')) {
     return next();
   }
   // Apply CSRF for other routes
