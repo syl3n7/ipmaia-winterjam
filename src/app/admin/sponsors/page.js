@@ -29,9 +29,13 @@ export default function AdminSponsors() {
       if (response.ok) {
         const data = await response.json();
         setSponsors(data.sponsors || []);
+      } else {
+        console.error('Failed to fetch sponsors:', response.status, response.statusText);
+        alert(`Failed to load sponsors: ${response.status} ${response.statusText}`);
       }
     } catch (error) {
       console.error('Failed to fetch sponsors:', error);
+      alert('Failed to load sponsors. Please check console for details.');
     } finally {
       setLoading(false);
     }
@@ -98,6 +102,9 @@ export default function AdminSponsors() {
         await fetchSponsors();
         resetForm();
         alert(editing ? 'Sponsor updated!' : 'Sponsor created!');
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        alert(`Failed to save sponsor: ${errorData.error || response.statusText}`);
       }
     } catch (error) {
       console.error('Failed to save sponsor:', error);
@@ -134,6 +141,9 @@ export default function AdminSponsors() {
       if (response.ok) {
         await fetchSponsors();
         alert('Sponsor deleted!');
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        alert(`Failed to delete sponsor: ${errorData.error || response.statusText}`);
       }
     } catch (error) {
       console.error('Failed to delete sponsor:', error);

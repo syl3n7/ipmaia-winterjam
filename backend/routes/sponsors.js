@@ -133,7 +133,7 @@ router.get('/', async (req, res) => {
 });
 
 // GET /api/sponsors/admin - Get all sponsors for admin (including inactive)
-router.get('/admin', async (req, res) => {
+router.get('/admin', requireAdmin, async (req, res) => {
   try {
     // Get all sponsors from database
     const result = await pool.query(`
@@ -245,7 +245,7 @@ router.put('/:id', requireAdmin, async (req, res) => {
 
     // Check if sponsor exists
     const existingResult = await pool.query(
-      'SELECT id FROM sponsors WHERE id = $1',
+      'SELECT id, is_active FROM sponsors WHERE id = $1',
       [id]
     );
 
@@ -311,14 +311,11 @@ router.put('/:id', requireAdmin, async (req, res) => {
 
     if (is_active !== undefined) {
       updates.push(`is_active = $${paramIndex++}`);
-      values.push(is_active !== undefined ? Boolean(is_active) : existingResult.rows[0].is_active);
+      values.push(Boolean(is_active));
     }
 
     // Always update updated_at
     updates.push(`updated_at = NOW()`);
-
-    // Add id at the end
-    values.push(id);
 
     if (updates.length === 1) { // Only updated_at
       return res.status(400).json({
@@ -326,6 +323,9 @@ router.put('/:id', requireAdmin, async (req, res) => {
         error: 'Nenhum campo para atualizar'
       });
     }
+
+    // Add id at the end
+    values.push(id);
 
     const query = `
       UPDATE sponsors
