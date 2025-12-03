@@ -32,19 +32,17 @@ nano .env
 ### 2. Deploy with Docker (Recommended)
 ```bash
 # Start everything with automated migration
-docker-compose up -d
+docker compose up -d
 
-# OR use the timed build script for detailed build timing
-./scripts/timed-build.sh up -d --build
-
-# Check logs to see auto-migration and timing in action
-docker-compose logs -f backend
+# Check logs to see auto-migration in action
+docker compose logs -f backend
 ```
 
 ### 3. Access the Application
 - **Frontend**: http://localhost:3000
 - **Admin Panel**: http://localhost:3001/admin
 - **API**: http://localhost:3001/api
+- **Health Check**: http://localhost:3001/health
 
 ## 🤖 Automated Migration System
 
@@ -73,7 +71,7 @@ npm run migrate:auto
 ### Migration Logs
 ```bash
 # View migration progress
-docker-compose logs backend | grep -E "(⏳|🎯|✅|❌|🚀)"
+docker compose logs backend | grep -E "(⏳|🎯|✅|❌|🚀)"
 
 # Example output:
 # ⏳ Giving backend 10 seconds to initialize...
@@ -155,16 +153,18 @@ docker-compose logs backend | grep -E "(⏳|🎯|✅|❌|🚀)"
 |----------|-------------|---------|
 | `DB_NAME` | Database name | `winterjam` |
 | `DB_USER` | Database user | `postgres` |
-| `DB_PASSWORD` | Database password | `secure_password` |
-| `JWT_SECRET` | JWT signing key | `long_random_string` |
-| `SESSION_SECRET` | Session encryption key | `another_random_string` |
-| `OIDC_ISSUER_URL` | PocketID instance URL | `https://auth.example.com` |
-| `OIDC_CLIENT_ID` | OIDC application ID | `winterjam_app` |
-| `OIDC_CLIENT_SECRET` | OIDC application secret | `secret_from_pocketid` |
-| `OIDC_REDIRECT_URI` | OAuth callback URL | `https://api.example.com/api/auth/oidc/callback` |
-| `OIDC_ADMIN_EMAIL` | Admin user email | `admin@example.com` |
+| `DB_PASSWORD` | Database password | `your_secure_password` |
+| `JWT_SECRET` | JWT signing key | `your_jwt_secret_here` |
+| `SESSION_SECRET` | Session encryption key | `your_session_secret_here` |
+| `OIDC_ISSUER_URL` | PocketID instance URL | `https://your-auth-server.com` |
+| `OIDC_CLIENT_ID` | OIDC application ID | `your_client_id` |
+| `OIDC_CLIENT_SECRET` | OIDC application secret | `your_client_secret` |
+| `OIDC_REDIRECT_URI` | OAuth callback URL | `https://your-domain.com/api/auth/oidc/callback` |
+| `OIDC_ADMIN_EMAIL` | Admin user email | `admin@yourdomain.com` |
+| `POCKETID_API_URL` | PocketID API endpoint (optional) | `https://your-auth-server.com/api` |
+| `POCKETID_API_KEY` | PocketID API key (optional) | `your_api_key` |
 | `STARTUP_DELAY` | Docker startup delay (seconds) | `10` (optional, default: 10) |
-| `NEXT_PUBLIC_API_URL` | Frontend API endpoint | `https://api.example.com/api` |
+| `NEXT_PUBLIC_API_URL` | Frontend API endpoint | `https://your-domain.com/api` |
 
 ### Docker Services
 
@@ -440,18 +440,23 @@ See [MAINTENANCE.md](MAINTENANCE.md) for full documentation.
 
 ## 📋 Recent Updates
 
+### v3.0.0 - Production & Maintenance (December 2025)
+- ✅ **Maintenance Mode**: Automatic maintenance page with auto-refresh during deployments
+- ✅ **Production Scripts**: Automated deployment with `deploy-docker.sh`
+- ✅ **SSL Setup**: Easy SSL certificate configuration with `setup-ssl.sh`
+- ✅ **Enhanced Security**: Rate limiting, security headers, and isolated Docker networks
+- ✅ **Health Monitoring**: Comprehensive health checks and status monitoring
+- ✅ **Docker Production**: Full Nginx reverse proxy setup for production
+
 ### v2.5.0 - Enhanced User Experience
 - ✅ **Game Detail Modals**: Click any game card to view full details in a modal
 - ✅ **Team Member Display**: Fixed "[object Object]" issue - names now display correctly
 - ✅ **SEO Optimization**: Automatic sitemap generation with next-sitemap
 - ✅ **Performance Improvements**: Image URL localization for faster loading
 - ✅ **Security Enhancements**: Updated CSP to allow Cloudflare Insights
-- ✅ **Build Monitoring**: Added timing metrics for Docker startup and builds
-- ✅ **Error Handling**: Improved error messages and debugging information
 
 ### v2.0.0 - Production Ready
 - ✅ **Automated Migration**: Docker startup with intelligent health checks
 - ✅ **OIDC Authentication**: Secure admin access via PocketID
 - ✅ **Admin Dashboard**: Complete front page content management
 - ✅ **Responsive Design**: Mobile and desktop optimized
-- ✅ **Real-time Status**: Dynamic event status detection
