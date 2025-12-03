@@ -342,7 +342,7 @@ export default function AdminUsers() {
       <div className="bg-blue-900 bg-opacity-30 border border-blue-700 rounded-lg p-4">
         <h4 className="text-white font-semibold mb-2">ℹ️ User Management Info</h4>
         <ul className="text-gray-300 text-sm space-y-1">
-          <li>• <strong>PocketID Sync:</strong> Click "Sync from PocketID" to import users from PocketID API</li>
+          <li>• <strong>PocketID Sync:</strong> Click &quot;Sync from PocketID&quot; to import users from PocketID API</li>
           <li>• Only users in <code className="bg-gray-800 px-1 rounded">admin</code>, <code className="bg-gray-800 px-1 rounded">ipmaia</code>, or <code className="bg-gray-800 px-1 rounded">users</code> groups are synced</li>
           <li>• <strong>Local Control:</strong> Users are stored locally after sync - you can block/modify them here</li>
           <li>• <strong>Prevent Unauthorized Login:</strong> Deactivate users locally to block their access, even if they&apos;re still in PocketID</li>
