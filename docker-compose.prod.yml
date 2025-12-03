@@ -49,7 +49,7 @@ services:
     volumes:
       - backend_uploads:/app/uploads
       - shared_public:/app/public
-      - maintenance_flag:/var/maintenance_flag:rw
+      - /tmp/maintenance_flag:/var/maintenance_flag:rw
     healthcheck:
       test: ["CMD", "node", "scripts/health-check.js"]
       interval: 30s
@@ -86,7 +86,7 @@ services:
       - ./nginx.prod.conf:/etc/nginx/nginx.conf:ro
       - ./ssl:/etc/nginx/ssl:ro
       - ./maintenance.html:/usr/share/nginx/html/maintenance.html:ro
-      - maintenance_flag:/var/maintenance_flag:ro
+      - /tmp/maintenance_flag:/var/maintenance_flag:ro
       - backend_uploads:/var/www/uploads:ro
     depends_on:
       - frontend
@@ -98,7 +98,6 @@ volumes:
   postgres_data:
   backend_uploads:
   shared_public:
-  maintenance_flag:
 
 networks:
   winterjam-network:

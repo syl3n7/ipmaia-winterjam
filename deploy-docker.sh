@@ -33,10 +33,22 @@ chmod +x backend/scripts/*.js 2>/dev/null || true
 
 # Enable maintenance mode (nginx must stay up to show maintenance page)
 echo -e "${YELLOW}🚧 Enabling maintenance mode...${NC}"
-docker compose -f docker-compose.prod.yml up -d nginx 2>/dev/null || true
-sleep 2
-docker compose -f docker-compose.prod.yml exec -T nginx touch /var/maintenance_flag/maintenance.on 2>/dev/null || true
-sleep 2
+
+# Create maintenance flag directory and file on host
+mkdir -p /tmp/maintenance_flag
+touch /tmp/maintenance_flag/maintenance.on
+echo "Maintenance mode enabled at $(date)" > /tmp/maintenance_flag/maintenance.on
+
+# Ensure nginx is running to show maintenance page
+docker compose -f docker-compose.prod.yml up -d nginx
+sleep 3
+
+# Verify maintenance mode is active
+if [ -f /tmp/maintenance_flag/maintenance.on ]; then
+    echo -e "${GREEN}✅ Maintenance mode activated${NC}"
+else
+    echo -e "${YELLOW}⚠️  Warning: Could not verify maintenance mode${NC}"
+fi
 
 # Stop application services (keep nginx up for maintenance page)
 echo -e "${YELLOW}🛑 Stopping application services...${NC}"
@@ -143,8 +155,14 @@ echo ""
 
 # Disable maintenance mode
 echo -e "${BLUE}🎉 Disabling maintenance mode...${NC}"
-docker compose -f docker-compose.prod.yml exec -T nginx rm -f /var/maintenance_flag/maintenance.on 2>/dev/null || true
+rm -f /tmp/maintenance_flag/maintenance.on 2>/dev/null || true
 sleep 2
+
+if [ ! -f /tmp/maintenance_flag/maintenance.on ]; then
+    echo -e "${GREEN}✅ Maintenance mode disabled${NC}"
+else
+    echo -e "${YELLOW}⚠️  Warning: Could not disable maintenance mode${NC}"
+fi
 
 # Health checks
 echo -e "${BLUE}🏥 Performing health checks...${NC}"
