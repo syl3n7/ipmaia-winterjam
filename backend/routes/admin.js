@@ -3,6 +3,8 @@ const { pool } = require('../config/database');
 const GameJam = require('../models/GameJam');
 const Game = require('../models/Game');
 const { requireAdmin, requireSuperAdmin } = require('./auth');
+const fs = require('fs');
+const path = require('path');
 const router = express.Router();
 
 // All admin routes require admin privileges
@@ -429,26 +431,55 @@ router.post('/system/restart', requireSuperAdmin, async (req, res) => {
 });
 
 // Maintenance mode toggle
-let maintenanceMode = false;
+const MAINTENANCE_FILE = '/var/maintenance/maintenance.on';
+const MAINTENANCE_DIR = '/var/maintenance';
+
 router.post('/system/maintenance', requireSuperAdmin, async (req, res) => {
   try {
-    maintenanceMode = !maintenanceMode;
-    console.log(`🚧 Maintenance mode ${maintenanceMode ? 'ENABLED' : 'DISABLED'}`);
+    // Ensure maintenance directory exists
+    if (!fs.existsSync(MAINTENANCE_DIR)) {
+      fs.mkdirSync(MAINTENANCE_DIR, { recursive: true });
+    }
+
+    // Check current state
+    const currentState = fs.existsSync(MAINTENANCE_FILE);
+    const newState = !currentState;
+
+    if (newState) {
+      // Enable maintenance mode
+      fs.writeFileSync(MAINTENANCE_FILE, new Date().toISOString());
+      console.log('🚧 Maintenance mode ENABLED');
+    } else {
+      // Disable maintenance mode
+      if (fs.existsSync(MAINTENANCE_FILE)) {
+        fs.unlinkSync(MAINTENANCE_FILE);
+      }
+      console.log('✅ Maintenance mode DISABLED');
+    }
     
     res.json({ 
       success: true, 
-      enabled: maintenanceMode,
-      message: `Maintenance mode ${maintenanceMode ? 'enabled' : 'disabled'}`,
+      enabled: newState,
+      message: `Maintenance mode ${newState ? 'enabled' : 'disabled'}. Admin panel remains accessible at api.ipmaia-winterjam.pt/admin`,
       timestamp: new Date().toISOString()
     });
   } catch (error) {
     console.error('❌ Error toggling maintenance mode:', error);
-    res.status(500).json({ error: 'Failed to toggle maintenance mode' });
+    res.status(500).json({ 
+      error: 'Failed to toggle maintenance mode',
+      details: error.message 
+    });
   }
 });
 
 router.get('/system/maintenance', async (req, res) => {
-  res.json({ enabled: maintenanceMode });
+  try {
+    const enabled = fs.existsSync(MAINTENANCE_FILE);
+    res.json({ enabled });
+  } catch (error) {
+    console.error('❌ Error checking maintenance mode:', error);
+    res.status(500).json({ error: 'Failed to check maintenance mode' });
+  }
 });
 
 // Test database connection

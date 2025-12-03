@@ -35,8 +35,7 @@ chmod +x backend/scripts/*.js 2>/dev/null || true
 echo -e "${YELLOW}🚧 Enabling maintenance mode...${NC}"
 docker compose -f docker-compose.prod.yml up -d nginx 2>/dev/null || true
 sleep 2
-docker compose -f docker-compose.prod.yml exec -T nginx touch /etc/nginx/maintenance.on 2>/dev/null || true
-docker compose -f docker-compose.prod.yml exec -T nginx nginx -s reload 2>/dev/null || true
+docker compose -f docker-compose.prod.yml exec -T nginx touch /var/maintenance/maintenance.on 2>/dev/null || true
 sleep 2
 
 # Stop application services (keep nginx up for maintenance page)
@@ -144,8 +143,7 @@ echo ""
 
 # Disable maintenance mode
 echo -e "${BLUE}🎉 Disabling maintenance mode...${NC}"
-docker compose -f docker-compose.prod.yml exec -T nginx rm -f /etc/nginx/maintenance.on 2>/dev/null || true
-docker compose -f docker-compose.prod.yml exec -T nginx nginx -s reload 2>/dev/null || true
+docker compose -f docker-compose.prod.yml exec -T nginx rm -f /var/maintenance/maintenance.on 2>/dev/null || true
 sleep 2
 
 # Health checks

@@ -11,13 +11,29 @@ export default function AdminSystem() {
   const [auditLogs, setAuditLogs] = useState([]);
   const [auditStats, setAuditStats] = useState(null);
   const [showAuditLogs, setShowAuditLogs] = useState(false);
+  const [maintenanceMode, setMaintenanceMode] = useState(false);
 
   useEffect(() => {
     loadSystemInfo();
     if (isSuperAdmin) {
       loadAuditLogs();
+      loadMaintenanceStatus();
     }
   }, [isSuperAdmin]);
+
+  const loadMaintenanceStatus = async () => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/system/maintenance`, {
+        credentials: 'include',
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setMaintenanceMode(data.enabled);
+      }
+    } catch (error) {
+      console.error('Failed to load maintenance status:', error);
+    }
+  };
 
   const loadSystemInfo = async () => {
     setLoading(true);
@@ -233,7 +249,8 @@ export default function AdminSystem() {
 
       if (response.ok) {
         const result = await response.json();
-        alert(`✅ Maintenance mode ${result.enabled ? 'ENABLED' : 'DISABLED'}`);
+        setMaintenanceMode(result.enabled);
+        alert(`✅ ${result.message}`);
         await loadSystemInfo();
       } else {
         alert('❌ Failed to toggle maintenance mode');
@@ -563,13 +580,27 @@ export default function AdminSystem() {
               <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
                 <h4 className="text-lg font-semibold text-white mb-2">🚧 Maintenance Mode</h4>
                 <p className="text-gray-400 text-sm mb-3">
-                  Toggle maintenance mode. Visitors will see maintenance page.
+                  Toggle maintenance mode. Visitors will see maintenance page. Admin panel remains accessible.
                 </p>
+                <div className="mb-3 flex items-center gap-2">
+                  <span className="text-sm text-gray-400">Status:</span>
+                  <span className={`px-2 py-1 rounded text-sm font-semibold ${
+                    maintenanceMode 
+                      ? 'bg-yellow-600 text-white' 
+                      : 'bg-green-600 text-white'
+                  }`}>
+                    {maintenanceMode ? '🚧 ENABLED' : '✅ DISABLED'}
+                  </span>
+                </div>
                 <button 
                   onClick={handleToggleMaintenanceMode}
-                  className="w-full px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded transition-colors"
+                  className={`w-full px-4 py-2 text-white rounded transition-colors ${
+                    maintenanceMode
+                      ? 'bg-green-600 hover:bg-green-700'
+                      : 'bg-yellow-600 hover:bg-yellow-700'
+                  }`}
                 >
-                  Toggle Maintenance
+                  {maintenanceMode ? 'Disable Maintenance' : 'Enable Maintenance'}
                 </button>
               </div>
 
