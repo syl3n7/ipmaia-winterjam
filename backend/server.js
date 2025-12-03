@@ -69,6 +69,25 @@ const limiter = rateLimit({
     return process.env.NODE_ENV === 'production' ? 100 : 1000; // Standard limits
   },
   message: 'Too many requests from this IP, please try again later.',
+  // Skip rate limiting for internal Docker network requests
+  skip: (req) => {
+    const ip = req.ip || req.connection.remoteAddress || '';
+    // Docker bridge network typically uses 172.x.x.x range
+    // Also skip localhost and private network ranges
+    const isInternalIP = 
+      ip.startsWith('172.') ||      // Docker default bridge network
+      ip.startsWith('10.') ||        // Private network
+      ip.startsWith('192.168.') ||   // Private network
+      ip === '::1' ||                // IPv6 localhost
+      ip === '127.0.0.1' ||          // IPv4 localhost
+      ip === '::ffff:127.0.0.1';     // IPv4-mapped IPv6 localhost
+    
+    if (isInternalIP && process.env.NODE_ENV === 'production') {
+      console.log(`⚡ Skipping rate limit for internal IP: ${ip}`);
+    }
+    
+    return isInternalIP;
+  }
 });
 
 app.use(limiter);
