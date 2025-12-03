@@ -43,6 +43,9 @@ services:
       OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET}
       OIDC_REDIRECT_URI: ${OIDC_REDIRECT_URI:-https://api.ipmaia-winterjam.pt/api/auth/oidc/callback}
       OIDC_ADMIN_EMAIL: ${OIDC_ADMIN_EMAIL:-claudiosilva@steelchunk.eu}
+      # PocketID Configuration
+      POCKETID_API_URL: ${POCKETID_API_URL}
+      POCKETID_API_KEY: ${POCKETID_API_KEY}
     volumes:
       - backend_uploads:/app/uploads
       - shared_public:/app/public
