@@ -53,8 +53,8 @@ class PocketIDClient {
   }
 
   // Get all users (with pagination)
-  async getUsers(page = 1, pageSize = 50) {
-    const response = await this.request(`/api/users?page=${page}&pageSize=${pageSize}`);
+  async getUsers(page = 1, limit = 50) {
+    const response = await this.request(`/api/users?pagination[page]=${page}&pagination[limit]=${limit}`);
     console.log('📋 Raw PocketID response:', JSON.stringify(response, null, 2));
     return response;
   }
@@ -70,8 +70,8 @@ class PocketIDClient {
   }
 
   // Get all user groups
-  async getAllGroups(page = 1, pageSize = 50) {
-    return await this.request(`/api/user-groups?page=${page}&pageSize=${pageSize}`);
+  async getAllGroups(page = 1, limit = 50) {
+    return await this.request(`/api/user-groups?pagination[page]=${page}&pagination[limit]=${limit}`);
   }
 
   // Get specific group by ID
@@ -90,7 +90,9 @@ class PocketIDClient {
 
       for (const user of usersResponse.data || []) {
         console.log(`👤 Checking user: ${user.email || user.username} (ID: ${user.id})`);
-        const userGroups = await this.getUserGroups(user.id);
+        const userGroupsResponse = await this.getUserGroups(user.id);
+        // getUserGroups returns an array directly, not wrapped in data
+        const userGroups = Array.isArray(userGroupsResponse) ? userGroupsResponse : (userGroupsResponse.data || []);
         console.log(`   Groups: ${userGroups.map(g => g.name).join(', ') || 'none'}`);
         const groupNames = userGroups.map(g => g.name.toLowerCase());
         
@@ -118,8 +120,8 @@ class PocketIDClient {
   }
 
   // Get audit logs from PocketID
-  async getAuditLogs(page = 1, pageSize = 50) {
-    return await this.request(`/api/audit-logs?page=${page}&pageSize=${pageSize}`);
+  async getAuditLogs(page = 1, limit = 50) {
+    return await this.request(`/api/audit-logs?pagination[page]=${page}&pagination[limit]=${limit}`);
   }
 
   // Check if API is configured and working
