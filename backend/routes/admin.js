@@ -657,6 +657,12 @@ router.post('/users/sync-from-pocketid', requireSuperAdmin, async (req, res) => 
         role = 'admin';
       }
 
+      // Prepare username from PocketID data
+      const username = pocketUser.username || 
+                      pocketUser.displayName || 
+                      pocketUser.email?.split('@')[0] || 
+                      'user';
+
       // Check if user exists
       const existing = await pool.query(
         'SELECT id, role, is_active FROM users WHERE email = $1',
@@ -671,18 +677,21 @@ router.post('/users/sync-from-pocketid', requireSuperAdmin, async (req, res) => 
         console.log(`   ⏭️  Skipped ${pocketUser.email} (preserving local settings)`);
       } else {
         // Create new user
+        // Check if user is disabled in PocketID
+        const isActive = !pocketUser.disabled;
+        
         await pool.query(`
           INSERT INTO users (username, email, password_hash, role, is_active, created_at, updated_at)
           VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
         `, [
-          pocketUser.username || pocketUser.email.split('@')[0],
+          username,
           pocketUser.email,
           '', // No password for OIDC users
           role,
-          true
+          isActive
         ]);
         created++;
-        console.log(`   ✅ Created ${pocketUser.email} with role: ${role}`);
+        console.log(`   ✅ Created ${pocketUser.email} with role: ${role} (active: ${isActive})`);
       }
     }
 
