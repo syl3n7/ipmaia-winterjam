@@ -153,21 +153,20 @@ passport.deserializeUser(async (id, done) => {
 // Serve static files (uploaded images, etc.)
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Serve admin static assets (CSS, JS) - specific files only, not HTML
-app.get('/admin/styles.css', (req, res) => {
-  res.setHeader('Content-Type', 'text/css');
-  res.sendFile(path.join(__dirname, 'admin/dist/styles.css'));
-});
+// ADMIN INTERFACE: Both old and new admin can coexist during transition
+// Old admin (backend HTML) is at: http://localhost:3001/admin
+// New admin (Next.js) is at: http://localhost:3000/admin
+// 
+// To switch to new admin only, uncomment the redirect below and comment out the static serving
 
-app.get('/admin/admin.js', (req, res) => {
-  res.setHeader('Content-Type', 'application/javascript');
-  res.sendFile(path.join(__dirname, 'admin/dist/admin.js'));
-});
+// OPTION 1: Redirect to new frontend admin (for full migration)
+// app.get('/admin*', (req, res) => {
+//   const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+//   res.redirect(`${frontendUrl}/admin`);
+// });
 
-app.get('/admin/admin.css', (req, res) => {
-  res.setHeader('Content-Type', 'text/css');
-  res.sendFile(path.join(__dirname, 'admin/dist/admin.css'));
-});
+// OPTION 2: Serve old backend admin (for transition period) - CURRENTLY ACTIVE
+app.use('/admin', express.static(path.join(__dirname, 'admin/dist')));
 
 // Serve favicon for admin panel
 app.get('/favicon.ico', (req, res) => {
@@ -218,57 +217,8 @@ app.get('/debug/files', (req, res) => {
   }
 });
 
-// Admin middleware for dashboard access
-const requireAdminAccess = (req, res, next) => {
-  // In development with auth bypass, or when DEV_BYPASS_AUTH is enabled, skip authentication checks
-  if (process.env.DEV_BYPASS_AUTH === 'true') {
-    // Simulate admin user session for development
-    req.session.userId = req.session.userId || 1;
-    req.session.username = req.session.username || 'dev-admin';
-    req.session.role = req.session.role || 'super_admin';
-    return next();
-  }
-
-  // Check if user is authenticated and has admin or super_admin role
-  if (!req.session.userId || (req.session.role !== 'admin' && req.session.role !== 'super_admin')) {
-    // Redirect to OIDC login for admin access
-    return res.redirect('/api/auth/oidc/login');
-  }
-  next();
-};
-
-// Serve admin dashboard - single page application
-app.get('/admin', requireAdminAccess, (req, res) => {
-  res.sendFile(path.join(__dirname, 'admin/dist/index.html'));
-});
-
-app.get('/admin/gamejams', requireAdminAccess, (req, res) => {
-  res.sendFile(path.join(__dirname, 'admin/dist/index.html'));
-});
-
-app.get('/admin/games', requireAdminAccess, (req, res) => {
-  res.sendFile(path.join(__dirname, 'admin/dist/index.html'));
-});
-
-app.get('/admin/users', requireAdminAccess, (req, res) => {
-  res.sendFile(path.join(__dirname, 'admin/dist/index.html'));
-});
-
-app.get('/admin/sponsors', requireAdminAccess, (req, res) => {
-  res.sendFile(path.join(__dirname, 'admin/dist/index.html'));
-});
-
-app.get('/admin/frontpage', requireAdminAccess, (req, res) => {
-  res.sendFile(path.join(__dirname, 'admin/dist/index.html'));
-});
-
-app.get('/admin/rules', requireAdminAccess, (req, res) => {
-  res.sendFile(path.join(__dirname, 'admin/dist/index.html'));
-});
-
-app.get('/admin/system', requireAdminAccess, (req, res) => {
-  res.sendFile(path.join(__dirname, 'admin/dist/index.html'));
-});
+// Note: Admin routes removed - admin interface migrated to Next.js frontend at /admin
+// All /admin* requests are now redirected to the frontend (see redirect above)
 
 // 404 handler
 app.use((req, res) => {
@@ -290,8 +240,8 @@ app.use((err, req, res, next) => {
 // Start server
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Backend server running on port ${PORT}`);
-  console.log(`📊 Admin dashboard: http://localhost:${PORT}/admin`);
   console.log(`🔧 API endpoints: http://localhost:${PORT}/api`);
+  console.log(`📊 Admin interface: ${process.env.FRONTEND_URL || 'http://localhost:3000'}/admin`);
 });
 
 module.exports = app;

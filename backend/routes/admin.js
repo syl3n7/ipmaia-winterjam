@@ -500,4 +500,314 @@ router.delete('/sponsors/:id', async (req, res) => {
   }
 });
 
+// Super Admin System Operations
+router.post('/system/clear-cache', requireSuperAdmin, async (req, res) => {
+  try {
+    console.log('🗑️ Super admin clearing cache...');
+    
+    // Clear require cache for dynamic modules (if needed)
+    Object.keys(require.cache).forEach(key => {
+      if (key.includes('/models/') || key.includes('/routes/')) {
+        delete require.cache[key];
+      }
+    });
+    
+    console.log('✅ Cache cleared successfully');
+    res.json({ 
+      success: true, 
+      message: 'Cache cleared successfully',
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('❌ Error clearing cache:', error);
+    res.status(500).json({ error: 'Failed to clear cache' });
+  }
+});
+
+router.post('/system/restart', requireSuperAdmin, async (req, res) => {
+  try {
+    console.log('🔄 Super admin requesting server restart...');
+    
+    // Send response first
+    res.json({ 
+      success: true, 
+      message: 'Server restart initiated. Please wait 10-15 seconds.',
+      timestamp: new Date().toISOString()
+    });
+    
+    // Wait a moment to ensure response is sent
+    setTimeout(() => {
+      console.log('🔄 Restarting server...');
+      process.exit(0); // Let process manager (pm2, docker, etc.) restart the server
+    }, 1000);
+    
+  } catch (error) {
+    console.error('❌ Error restarting server:', error);
+    res.status(500).json({ error: 'Failed to restart server' });
+  }
+});
+
+// Maintenance mode toggle
+let maintenanceMode = false;
+router.post('/system/maintenance', requireSuperAdmin, async (req, res) => {
+  try {
+    maintenanceMode = !maintenanceMode;
+    console.log(`🚧 Maintenance mode ${maintenanceMode ? 'ENABLED' : 'DISABLED'}`);
+    
+    res.json({ 
+      success: true, 
+      enabled: maintenanceMode,
+      message: `Maintenance mode ${maintenanceMode ? 'enabled' : 'disabled'}`,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('❌ Error toggling maintenance mode:', error);
+    res.status(500).json({ error: 'Failed to toggle maintenance mode' });
+  }
+});
+
+router.get('/system/maintenance', async (req, res) => {
+  res.json({ enabled: maintenanceMode });
+});
+
+// Test database connection
+router.get('/system/test-db', requireSuperAdmin, async (req, res) => {
+  try {
+    const startTime = Date.now();
+    
+    // Test connection
+    const connectionTest = await pool.query('SELECT 1 as test');
+    const connectionOk = connectionTest.rows[0].test === 1;
+    
+    // Test query
+    const queryTest = await pool.query('SELECT COUNT(*) as count FROM game_jams');
+    const queryOk = queryTest.rows.length > 0;
+    
+    const responseTime = Date.now() - startTime;
+    
+    res.json({
+      success: true,
+      connection: connectionOk,
+      query: queryOk,
+      responseTime: responseTime,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('❌ Database test failed:', error);
+    res.status(500).json({ 
+      success: false,
+      connection: false,
+      query: false,
+      error: error.message 
+    });
+  }
+});
+
+// User Management
+const pocketid = require('../utils/pocketid');
+
+router.get('/users', requireSuperAdmin, async (req, res) => {
+  try {
+    const usePocketID = process.env.POCKETID_API_URL && process.env.POCKETID_API_KEY;
+    
+    if (usePocketID) {
+      // Fetch users from PocketID API (only admin-related groups)
+      console.log('🔍 Fetching users from PocketID API...');
+      const pocketidUsers = await pocketid.getAdminUsers();
+      
+      // Also get local database users for role mapping
+      const localResult = await pool.query(
+        'SELECT id, username, email, role, is_active FROM users'
+      );
+      const localUsersMap = new Map(localResult.rows.map(u => [u.email, u]));
+      
+      // Merge PocketID data with local role data
+      const mergedUsers = pocketidUsers.map(pocketUser => {
+        const localUser = localUsersMap.get(pocketUser.email);
+        const groupNames = pocketUser.groupNames || [];
+        
+        // Determine role from PocketID groups
+        let role = 'user';
+        if (groupNames.includes('admin') && pocketUser.email === process.env.OIDC_ADMIN_EMAIL) {
+          role = 'super_admin';
+        } else if (groupNames.includes('admin') || groupNames.includes('ipmaia') || groupNames.includes('users')) {
+          role = 'admin';
+        }
+        
+        return {
+          id: pocketUser.id,
+          username: pocketUser.username,
+          email: pocketUser.email,
+          firstName: pocketUser.firstName,
+          lastName: pocketUser.lastName,
+          role: localUser?.role || role, // Use local role if exists, otherwise derive from groups
+          is_active: localUser?.is_active ?? true,
+          groups: pocketUser.groups,
+          groupNames: groupNames,
+          createdAt: pocketUser.createdAt,
+          source: 'pocketid'
+        };
+      });
+      
+      console.log(`✅ Fetched ${mergedUsers.length} admin users from PocketID`);
+      res.json(mergedUsers);
+    } else {
+      // Fallback to local database users
+      console.log('⚠️ PocketID API not configured, using local database');
+      const result = await pool.query(
+        'SELECT id, username, email, role, is_active, created_at, updated_at FROM users ORDER BY created_at DESC'
+      );
+      res.json(result.rows.map(u => ({ ...u, source: 'local' })));
+    }
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    res.status(500).json({ error: 'Failed to fetch users' });
+  }
+});
+
+router.put('/users/:id/role', requireSuperAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { role, email } = req.body;
+    
+    // Validate role
+    if (!['user', 'admin', 'super_admin'].includes(role)) {
+      return res.status(400).json({ error: 'Invalid role' });
+    }
+    
+    // Prevent changing own role via session check
+    if (req.session.email && req.session.email === email) {
+      return res.status(403).json({ error: 'Cannot change your own role' });
+    }
+    
+    // When using PocketID, we store role override in local DB
+    // The actual groups in PocketID remain unchanged (read-only)
+    
+    // Check if user exists in local DB
+    const existingUser = await pool.query(
+      'SELECT id FROM users WHERE email = $1',
+      [email]
+    );
+    
+    if (existingUser.rows.length > 0) {
+      // Update existing local user role
+      const result = await pool.query(
+        'UPDATE users SET role = $1, updated_at = NOW() WHERE email = $2 RETURNING id, username, email, role',
+        [role, email]
+      );
+      console.log(`✅ Local user role updated: ${email} -> ${role}`);
+      res.json(result.rows[0]);
+    } else {
+      // Create local user entry with role override
+      const result = await pool.query(
+        'INSERT INTO users (username, email, password_hash, role, is_active) VALUES ($1, $2, $3, $4, $5) RETURNING id, username, email, role',
+        [email.split('@')[0], email, '', role, true]
+      );
+      console.log(`✅ Created local user with role override: ${email} -> ${role}`);
+      res.json(result.rows[0]);
+    }
+  } catch (error) {
+    console.error('Error updating user role:', error);
+    res.status(500).json({ error: 'Failed to update user role' });
+  }
+});
+
+router.put('/users/:id/toggle', requireSuperAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { email } = req.body;
+    
+    // Prevent deactivating own account
+    if (req.session.email && req.session.email === email) {
+      return res.status(403).json({ error: 'Cannot deactivate your own account' });
+    }
+    
+    // Note: We can only toggle status in local DB, not in PocketID
+    // PocketID users remain active in PocketID, but we block them locally
+    
+    const result = await pool.query(
+      'UPDATE users SET is_active = NOT is_active, updated_at = NOW() WHERE email = $1 RETURNING id, username, is_active',
+      [email]
+    );
+    
+    if (result.rows.length === 0) {
+      // Create user entry with inactive status
+      const createResult = await pool.query(
+        'INSERT INTO users (username, email, password_hash, role, is_active) VALUES ($1, $2, $3, $4, $5) RETURNING id, username, is_active',
+        [email.split('@')[0], email, '', 'user', false]
+      );
+      console.log(`✅ User ${email} deactivated (local override created)`);
+      return res.json(createResult.rows[0]);
+    }
+    
+    console.log(`✅ User ${email} ${result.rows[0].is_active ? 'activated' : 'deactivated'} by super admin ${req.session.username}`);
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Error toggling user status:', error);
+    res.status(500).json({ error: 'Failed to toggle user status' });
+  }
+});
+
+// PocketID connection status
+router.get('/pocketid/status', requireSuperAdmin, async (req, res) => {
+  try {
+    const configured = !!(process.env.POCKETID_API_URL && process.env.POCKETID_API_KEY);
+    
+    if (!configured) {
+      return res.json({
+        configured: false,
+        connected: false,
+        message: 'PocketID API not configured. Set POCKETID_API_URL and POCKETID_API_KEY'
+      });
+    }
+    
+    const connected = await pocketid.healthCheck();
+    
+    res.json({
+      configured: true,
+      connected: connected,
+      apiUrl: process.env.POCKETID_API_URL,
+      message: connected ? 'Connected to PocketID' : 'Failed to connect to PocketID'
+    });
+  } catch (error) {
+    console.error('Error checking PocketID status:', error);
+    res.json({
+      configured: true,
+      connected: false,
+      error: error.message
+    });
+  }
+});
+
+// Audit Logs
+const { getAuditLogs, getAuditStats } = require('../utils/auditLog');
+
+router.get('/audit-logs', requireSuperAdmin, async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 100;
+    const offset = parseInt(req.query.offset) || 0;
+    const filters = {
+      userId: req.query.userId,
+      action: req.query.action,
+      tableName: req.query.tableName
+    };
+    
+    const logs = await getAuditLogs(limit, offset, filters);
+    res.json(logs);
+  } catch (error) {
+    console.error('Error fetching audit logs:', error);
+    res.status(500).json({ error: 'Failed to fetch audit logs' });
+  }
+});
+
+router.get('/audit-logs/stats', requireSuperAdmin, async (req, res) => {
+  try {
+    const stats = await getAuditStats();
+    res.json(stats);
+  } catch (error) {
+    console.error('Error fetching audit stats:', error);
+    res.status(500).json({ error: 'Failed to fetch audit stats' });
+  }
+});
+
 module.exports = router;
