@@ -220,9 +220,9 @@ router.post('/admin/upload-background', requireAdmin, uploadLimiter, upload.sing
     // Priority: 1. API_URL from ENV, 2. Request host, 3. Default
     let imageUrl;
     if (process.env.API_URL) {
-      // Remove /api suffix if present and add the full path
-      const baseUrl = process.env.API_URL.replace(/\/api$/, '');
-      imageUrl = `${baseUrl}/api/frontpage/background`;
+      // API_URL = https://api.ipmaia-winterjam.pt/api
+      // Just append the specific endpoint
+      imageUrl = `${process.env.API_URL}/frontpage/background`;
     } else {
       const protocol = req.protocol || 'https';
       const host = req.get('host') || 'ipmaia-winterjam.pt';
