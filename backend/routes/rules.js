@@ -259,8 +259,9 @@ router.post('/admin/upload-pdf', uploadLimiter, upload.single('pdf'), async (req
     // Process the rules content from form data
     const sections = processRulesContent(req.body);
     
-    // Generate the API URL for downloading
-    const apiUrl = process.env.API_URL || 'http://localhost:3001/api';
+    // Generate the API URL for downloading - handle trailing slashes
+    const apiUrlRaw = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+    const apiUrl = apiUrlRaw.replace(/\/+$/, '');
     const pdfUrl = `${apiUrl}/rules/download`;
     
     // Create or update rules in database

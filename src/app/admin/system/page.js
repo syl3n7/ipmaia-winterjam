@@ -24,17 +24,21 @@ export default function AdminSystem() {
     const startTime = Date.now();
 
     try {
+      // Extract base URL from API URL (remove /api suffix if present)
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+      const baseUrl = apiUrl.replace(/\/api$/, '');
+
       const [gameJamsRes, gamesRes, sponsorsRes, healthRes] = await Promise.allSettled([
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/gamejams`, {
+        fetch(`${apiUrl}/admin/gamejams`, {
           credentials: 'include',
         }),
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/games`, {
+        fetch(`${apiUrl}/admin/games`, {
           credentials: 'include',
         }),
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/sponsors/admin`, {
+        fetch(`${apiUrl}/sponsors/admin`, {
           credentials: 'include',
         }),
-        fetch(`${process.env.NEXT_PUBLIC_API_URL.replace('/api', '')}/health`),
+        fetch(`${baseUrl}/health`),
       ]);
 
       const responseTime = Date.now() - startTime;

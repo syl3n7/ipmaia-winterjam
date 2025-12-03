@@ -217,12 +217,12 @@ router.post('/admin/upload-background', requireAdmin, uploadLimiter, upload.sing
     }
 
     // Store full URL for cross-domain access
-    // Priority: 1. API_URL from ENV, 2. Request host, 3. Default
+    // Priority: 1. NEXT_PUBLIC_API_URL from ENV, 2. Request host, 3. Default
     let imageUrl;
-    if (process.env.API_URL) {
-      // API_URL = https://api.ipmaia-winterjam.pt/api
-      // Just append the specific endpoint
-      imageUrl = `${process.env.API_URL}/frontpage/background`;
+    if (process.env.NEXT_PUBLIC_API_URL) {
+      // Remove any trailing slashes and append the endpoint
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL.replace(/\/+$/, '');
+      imageUrl = `${baseUrl}/frontpage/background`;
     } else {
       const protocol = req.protocol || 'https';
       const host = req.get('host') || 'ipmaia-winterjam.pt';

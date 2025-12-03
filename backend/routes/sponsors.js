@@ -4,6 +4,7 @@ const path = require('path');
 const fs = require('fs').promises;
 const rateLimit = require('express-rate-limit');
 const { pool } = require('../config/database');
+const { requireAdmin } = require('./auth');
 const router = express.Router();
 
 // Rate limiter for logo uploads
@@ -171,8 +172,8 @@ router.get('/admin', async (req, res) => {
   }
 });
 
-// POST /api/sponsors - Create new sponsor
-router.post('/', async (req, res) => {
+// POST /api/sponsors - Create new sponsor (admin only)
+router.post('/', requireAdmin, async (req, res) => {
   try {
     const { name, tier, logo_filename, website_url, description, is_active } = req.body;
 
@@ -229,8 +230,8 @@ router.post('/', async (req, res) => {
   }
 });
 
-// PUT /api/sponsors/:id - Update sponsor
-router.put('/:id', async (req, res) => {
+// PUT /api/sponsors/:id - Update sponsor (admin only)
+router.put('/:id', requireAdmin, async (req, res) => {
   try {
     const id = parseInt(req.params.id);
     const { name, tier, logo_filename, website_url, description, is_active } = req.body;
@@ -351,8 +352,8 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// DELETE /api/sponsors/:id - Delete sponsor
-router.delete('/:id', async (req, res) => {
+// DELETE /api/sponsors/:id - Delete sponsor (admin only)
+router.delete('/:id', requireAdmin, async (req, res) => {
   try {
     const id = parseInt(req.params.id);
 
@@ -394,8 +395,34 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
-// Upload sponsor logo (admin only)
-router.post('/upload-logo/:id', uploadLimiter, upload.single('logo'), async (req, res) => {
+// Upload sponsor logo without ID (returns filename for later use) (admin only)
+router.post('/upload-logo', requireAdmin, uploadLimiter, upload.single('logo'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        error: 'Nenhum ficheiro foi enviado'
+      });
+    }
+
+    console.log('🖼️ Sponsor logo uploaded (temp):', req.file.filename);
+
+    res.json({
+      success: true,
+      filename: req.file.filename,
+      message: 'Logo carregado com sucesso'
+    });
+  } catch (error) {
+    console.error('❌ Error uploading logo:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Erro ao carregar logo'
+    });
+  }
+});
+
+// Upload sponsor logo for existing sponsor (admin only)
+router.post('/upload-logo/:id', requireAdmin, uploadLimiter, upload.single('logo'), async (req, res) => {
   try {
     const id = parseInt(req.params.id);
 
