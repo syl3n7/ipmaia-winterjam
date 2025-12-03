@@ -156,18 +156,12 @@ passport.deserializeUser(async (id, done) => {
 // Serve static files (uploaded images, etc.)
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// ADMIN INTERFACE: Redirect to new Next.js admin panel
-// Old admin (backend HTML) was at: http://localhost:3001/admin
-// New admin (Next.js) is at: http://localhost:3000/admin (dev) or https://ipmaia-winterjam.pt/admin (prod)
-
-// OPTION 1: Redirect to new frontend admin (for full migration) - CURRENTLY ACTIVE
+// ADMIN INTERFACE: Redirect to Next.js admin panel
+// All /admin requests are redirected to the frontend at /admin
 app.get('/admin*', (req, res) => {
   const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
   res.redirect(`${frontendUrl}/admin`);
 });
-
-// OPTION 2: Serve old backend admin (for transition period) - DISABLED
-// app.use('/admin', express.static(path.join(__dirname, 'admin/dist')));
 
 // Serve favicon for admin panel
 app.get('/favicon.ico', (req, res) => {
@@ -217,9 +211,6 @@ app.get('/debug/files', (req, res) => {
     res.json({ error: error.message });
   }
 });
-
-// Note: Admin routes removed - admin interface migrated to Next.js frontend at /admin
-// All /admin* requests are now redirected to the frontend (see redirect above)
 
 // 404 handler
 app.use((req, res) => {
