@@ -150,7 +150,7 @@ export default function Page() {
         {/* Rules Content */}
         <div className="space-y-8">
           
-          {/* Section 1: Code of Conduct */}
+          {/* Section 1: Código de Conduta */}
           <section className="bg-white rounded-2xl p-8 border-2 border-gray-200 shadow-md">
             <h2 className="text-3xl font-bold text-gray-900 mb-6 flex items-center gap-3">
               <span className="text-gray-500">1.</span> Código de Conduta
@@ -160,23 +160,20 @@ export default function Page() {
                 Todos os participantes da Game Jam devem aderir ao seguinte código de conduta para garantir um ambiente inclusivo, seguro e respeitoso:
               </p>
               
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
-                <h3 className="font-semibold text-gray-900 mb-3">✅ Regras de Conduta</h3>
-                <ol className="list-decimal list-inside space-y-2 text-gray-700">
-                  <li><strong>Respeito Mútuo:</strong> Trate todos com respeito, independentemente de origem, género, orientação sexual, etnia, religião ou habilidade. Qualquer forma de assédio ou discriminação não será tolerada.</li>
-                  <li><strong>Assédio:</strong> Não serão aceites comportamentos intimidatórios, perseguição, insultos ou qualquer tipo de assédio, seja pessoalmente, online ou através de outros meios.</li>
-                  <li><strong>Colaboração:</strong> A Game Jam promove a colaboração entre os participantes. A competição saudável é incentivada, mas é igualmente importante fomentar o espírito de comunidade.</li>
-                  <li><strong>Segurança:</strong> Em caso de qualquer situação desconfortável ou insegura, comunique-se imediatamente com a organização.</li>
-                  <li><strong>Respeito aos Outros:</strong> Respeite os outros participantes e organizadores do evento.</li>
-                  <li><strong>Conduta Educada:</strong> Mantenha uma conduta educada durante o evento.</li>
-                  <li><strong>Experiência dos Outros:</strong> Não interfira negativamente na experiência de outros participantes.</li>
-                  <li><strong>Preservação de Materiais:</strong> Não danifique os materiais utilizados no evento.</li>
-                  <li><strong>Horário e Cronograma:</strong> Siga o horário e cronograma do evento.</li>
-                  <li><strong>Limpeza e Organização:</strong> Mantenha os locais limpos e organizados.</li>
-                  <li><strong>Itens proibidos:</strong> É estritamente proibido trazer, consumir ou expor durante o evento qualquer tipo de bebida alcoólica ou substâncias ilegais.</li>
-                  <li><strong>Equipamento/Utensílios:</strong> A responsabilidade pelo equipamento utilizado (ex.: monitor, rato, computador, mesas digitais, extensões, prato, talheres, micro-ondas, etc.), sejam estes da organização, propriedade do IPMAIA ou propriedade do participante, é da inteira responsabilidade do próprio utilizador. A organização não se responsabiliza por quaisquer danos ou perdas de equipamento. Caso algum material pertencente à organização ou ao IPMAIA seja danificado, poderá ser solicitada ao utilizador uma compensação pelos danos causados.</li>
-                </ol>
-              </div>
+              <ol className="list-decimal list-inside space-y-2 text-gray-700 ml-4">
+                <li><strong>Respeito Mútuo:</strong> Trate todos com respeito, independentemente de origem, género, orientação sexual, etnia, religião ou habilidade. Qualquer forma de assédio ou discriminação não será tolerada.</li>
+                <li><strong>Assédio:</strong> Não serão aceites comportamentos intimidatórios, perseguição, insultos ou qualquer tipo de assédio, seja pessoalmente, online ou através de outros meios.</li>
+                <li><strong>Colaboração:</strong> A Game Jam promove a colaboração entre os participantes. A competição saudável é incentivada, mas é igualmente importante fomentar o espírito de comunidade.</li>
+                <li><strong>Segurança:</strong> Em caso de qualquer situação desconfortável ou insegura, comunique-se imediatamente com a organização.</li>
+                <li><strong>Respeito aos Outros:</strong> Respeite os outros participantes e organizadores do evento.</li>
+                <li><strong>Conduta Educada:</strong> Mantenha uma conduta educada durante o evento.</li>
+                <li><strong>Experiência dos Outros:</strong> Não interfira negativamente na experiência de outros participantes.</li>
+                <li><strong>Preservação de Materiais:</strong> Não danifique os materiais utilizados no evento.</li>
+                <li><strong>Horário e Cronograma:</strong> Siga o horário e cronograma do evento.</li>
+                <li><strong>Limpeza e Organização:</strong> Mantenha os locais limpos e organizados.</li>
+                <li><strong>Itens proibidos:</strong> É estritamente proibido trazer, consumir ou expor durante o evento qualquer tipo de bebida alcoólica ou substâncias ilegais.</li>
+                <li><strong>Equipamento/Utensílios:</strong> A responsabilidade pelo equipamento utilizado (ex.: monitor, rato, computador, mesas digitais, extensões, prato, talheres, micro-ondas, etc.), sejam estes da organização, propriedade do IPMAIA ou propriedade do participante, é da inteira responsabilidade do próprio utilizador. A organização não se responsabiliza por quaisquer danos ou perdas de equipamento. Caso algum material pertencente à organização ou ao IPMAIA seja danificado, poderá ser solicitada ao utilizador uma compensação pelos danos causados.</li>
+              </ol>
 
               <div className="bg-red-50 border-l-4 border-red-500 p-4 mt-4">
                 <p className="font-semibold text-red-800">
@@ -210,7 +207,7 @@ export default function Page() {
             </div>
           </section>
 
-          {/* Section 3: Inclusion Policy */}
+          {/* Section 3: Política de Inclusão */}
           <section className="bg-blue-50 rounded-2xl p-8 border-2 border-blue-200 shadow-md">
             <h2 className="text-3xl font-bold text-gray-900 mb-6 flex items-center gap-3">
               <span className="text-gray-500">3.</span> Política de Inclusão
@@ -236,39 +233,35 @@ export default function Page() {
               
               {/* Regras da Jam */}
               <div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-3">⏱️ Regras da Jam</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-3">Regras da Jam</h3>
                 <ol className="list-decimal list-inside space-y-2 ml-4 text-gray-700">
-                  <li><strong>Duração:</strong> O jogo deve ser criado do zero durante as 45 horas da game jam. É permitido o uso de ativos existentes (como arte, som ou música), desde que a criação do jogo em si como mecânicas, código e estrutura seja desenvolvida dentro do período da competição.</li>
+                  <li><strong>Duração:</strong> O jogo deve ser criado do zero durante as 45 horas da game jam.</li>
                   <li><strong>Participação em Equipa:</strong> Equipas de 2 até 4 pessoas.</li>
                 </ol>
               </div>
 
               {/* Ferramentas e Ativos */}
               <div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-3">🛠️ Ferramentas e Ativos</h3>
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                  <ol className="list-decimal list-inside space-y-2 text-gray-700">
-                    <li><strong>Ferramentas:</strong> Pode usar qualquer ferramenta, motor, biblioteca ou código-base pré-existente.</li>
-                    <li><strong>Ativos de Terceiros:</strong> São permitidos ativos de arte, música ou áudio, pagos ou gratuitos. A quantidade de ativos pagos influenciará a pontuação final.</li>
-                    <li><strong>Direitos:</strong> Utilize apenas ativos sobre os quais detém direitos legais (domínio público, licenciados ou criados por si).</li>
-                  </ol>
-                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-3">Ferramentas e Ativos</h3>
+                <ol className="list-decimal list-inside space-y-2 ml-4 text-gray-700">
+                  <li><strong>Ferramentas:</strong> Pode usar qualquer ferramenta, motor, biblioteca ou código-base pré-existente.</li>
+                  <li><strong>Ativos de Terceiros:</strong> São permitidos ativos de arte, música ou áudio, pagos ou gratuitos, desde que a criação do jogo em si como mecânicas, código e estrutura seja desenvolvida dentro do período da competição. A quantidade de ativos pagos influenciará a pontuação final.</li>
+                  <li><strong>Direitos:</strong> Utilize apenas ativos sobre os quais detém direitos legais (domínio público, licenciados ou criados por si).</li>
+                </ol>
               </div>
 
               {/* Regras da Competição */}
               <div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-3">🏆 Regras da Competição</h3>
-                <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4">
-                  <ol className="list-decimal list-inside space-y-2 text-gray-700">
-                    <li><strong>Duração:</strong> O jogo deve ser criado do zero em 45 horas.</li>
-                    <li><strong>Código Fonte:</strong> O código fonte ou os ficheiros do projeto devem ser incluídos com o jogo.</li>
-                  </ol>
-                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-3">Regras da Competição</h3>
+                <ol className="list-decimal list-inside space-y-2 ml-4 text-gray-700">
+                  <li><strong>Duração:</strong> O jogo deve ser criado do zero em 45 horas.</li>
+                  <li><strong>Código Fonte:</strong> O código fonte ou os ficheiros do projeto devem ser incluídos com o jogo.</li>
+                </ol>
               </div>
 
               {/* Diretrizes do Código Fonte */}
               <div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-3">📁 Diretrizes do Código Fonte</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-3">Diretrizes do Código Fonte</h3>
                 <ol className="list-decimal list-inside space-y-2 ml-4 text-gray-700">
                   <li>Partilhar o código fonte contribui para a aprendizagem da comunidade.</li>
                   <li>Para ferramentas sem &apos;código&apos; (como GameMaker), o ficheiro do projeto e o &apos;código fonte&apos;.</li>
@@ -287,7 +280,7 @@ export default function Page() {
               
               {/* Submissão */}
               <div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-3">📤 Submissão</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-3">Submissão</h3>
                 <ol className="list-decimal list-inside space-y-2 ml-4 text-gray-700">
                   <li>Os projetos devem ser submetidos ao Itch.io após o término das 45 horas e o link partilhado no <a href="http://discord.gg/X97GAg7F6E" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 underline">Discord</a>.</li>
                 </ol>
@@ -295,7 +288,7 @@ export default function Page() {
 
               {/* Correções de Erros */}
               <div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-3">🐛 Correções de Erros</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-3">Correções de Erros</h3>
                 <ol className="list-decimal list-inside space-y-2 ml-4 text-gray-700">
                   <li>Não são permitidas correções de erros ou adição de Features após a submissão.</li>
                 </ol>
@@ -303,7 +296,7 @@ export default function Page() {
 
               {/* Direitos */}
               <div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-3">©️ Direitos</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-3">Direitos</h3>
                 <ol className="list-decimal list-inside space-y-2 ml-4 text-gray-700">
                   <li>O jogo é propriedade do criador. A organização pode usá-lo para divulgação do evento.</li>
                 </ol>
@@ -311,7 +304,7 @@ export default function Page() {
 
               {/* Entrada Livre */}
               <div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-3">🎟️ Entrada Livre</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-3">Entrada Livre</h3>
                 <ol className="list-decimal list-inside space-y-2 ml-4 text-gray-700">
                   <li>A participação é gratuita e aberta ao público em geral, incluindo alunos e alumni do IPMAIA. A game jam decorre principalmente em formato presencial, sendo permitido que apenas um membro da equipa participe online. A maioria dos elementos deve estar presente nas instalações do IPMaia.</li>
                 </ol>
@@ -319,23 +312,19 @@ export default function Page() {
 
               {/* Comunicação e Organização */}
               <div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-3">💬 Comunicação e Organização</h3>
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <ol className="list-decimal list-inside space-y-2 text-gray-700">
-                    <li>A organização e comunicação do evento serão feitas, sem falta, através do servidor de <a href="http://discord.gg/X97GAg7F6E" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 underline">Discord</a> da game jam, não deixando de parte a possibilidade de também serem feitas de forma presencial.</li>
-                    <li>As regras do sorteio de jogos serão divulgadas no Discord oficial da game jam.</li>
-                  </ol>
-                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-3">Comunicação e Organização</h3>
+                <ol className="list-decimal list-inside space-y-2 ml-4 text-gray-700">
+                  <li>A organização e comunicação do evento serão feitas, sem falta, através do servidor de <a href="http://discord.gg/X97GAg7F6E" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 underline">Discord</a> da game jam, não deixando de parte a possibilidade de também serem feitas de forma presencial.</li>
+                  <li>As regras do sorteio de jogos serão divulgadas no Discord oficial da game jam.</li>
+                </ol>
               </div>
 
               {/* Confirmação de Refeições */}
               <div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-3">🍽️ Confirmação de Refeições</h3>
-                <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4">
-                  <ol className="list-decimal list-inside space-y-2 text-gray-700">
-                    <li><strong>Confirmação de Refeições:</strong> Os participantes que confirmarem a sua presença em refeições organizadas pela Game Jam (ex: jantar de sexta-feira) e não comparecerem, ficam obrigados ao pagamento do custo da mesma, no valor de 1,50 € (um euro e cinquenta cêntimos).</li>
-                  </ol>
-                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-3">Confirmação de Refeições</h3>
+                <ol className="list-decimal list-inside space-y-2 ml-4 text-gray-700">
+                  <li>Os participantes que confirmarem a sua presença em refeições organizadas pela Game Jam (ex: jantar de sexta-feira) e não comparecerem, ficam obrigados ao pagamento do custo da mesma, no valor de 1,50 € (um euro e cinquenta cêntimos).</li>
+                </ol>
               </div>
               
               <div className="bg-red-50 border-l-4 border-red-500 p-4 mt-4">
@@ -346,37 +335,19 @@ export default function Page() {
             </div>
           </section>
 
-          {/* Section 6: Judging Criteria */}
+          {/* Section 6: Critérios de Avaliação */}
           <section className="bg-white rounded-2xl p-8 border-2 border-gray-200 shadow-md">
             <h2 className="text-3xl font-bold text-gray-900 mb-6 flex items-center gap-3">
               <span className="text-gray-500">6.</span> Critérios de Avaliação
             </h2>
             <div className="space-y-4 text-gray-800">
-              <p className="text-gray-700 mb-4">
-                Os projetos serão avaliados com os seguintes critérios:
-              </p>
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <h3 className="font-semibold text-gray-900 mb-2">1. 🎯 Relação/Cumprimento do Tema</h3>
-                  <p className="text-sm text-gray-700">0–20 pontos</p>
-                </div>
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                  <h3 className="font-semibold text-gray-900 mb-2">2. 💡 Criatividade/ÚSP</h3>
-                  <p className="text-sm text-gray-700">0–20 pontos</p>
-                </div>
-                <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                  <h3 className="font-semibold text-gray-900 mb-2">3. 🎮 Qualidade (diversão)</h3>
-                  <p className="text-sm text-gray-700">0–20 pontos</p>
-                </div>
-                <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-                  <h3 className="font-semibold text-gray-900 mb-2">4. 📋 Cumprimento/Quebra das Regras</h3>
-                  <p className="text-sm text-gray-700">0–20 pontos</p>
-                </div>
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 md:col-span-2">
-                  <h3 className="font-semibold text-gray-900 mb-2">5. 🎨 Apresentação Visual/Estética e Quantidade de Ativos Usados</h3>
-                  <p className="text-sm text-gray-700">0–20 pontos</p>
-                </div>
-              </div>
+              <ol className="list-decimal list-inside space-y-2 text-gray-700 ml-4">
+                <li><strong>Relação/Cumprimento do Tema</strong> (0–20 pontos)</li>
+                <li><strong>Criatividade/ÚSP</strong> (0–20 pontos)</li>
+                <li><strong>Qualidade (diversão)</strong> (0–20 pontos)</li>
+                <li><strong>Cumprimento/Quebra das Regras</strong> (0–20 pontos)</li>
+                <li><strong>Apresentação Visual/Estética e Quantidade de Ativos Usados</strong> (0–20 pontos)</li>
+              </ol>
             </div>
           </section>
 
