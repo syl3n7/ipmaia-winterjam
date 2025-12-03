@@ -431,8 +431,8 @@ router.post('/system/restart', requireSuperAdmin, async (req, res) => {
 });
 
 // Maintenance mode toggle
-const MAINTENANCE_FILE = '/var/maintenance/maintenance.on';
-const MAINTENANCE_DIR = '/var/maintenance';
+const MAINTENANCE_FILE = '/var/maintenance_flag/maintenance.on';
+const MAINTENANCE_DIR = '/var/maintenance_flag';
 
 router.post('/system/maintenance', requireSuperAdmin, async (req, res) => {
   try {
