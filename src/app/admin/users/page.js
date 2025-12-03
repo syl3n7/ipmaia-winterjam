@@ -9,6 +9,7 @@ export default function AdminUsers() {
   const router = useRouter();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
   const [filter, setFilter] = useState('all'); // all, admin, super_admin, user
   const [pocketidStatus, setPocketidStatus] = useState(null);
 
@@ -85,6 +86,34 @@ export default function AdminUsers() {
     }
   };
 
+  const handleSyncUsers = async () => {
+    if (!confirm('Sync users from PocketID?\n\nThis will add new users from PocketID to the local database.\nExisting user settings will be preserved.')) {
+      return;
+    }
+
+    try {
+      setSyncing(true);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/users/sync-from-pocketid`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        alert(`✅ Sync complete!\n\nCreated: ${result.created}\nSkipped: ${result.skipped}\nTotal: ${result.total}`);
+        await fetchUsers();
+      } else {
+        const error = await response.json();
+        alert(`❌ Sync failed: ${error.error || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error syncing users:', error);
+      alert('❌ Failed to sync users');
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   const handleToggleActive = async (userId, userEmail, currentStatus) => {
     const action = currentStatus ? 'deactivate' : 'activate';
     if (!confirm(`Are you sure you want to ${action} this user?\n\nNote: This only affects local access. PocketID account remains active.`)) {
@@ -151,12 +180,23 @@ export default function AdminUsers() {
             </div>
           )}
         </div>
-        <button
-          onClick={fetchUsers}
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
-        >
-          🔄 Refresh
-        </button>
+        <div className="flex gap-2">
+          {pocketidStatus?.connected && (
+            <button
+              onClick={handleSyncUsers}
+              disabled={syncing}
+              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {syncing ? '⏳ Syncing...' : '🔄 Sync from PocketID'}
+            </button>
+          )}
+          <button
+            onClick={fetchUsers}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
+          >
+            🔄 Refresh
+          </button>
+        </div>
       </div>
 
       {/* Stats */}
@@ -302,9 +342,10 @@ export default function AdminUsers() {
       <div className="bg-blue-900 bg-opacity-30 border border-blue-700 rounded-lg p-4">
         <h4 className="text-white font-semibold mb-2">ℹ️ User Management Info</h4>
         <ul className="text-gray-300 text-sm space-y-1">
-          <li>• <strong>Read-Only PocketID Integration:</strong> Users are fetched from PocketID API</li>
-          <li>• Only users in <code className="bg-gray-800 px-1 rounded">admin</code>, <code className="bg-gray-800 px-1 rounded">ipmaia</code>, or <code className="bg-gray-800 px-1 rounded">users</code> groups are shown</li>
-          <li>• <strong>PocketID groups remain unchanged</strong> - we only create local role overrides</li>
+          <li>• <strong>PocketID Sync:</strong> Click "Sync from PocketID" to import users from PocketID API</li>
+          <li>• Only users in <code className="bg-gray-800 px-1 rounded">admin</code>, <code className="bg-gray-800 px-1 rounded">ipmaia</code>, or <code className="bg-gray-800 px-1 rounded">users</code> groups are synced</li>
+          <li>• <strong>Local Control:</strong> Users are stored locally after sync - you can block/modify them here</li>
+          <li>• <strong>Prevent Unauthorized Login:</strong> Deactivate users locally to block their access, even if they&apos;re still in PocketID</li>
           <li>• Super Admin: Requires &quot;admin&quot; group + matching email (<code className="bg-gray-800 px-1 rounded">OIDC_ADMIN_EMAIL</code>)</li>
           <li>• Role changes and deactivations are stored locally and don&apos;t affect PocketID</li>
           <li>• You cannot modify your own account to prevent lockout</li>

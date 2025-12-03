@@ -5,6 +5,7 @@ const fs = require('fs').promises;
 const rateLimit = require('express-rate-limit');
 const Rules = require('../models/Rules');
 const { requireAdmin } = require('./auth');
+const { logAudit } = require('../utils/auditLog');
 
 const router = express.Router();
 
@@ -300,6 +301,18 @@ router.post('/admin/upload-pdf', uploadLimiter, upload.single('pdf'), async (req
       console.error('⚠️ Database error (non-critical):', dbError.message);
       // Continue even if database fails - PDF is uploaded
     }
+
+    // Log the upload
+    await logAudit({
+      userId: req.session.userId,
+      username: req.session.username || req.session.email,
+      action: 'UPDATE',
+      tableName: 'rules',
+      description: `Uploaded new rulebook PDF: ${req.file.filename}`,
+      newValues: { filename: req.file.filename, size: req.file.size },
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent')
+    });
 
     res.json({
       message: 'PDF uploaded successfully and rules updated',

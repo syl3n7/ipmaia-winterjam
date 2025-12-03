@@ -16,6 +16,7 @@ A comprehensive web application for IPMAIA's WinterJam event - a 45-hour game de
 - **🛡️ Security**: Proper session handling, input validation, and CSP protection
 - **🔍 SEO Optimized**: Automatic sitemap generation with next-sitemap
 - **⚡ Performance**: Image URL localization and optimized loading
+- **🚧 Maintenance Mode**: Automatic maintenance page during deployments with auto-refresh
 
 ## 🚀 Quick Start
 
@@ -411,6 +412,27 @@ docker stats
 - **HTTPS Only**: HTTP automatically redirects to HTTPS
 - **Isolated Networks**: Docker containers communicate via private networks
 - **Minimal Exposed Ports**: Only 80 and 443 exposed on host
+
+### 🚧 Maintenance Mode
+
+Automatic maintenance page system for zero-downtime deployments:
+
+```bash
+# Automatic during deployment - no action needed
+./deploy-docker.sh
+
+# Manual control (if needed)
+./maintenance-on.sh   # Enable maintenance mode
+./maintenance-off.sh  # Disable maintenance mode
+```
+
+**Features:**
+- 🎨 Branded maintenance page with auto-refresh
+- ⏱️ Checks service status every 10 seconds
+- 🔄 Automatically redirects when services are back
+- 📱 Mobile and desktop responsive
+
+See [MAINTENANCE.md](MAINTENANCE.md) for full documentation.
 
 ---
 

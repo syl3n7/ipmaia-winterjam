@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const { pool } = require('../config/database');
 const { Issuer, Strategy } = require('openid-client');
 const passport = require('passport');
+const { logAudit } = require('../utils/auditLog');
 
 const router = express.Router();
 
@@ -107,6 +108,11 @@ const initOIDC = async () => {
           user = result.rows[0];
           console.log(`✅ Created new OIDC user: ${user.email} with role: ${role} (groups: ${groups.join(', ')})`);
         } else {
+          // Check if user is deactivated locally
+          if (!user.is_active) {
+            console.log(`🚫 Login blocked: User ${user.email} is deactivated locally`);
+            return done(null, false, { message: 'Your account has been deactivated. Please contact an administrator.' });
+          }
           // Update existing user's role if their groups/email have changed
           const groups = userinfo.groups || userinfo.memberOf || [];
           let newRole = 'user';
@@ -178,6 +184,7 @@ router.get('/me', (req, res) => {
     return res.json({
       id: 1,
       username: 'dev-admin',
+      email: 'dev@admin.local',
       role: 'super_admin'
     });
   }
@@ -189,6 +196,7 @@ router.get('/me', (req, res) => {
   res.json({
     id: req.session.userId,
     username: req.session.username,
+    email: req.session.email,
     role: req.session.role
   });
 });
@@ -410,6 +418,16 @@ router.get('/oidc/callback', async (req, res) => {
     req.session.username = user.username;
     req.session.role = user.role;
     req.session.email = user.email;
+
+    // Log the login
+    await logAudit({
+      userId: user.id,
+      username: user.username,
+      action: 'LOGIN',
+      description: `User logged in via OIDC (role: ${user.role})`,
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent')
+    });
 
     // Redirect to admin dashboard
     res.redirect('/admin');

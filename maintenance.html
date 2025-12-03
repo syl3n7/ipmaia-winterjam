@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IPMAIA WinterJam - Maintenance</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            text-align: center;
+            max-width: 600px;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .logo {
+            font-size: 80px;
+            margin-bottom: 20px;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+
+        p {
+            font-size: 1.25rem;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            opacity: 0.95;
+        }
+
+        .status {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 30px;
+            margin: 30px 0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .info {
+            font-size: 0.95rem;
+            opacity: 0.8;
+            margin-top: 20px;
+        }
+
+        .countdown {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-top: 15px;
+            color: #ffd700;
+        }
+
+        .footer {
+            margin-top: 40px;
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+
+        /* Connection status indicator */
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ffd700;
+            margin-right: 8px;
+            animation: blink 1.5s ease-in-out infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        @media (max-width: 600px) {
+            h1 { font-size: 2rem; }
+            p { font-size: 1rem; }
+            .logo { font-size: 60px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">🎮</div>
+        <h1>IPMAIA WinterJam</h1>
+        <p>We're currently updating our systems to bring you the best experience!</p>
+
+        <div class="status">
+            <div class="spinner"></div>
+            <p><span class="status-indicator"></span>Deployment in Progress</p>
+            <p class="info">
+                Our team is deploying new updates. This usually takes just a few minutes.
+            </p>
+            <div class="countdown" id="countdown">
+                Checking status in <span id="timer">10</span> seconds...
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Thank you for your patience! 💙</p>
+            <p style="font-size: 0.8rem; margin-top: 10px;">
+                Auto-refreshing to check if services are back online...
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // Auto-refresh logic to check if services are back
+        let countdown = 10;
+        const timerElement = document.getElementById('timer');
+        const countdownElement = document.getElementById('countdown');
+
+        function updateCountdown() {
+            countdown--;
+            timerElement.textContent = countdown;
+
+            if (countdown <= 0) {
+                countdownElement.innerHTML = '<span class="status-indicator"></span>Checking if services are ready...';
+                checkServerStatus();
+            }
+        }
+
+        function checkServerStatus() {
+            // Try to fetch from the main site
+            fetch('/', { 
+                method: 'HEAD',
+                cache: 'no-cache',
+                headers: {
+                    'Cache-Control': 'no-cache'
+                }
+            })
+            .then(response => {
+                // If we get a response that's not the maintenance page, reload
+                if (response.ok && !response.headers.get('X-Maintenance-Mode')) {
+                    window.location.reload();
+                } else {
+                    // Reset countdown and try again
+                    countdown = 10;
+                    countdownElement.innerHTML = 'Services still updating... Checking again in <span id="timer">10</span> seconds...';
+                    startCountdown();
+                }
+            })
+            .catch(() => {
+                // If fetch fails, reset countdown and try again
+                countdown = 10;
+                countdownElement.innerHTML = 'Services still starting... Checking again in <span id="timer">10</span> seconds...';
+                startCountdown();
+            });
+        }
+
+        function startCountdown() {
+            const interval = setInterval(() => {
+                updateCountdown();
+                if (countdown <= 0) {
+                    clearInterval(interval);
+                }
+            }, 1000);
+        }
+
+        // Start the countdown
+        startCountdown();
+    </script>
+</body>
+</html>

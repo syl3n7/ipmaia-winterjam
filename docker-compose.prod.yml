@@ -81,6 +81,8 @@ services:
     volumes:
       - ./nginx.prod.conf:/etc/nginx/nginx.conf:ro
       - ./ssl:/etc/nginx/ssl:ro
+      - ./maintenance.html:/usr/share/nginx/html/maintenance.html:ro
+      - maintenance_flag:/etc/nginx:rw
       - backend_uploads:/var/www/uploads:ro
     depends_on:
       - frontend
@@ -92,6 +94,7 @@ volumes:
   postgres_data:
   backend_uploads:
   shared_public:
+  maintenance_flag:
 
 networks:
   winterjam-network:

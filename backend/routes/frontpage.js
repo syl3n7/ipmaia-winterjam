@@ -5,6 +5,7 @@ const fs = require('fs').promises;
 const rateLimit = require('express-rate-limit');
 const { pool } = require('../config/database');
 const { requireAdmin } = require('./auth');
+const { logAudit } = require('../utils/auditLog');
 const router = express.Router();
 
 // Rate limiter for image uploads
@@ -241,6 +242,18 @@ router.post('/admin/upload-background', requireAdmin, uploadLimiter, upload.sing
       VALUES ('hero_background_image', $1, 'url', 'Background Image URL', 'hero', 98)
       ON CONFLICT (setting_key) DO UPDATE SET setting_value = $1, updated_at = CURRENT_TIMESTAMP
     `, [imageUrl]);
+
+    // Log the upload
+    await logAudit({
+      userId: req.session.userId,
+      username: req.session.username || req.session.email,
+      action: 'UPDATE',
+      tableName: 'front_page_settings',
+      description: `Uploaded new background image: ${req.file.filename}`,
+      newValues: { filename: req.file.filename, url: imageUrl },
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent')
+    });
 
     res.json({
       message: 'Background image uploaded successfully',

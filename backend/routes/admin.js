@@ -382,6 +382,17 @@ router.post('/system/clear-cache', requireSuperAdmin, async (req, res) => {
       }
     });
     
+    // Log the action
+    const { logAudit } = require('../utils/auditLog');
+    await logAudit({
+      userId: req.session.userId,
+      username: req.session.username || req.session.email,
+      action: 'SYSTEM_OPERATION',
+      description: 'Cleared server cache',
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent')
+    });
+    
     console.log('✅ Cache cleared successfully');
     res.json({ 
       success: true, 
@@ -479,56 +490,23 @@ const pocketid = require('../utils/pocketid');
 router.get('/users', requireSuperAdmin, async (req, res) => {
   try {
     const usePocketID = process.env.POCKETID_API_URL && process.env.POCKETID_API_KEY;
+    console.log('🔍 PocketID Configuration Check:');
+    console.log('   - POCKETID_API_URL:', process.env.POCKETID_API_URL ? '✅ Set' : '❌ Missing');
+    console.log('   - POCKETID_API_KEY:', process.env.POCKETID_API_KEY ? '✅ Set' : '❌ Missing');
     
-    if (usePocketID) {
-      // Fetch users from PocketID API (only admin-related groups)
-      console.log('🔍 Fetching users from PocketID API...');
-      const pocketidUsers = await pocketid.getAdminUsers();
-      
-      // Also get local database users for role mapping
-      const localResult = await pool.query(
-        'SELECT id, username, email, role, is_active FROM users'
-      );
-      const localUsersMap = new Map(localResult.rows.map(u => [u.email, u]));
-      
-      // Merge PocketID data with local role data
-      const mergedUsers = pocketidUsers.map(pocketUser => {
-        const localUser = localUsersMap.get(pocketUser.email);
-        const groupNames = pocketUser.groupNames || [];
-        
-        // Determine role from PocketID groups
-        let role = 'user';
-        if (groupNames.includes('admin') && pocketUser.email === process.env.OIDC_ADMIN_EMAIL) {
-          role = 'super_admin';
-        } else if (groupNames.includes('admin') || groupNames.includes('ipmaia') || groupNames.includes('users')) {
-          role = 'admin';
-        }
-        
-        return {
-          id: pocketUser.id,
-          username: pocketUser.username,
-          email: pocketUser.email,
-          firstName: pocketUser.firstName,
-          lastName: pocketUser.lastName,
-          role: localUser?.role || role, // Use local role if exists, otherwise derive from groups
-          is_active: localUser?.is_active ?? true,
-          groups: pocketUser.groups,
-          groupNames: groupNames,
-          createdAt: pocketUser.createdAt,
-          source: 'pocketid'
-        };
-      });
-      
-      console.log(`✅ Fetched ${mergedUsers.length} admin users from PocketID`);
-      res.json(mergedUsers);
-    } else {
-      // Fallback to local database users
-      console.log('⚠️ PocketID API not configured, using local database');
-      const result = await pool.query(
-        'SELECT id, username, email, role, is_active, created_at, updated_at FROM users ORDER BY created_at DESC'
-      );
-      res.json(result.rows.map(u => ({ ...u, source: 'local' })));
-    }
+    // Always fetch from local database now
+    // Users should be synced from PocketID first using the sync endpoint
+    const result = await pool.query(
+      'SELECT id, username, email, role, is_active, created_at, updated_at FROM users ORDER BY created_at DESC'
+    );
+    
+    const users = result.rows.map(u => ({ 
+      ...u, 
+      source: usePocketID ? 'synced_from_pocketid' : 'local' 
+    }));
+    
+    console.log(`✅ Fetched ${users.length} users from local database`);
+    res.json(users);
   } catch (error) {
     console.error('Error fetching users:', error);
     res.status(500).json({ error: 'Failed to fetch users' });
@@ -615,6 +593,85 @@ router.put('/users/:id/toggle', requireSuperAdmin, async (req, res) => {
   } catch (error) {
     console.error('Error toggling user status:', error);
     res.status(500).json({ error: 'Failed to toggle user status' });
+  }
+});
+
+// Sync users from PocketID to local database
+router.post('/users/sync-from-pocketid', requireSuperAdmin, async (req, res) => {
+  try {
+    const usePocketID = process.env.POCKETID_API_URL && process.env.POCKETID_API_KEY;
+    
+    if (!usePocketID) {
+      return res.status(400).json({
+        success: false,
+        error: 'PocketID API not configured'
+      });
+    }
+
+    console.log('🔄 Starting PocketID user sync...');
+    const pocketidUsers = await pocketid.getAdminUsers();
+    
+    let created = 0;
+    let updated = 0;
+    let skipped = 0;
+
+    for (const pocketUser of pocketidUsers) {
+      const groupNames = pocketUser.groupNames || [];
+      
+      // Determine role from PocketID groups
+      let role = 'user';
+      if (groupNames.includes('admin') && pocketUser.email === process.env.OIDC_ADMIN_EMAIL) {
+        role = 'super_admin';
+      } else if (groupNames.includes('admin') || groupNames.includes('ipmaia') || groupNames.includes('users')) {
+        role = 'admin';
+      }
+
+      // Check if user exists
+      const existing = await pool.query(
+        'SELECT id, role, is_active FROM users WHERE email = $1',
+        [pocketUser.email]
+      );
+
+      if (existing.rows.length > 0) {
+        // User exists - only update if they don't have a local role override
+        const localUser = existing.rows[0];
+        // Skip update to preserve local overrides
+        skipped++;
+        console.log(`   ⏭️  Skipped ${pocketUser.email} (preserving local settings)`);
+      } else {
+        // Create new user
+        await pool.query(`
+          INSERT INTO users (username, email, password_hash, role, is_active, created_at, updated_at)
+          VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+        `, [
+          pocketUser.username || pocketUser.email.split('@')[0],
+          pocketUser.email,
+          '', // No password for OIDC users
+          role,
+          true
+        ]);
+        created++;
+        console.log(`   ✅ Created ${pocketUser.email} with role: ${role}`);
+      }
+    }
+
+    console.log(`🎉 Sync complete: ${created} created, ${updated} updated, ${skipped} skipped`);
+
+    res.json({
+      success: true,
+      created,
+      updated,
+      skipped,
+      total: pocketidUsers.length,
+      message: `Synced ${created} new users from PocketID`
+    });
+  } catch (error) {
+    console.error('❌ Error syncing users from PocketID:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to sync users from PocketID',
+      details: error.message
+    });
   }
 });
 

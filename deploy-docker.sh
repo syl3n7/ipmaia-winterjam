@@ -31,6 +31,12 @@ mkdir -p backend/uploads/sponsors
 # Make scripts executable
 chmod +x backend/scripts/*.js 2>/dev/null || true
 
+# Enable maintenance mode
+echo -e "${YELLOW}🚧 Enabling maintenance mode...${NC}"
+docker compose -f docker-compose.prod.yml exec -T nginx touch /etc/nginx/maintenance.on 2>/dev/null || true
+docker compose -f docker-compose.prod.yml exec -T nginx nginx -s reload 2>/dev/null || true
+sleep 2
+
 # Stop existing containers (if any)
 echo -e "${YELLOW}🛑 Stopping existing containers...${NC}"
 docker compose -f docker-compose.prod.yml down --volumes --remove-orphans 2>/dev/null || true
@@ -132,6 +138,12 @@ echo "   🔄 Restart: docker compose -f docker-compose.prod.yml restart [servic
 echo "   🛑 Stop all: docker compose -f docker-compose.prod.yml down"
 echo "   🗄️  Database shell: docker compose -f docker-compose.prod.yml exec db psql -U postgres winterjam"
 echo ""
+
+# Disable maintenance mode
+echo -e "${BLUE}🎉 Disabling maintenance mode...${NC}"
+docker compose -f docker-compose.prod.yml exec -T nginx rm -f /etc/nginx/maintenance.on 2>/dev/null || true
+docker compose -f docker-compose.prod.yml exec -T nginx nginx -s reload 2>/dev/null || true
+sleep 2
 
 # Health checks
 echo -e "${BLUE}🏥 Performing health checks...${NC}"
