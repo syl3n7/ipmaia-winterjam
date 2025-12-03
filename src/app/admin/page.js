@@ -50,7 +50,7 @@ export default function AdminDashboard() {
           Welcome back, {user?.username}! 👋
         </h2>
         <p className="text-gray-400">
-          Here's an overview of your IPMAIA WinterJam admin dashboard
+          Here&apos;s an overview of your IPMAIA WinterJam admin dashboard
         </p>
       </div>
 
@@ -105,7 +105,7 @@ export default function AdminDashboard() {
         <ul className="space-y-2 text-gray-300">
           <li>• Use the sidebar to navigate between different admin sections</li>
           <li>• All changes are saved automatically to the database</li>
-          <li>• Click "Back to Site" to view the public website</li>
+          <li>• Click &quot;Back to Site&quot; to view the public website</li>
           <li>• Contact support if you encounter any issues</li>
         </ul>
       </div>

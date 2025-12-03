@@ -327,7 +327,7 @@ export default function AdminGameJams() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Name * <span className="text-gray-500 text-xs">(e.g., "Winter Game Jam 2025")</span>
+                    Name * <span className="text-gray-500 text-xs">(e.g., &quot;Winter Game Jam 2025&quot;)</span>
                   </label>
                   <input
                     type="text"
@@ -339,7 +339,7 @@ export default function AdminGameJams() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Theme <span className="text-gray-500 text-xs">(e.g., "Ancient Civilizations")</span>
+                    Theme <span className="text-gray-500 text-xs">(e.g., &quot;Ancient Civilizations&quot;)</span>
                   </label>
                   <input
                     type="text"
@@ -532,7 +532,7 @@ export default function AdminGameJams() {
                   placeholder="Click 'Auto-Generate' to create schedule from the datetime fields in the Dates & Schedule tab, or write your own markdown..."
                 />
                 <p className="text-xs text-gray-400 mt-1">
-                  💡 Tip: Fill in the schedule times in the "Dates & Schedule" tab, then click "Auto-Generate" to create formatted schedule content automatically.
+                  💡 Tip: Fill in the schedule times in the &quot;Dates &amp; Schedule&quot; tab, then click &quot;Auto-Generate&quot; to create formatted schedule content automatically.
                 </p>
               </div>
               <div>

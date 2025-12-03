@@ -305,8 +305,8 @@ export default function AdminUsers() {
           <li>• <strong>Read-Only PocketID Integration:</strong> Users are fetched from PocketID API</li>
           <li>• Only users in <code className="bg-gray-800 px-1 rounded">admin</code>, <code className="bg-gray-800 px-1 rounded">ipmaia</code>, or <code className="bg-gray-800 px-1 rounded">users</code> groups are shown</li>
           <li>• <strong>PocketID groups remain unchanged</strong> - we only create local role overrides</li>
-          <li>• Super Admin: Requires "admin" group + matching email (<code className="bg-gray-800 px-1 rounded">OIDC_ADMIN_EMAIL</code>)</li>
-          <li>• Role changes and deactivations are stored locally and don't affect PocketID</li>
+          <li>• Super Admin: Requires &quot;admin&quot; group + matching email (<code className="bg-gray-800 px-1 rounded">OIDC_ADMIN_EMAIL</code>)</li>
+          <li>• Role changes and deactivations are stored locally and don&apos;t affect PocketID</li>
           <li>• You cannot modify your own account to prevent lockout</li>
           <li>• <strong>Setup:</strong> Add <code className="bg-gray-800 px-1 rounded">POCKETID_API_URL</code> and <code className="bg-gray-800 px-1 rounded">POCKETID_API_KEY</code> to environment</li>
         </ul>
