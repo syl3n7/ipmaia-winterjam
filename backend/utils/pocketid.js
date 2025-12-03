@@ -29,7 +29,23 @@ class PocketIDClient {
         throw new Error(`PocketID API error: ${response.status} - ${error}`);
       }
 
-      return await response.json();
+      // For health check endpoints, don't try to parse JSON
+      if (options.expectJson === false) {
+        return response;
+      }
+
+      // Try to parse as JSON, return empty object if response is empty
+      const text = await response.text();
+      if (!text || text.trim() === '') {
+        return {};
+      }
+      
+      try {
+        return JSON.parse(text);
+      } catch (e) {
+        console.warn(`⚠️  Response from ${endpoint} is not valid JSON: ${text}`);
+        return { rawResponse: text };
+      }
     } catch (error) {
       console.error('❌ PocketID API request failed:', error);
       throw error;
@@ -98,9 +114,29 @@ class PocketIDClient {
   // Check if API is configured and working
   async healthCheck() {
     try {
-      await this.request('/healthz');
+      // Try multiple common health check endpoints
+      const endpoints = ['/healthz', '/health', '/api/health', '/api/healthz'];
+      
+      for (const endpoint of endpoints) {
+        try {
+          const response = await this.request(endpoint, { expectJson: false });
+          if (response.ok || response.status === 200) {
+            console.log(`✅ PocketID health check passed on ${endpoint}`);
+            return true;
+          }
+        } catch (err) {
+          // Try next endpoint
+          continue;
+        }
+      }
+      
+      // If all health checks fail, try to get users as a fallback test
+      console.log('⚠️  Health endpoints failed, trying to fetch users as fallback...');
+      await this.getUsers(1, 1);
+      console.log('✅ PocketID connection verified via user fetch');
       return true;
     } catch (error) {
+      console.error('❌ PocketID health check failed:', error.message);
       return false;
     }
   }

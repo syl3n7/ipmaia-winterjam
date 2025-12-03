@@ -711,6 +711,11 @@ router.get('/pocketid/status', requireSuperAdmin, async (req, res) => {
   try {
     const configured = !!(process.env.POCKETID_API_URL && process.env.POCKETID_API_KEY);
     
+    console.log('🔍 PocketID Status Check:');
+    console.log('   - Configured:', configured);
+    console.log('   - API URL:', process.env.POCKETID_API_URL);
+    console.log('   - API Key:', process.env.POCKETID_API_KEY ? '***set***' : 'missing');
+    
     if (!configured) {
       return res.json({
         configured: false,
@@ -719,7 +724,9 @@ router.get('/pocketid/status', requireSuperAdmin, async (req, res) => {
       });
     }
     
+    console.log('🔄 Testing PocketID connection...');
     const connected = await pocketid.healthCheck();
+    console.log('   - Connected:', connected);
     
     res.json({
       configured: true,
@@ -728,7 +735,7 @@ router.get('/pocketid/status', requireSuperAdmin, async (req, res) => {
       message: connected ? 'Connected to PocketID' : 'Failed to connect to PocketID'
     });
   } catch (error) {
-    console.error('Error checking PocketID status:', error);
+    console.error('❌ Error checking PocketID status:', error);
     res.json({
       configured: true,
       connected: false,
