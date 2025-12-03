@@ -54,7 +54,9 @@ class PocketIDClient {
 
   // Get all users (with pagination)
   async getUsers(page = 1, pageSize = 50) {
-    return await this.request(`/api/users?page=${page}&pageSize=${pageSize}`);
+    const response = await this.request(`/api/users?page=${page}&pageSize=${pageSize}`);
+    console.log('📋 Raw PocketID response:', JSON.stringify(response, null, 2));
+    return response;
   }
 
   // Get specific user by ID
@@ -82,11 +84,11 @@ class PocketIDClient {
     try {
       console.log('🔍 Fetching users from PocketID...');
       const usersResponse = await this.getUsers(1, 100);
-      console.log(`📊 PocketID returned ${usersResponse.items?.length || 0} total users`);
+      console.log(`📊 PocketID returned ${usersResponse.data?.length || 0} total users`);
       
       const adminUsers = [];
 
-      for (const user of usersResponse.items || []) {
+      for (const user of usersResponse.data || []) {
         console.log(`👤 Checking user: ${user.email || user.username} (ID: ${user.id})`);
         const userGroups = await this.getUserGroups(user.id);
         console.log(`   Groups: ${userGroups.map(g => g.name).join(', ') || 'none'}`);
