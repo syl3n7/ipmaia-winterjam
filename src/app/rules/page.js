@@ -174,7 +174,7 @@ export default function Page() {
                   <li><strong>Horário e Cronograma:</strong> Siga o horário e cronograma do evento.</li>
                   <li><strong>Limpeza e Organização:</strong> Mantenha os locais limpos e organizados.</li>
                   <li><strong>Itens proibidos:</strong> É estritamente proibido trazer, consumir ou expor durante o evento qualquer tipo de bebida alcoólica ou substâncias ilegais.</li>
-                  <li><strong>Equipamento/Utensílios:</strong> A responsabilidade pelo equipamento utilizado (ex: monitor, rato, computador, prato, talheres), sejam estes da organização ou propriedade do participante, são da inteira responsabilidade do próprio utilizador. A organização não se responsabiliza por quaisquer danos ou perdas de equipamento.</li>
+                  <li><strong>Equipamento/Utensílios:</strong> A responsabilidade pelo equipamento utilizado (ex.: monitor, rato, computador, mesas digitais, extensões, prato, talheres, micro-ondas, etc.), sejam estes da organização, propriedade do IPMAIA ou propriedade do participante, é da inteira responsabilidade do próprio utilizador. A organização não se responsabiliza por quaisquer danos ou perdas de equipamento. Caso algum material pertencente à organização ou ao IPMAIA seja danificado, poderá ser solicitada ao utilizador uma compensação pelos danos causados.</li>
                 </ol>
               </div>
 
@@ -197,7 +197,7 @@ export default function Page() {
               </p>
               <ol className="list-decimal list-inside space-y-3 text-gray-700 ml-4">
                 <li>Participar com empenho para atingir o aproveitamento mais elevado, sem afetar adversamente o rendimento dos colegas, a nível individual ou coletivo.</li>
-                <li>Conservar todo o património em que tem lugar as atividades ou iniciativas da responsabilidade da Maiêutica/IES, bem como o património que lhes serve de apoio.</li>
+                <li>Conservar todo o património em que têm lugar as atividades ou iniciativas da responsabilidade da Maiêutica/IES, bem como o património que lhes serve de apoio.</li>
                 <li>Colaborar em iniciativas de natureza científica, cultural e desportiva, ou outras, que possam contribuir simultaneamente para a sua realização pessoal e prestígio da Maiêutica/IES.</li>
                 <li>Respeitar e fazer-se respeitar no relacionamento com toda a comunidade académica.</li>
                 <li>Proceder ao imediato pagamento de todo o prejuízo causado na instituição e nunca usar, colaborar no uso, ou incentivar a utilização do nome da Maiêutica/IES em qualquer atividade económica, sem que, para tanto, esteja expressamente autorizado pelo Conselho de Administração da Maiêutica - Cooperativa de Ensino Superior, C.R.L.</li>
@@ -220,7 +220,7 @@ export default function Page() {
                 A Game Jam promove a inclusão e acessibilidade para todos os participantes:
               </p>
               <ol className="list-decimal list-inside space-y-2 text-gray-700 ml-4">
-                <li><strong>Ambiente Acessível:</strong> A organização comprometesse a criar um ambiente acessível, incluindo para participantes com necessidades especiais.</li>
+                <li><strong>Ambiente Acessível:</strong> A organização compromete-se a criar um ambiente acessível, incluindo para participantes com necessidades especiais.</li>
                 <li><strong>Diversidade de Participantes:</strong> Encorajamos a participação de indivíduos de todas as esferas, promovendo diversidade de ideias e habilidades.</li>
                 <li><strong>Conteúdos Inapropriados:</strong> Jogos com conteúdo ofensivo, discriminatório, sexualmente explícito, de violência extrema, que promova atividades ilegais ou que tenha como objetivo humilhar indivíduos ou grupos serão desqualificados, ficando a decisão final a cargo da organização.</li>
               </ol>
@@ -309,14 +309,31 @@ export default function Page() {
                 </ol>
               </div>
 
-              {/* Obrigações Logísticas e Financeiras */}
+              {/* Entrada Livre */}
               <div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-3">💰 Obrigações Logísticas e Financeiras</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-3">🎟️ Entrada Livre</h3>
+                <ol className="list-decimal list-inside space-y-2 ml-4 text-gray-700">
+                  <li>A participação é gratuita e aberta ao público em geral, incluindo alunos e alumni do IPMAIA. A game jam decorre principalmente em formato presencial, sendo permitido que apenas um membro da equipa participe online. A maioria dos elementos deve estar presente nas instalações do IPMaia.</li>
+                </ol>
+              </div>
+
+              {/* Comunicação e Organização */}
+              <div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-3">💬 Comunicação e Organização</h3>
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <ol className="list-decimal list-inside space-y-3 text-gray-700">
+                  <ol className="list-decimal list-inside space-y-2 text-gray-700">
+                    <li>A organização e comunicação do evento serão feitas, sem falta, através do servidor de <a href="http://discord.gg/X97GAg7F6E" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 underline">Discord</a> da game jam, não deixando de parte a possibilidade de também serem feitas de forma presencial.</li>
+                    <li>As regras do sorteio de jogos serão divulgadas no Discord oficial da game jam.</li>
+                  </ol>
+                </div>
+              </div>
+
+              {/* Confirmação de Refeições */}
+              <div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-3">🍽️ Confirmação de Refeições</h3>
+                <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4">
+                  <ol className="list-decimal list-inside space-y-2 text-gray-700">
                     <li><strong>Confirmação de Refeições:</strong> Os participantes que confirmarem a sua presença em refeições organizadas pela Game Jam (ex: jantar de sexta-feira) e não comparecerem, ficam obrigados ao pagamento do custo da mesma, no valor de 1,50 € (um euro e cinquenta cêntimos).</li>
-                    <li><strong>Entrada Livre:</strong> A participação é gratuita e aberta ao público em geral, incluindo alunos e alumni do IPMAIA. A game jam decorre principalmente em formato presencial, sendo permitido que apenas um membro da equipa participe online. A maioria dos elementos deve estar presente nas instalações do IPMaia.</li>
-                    <li><strong>Organização e Comunicação:</strong> A organização e comunicação do evento serão feitas através do servidor de Discord da game jam. Caso a equipa deseje desenvolver o projeto presencialmente nas instalações, deve informar previamente os organizadores.</li>
                   </ol>
                 </div>
               </div>
@@ -336,28 +353,28 @@ export default function Page() {
             </h2>
             <div className="space-y-4 text-gray-800">
               <p className="text-gray-700 mb-4">
-                Os projetos serão avaliados com os seguintes critérios (0-20 pontos cada):
+                Os projetos serão avaliados com os seguintes critérios:
               </p>
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <h3 className="font-semibold text-gray-900 mb-2">🎯 Relação/Cumprimento do Tema</h3>
-                  <p className="text-sm text-gray-700">Como o jogo interpreta e incorpora o tema revelado</p>
+                  <h3 className="font-semibold text-gray-900 mb-2">1. 🎯 Relação/Cumprimento do Tema</h3>
+                  <p className="text-sm text-gray-700">0–20 pontos</p>
                 </div>
                 <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                  <h3 className="font-semibold text-gray-900 mb-2">💡 Criatividade/ÚSP</h3>
-                  <p className="text-sm text-gray-700">Proposta de venda única e originalidade do conceito</p>
+                  <h3 className="font-semibold text-gray-900 mb-2">2. 💡 Criatividade/ÚSP</h3>
+                  <p className="text-sm text-gray-700">0–20 pontos</p>
                 </div>
                 <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                  <h3 className="font-semibold text-gray-900 mb-2">🎮 Qualidade (diversão)</h3>
-                  <p className="text-sm text-gray-700">Quão divertido e envolvente é o jogo</p>
+                  <h3 className="font-semibold text-gray-900 mb-2">3. 🎮 Qualidade (diversão)</h3>
+                  <p className="text-sm text-gray-700">0–20 pontos</p>
                 </div>
                 <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-                  <h3 className="font-semibold text-gray-900 mb-2">📋 Cumprimento/Quebra das Regras</h3>
-                  <p className="text-sm text-gray-700">Cumprimento das regras estabelecidas</p>
+                  <h3 className="font-semibold text-gray-900 mb-2">4. 📋 Cumprimento/Quebra das Regras</h3>
+                  <p className="text-sm text-gray-700">0–20 pontos</p>
                 </div>
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 md:col-span-2">
-                  <h3 className="font-semibold text-gray-900 mb-2">🎨 Apresentação Visual/Estética e Quantidade de Ativos Usados</h3>
-                  <p className="text-sm text-gray-700">Qualidade visual e quantidade de ativos utilizados</p>
+                  <h3 className="font-semibold text-gray-900 mb-2">5. 🎨 Apresentação Visual/Estética e Quantidade de Ativos Usados</h3>
+                  <p className="text-sm text-gray-700">0–20 pontos</p>
                 </div>
               </div>
             </div>
