@@ -24,16 +24,34 @@ export default function Page() {
     const handleScroll = () => {
       const scrollPosition = window.scrollY + window.innerHeight;
       const documentHeight = document.documentElement.scrollHeight;
+      const distanceFromBottom = documentHeight - scrollPosition;
       
-      // Check if user has scrolled to within 100px of the bottom
-      if (scrollPosition >= documentHeight - 100) {
-        // Mark rules as read
-        localStorage.setItem('rulesReadComplete', new Date().toISOString());
+      console.log('📜 Scroll detected:', {
+        scrollPosition,
+        documentHeight,
+        distanceFromBottom
+      });
+      
+      // Check if user has scrolled to within 200px of the bottom
+      if (distanceFromBottom <= 200) {
+        // Mark rules as read with current timestamp
+        const timestamp = new Date().toISOString();
+        localStorage.setItem('rulesReadComplete', timestamp);
+        console.log('✅ Rules marked as read at:', timestamp);
+        console.log('📦 localStorage check:', localStorage.getItem('rulesReadComplete'));
       }
     };
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    // Check on initial load in case user is at bottom
+    setTimeout(handleScroll, 1000);
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    document.addEventListener('scroll', handleScroll, { passive: true });
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      document.removeEventListener('scroll', handleScroll);
+    };
   }, []);
 
   useEffect(() => {

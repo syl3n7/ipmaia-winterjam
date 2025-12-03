@@ -58,11 +58,19 @@ export default function Home() {
         const rulesReadTimestamp = localStorage.getItem('rulesReadComplete');
         const lastUpdated = data.lastUpdated;
         
+        console.log('🔔 Notification check:', {
+          rulesReadTimestamp,
+          lastUpdated,
+          shouldShow: !rulesReadTimestamp || (lastUpdated && new Date(lastUpdated) > new Date(rulesReadTimestamp))
+        });
+        
         // Show notification if:
         // 1. User has never read the rules, OR
         // 2. Rules were updated after the user last read them
         if (!rulesReadTimestamp || (lastUpdated && new Date(lastUpdated) > new Date(rulesReadTimestamp))) {
           setShowRulesNotification(true);
+        } else {
+          setShowRulesNotification(false);
         }
       } catch (error) {
         console.error('Error checking rules update:', error);
