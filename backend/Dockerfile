@@ -5,6 +5,9 @@ WORKDIR /app
 # Set production environment
 ENV NODE_ENV production
 
+# Install curl for health checks
+RUN apk add --no-cache curl
+
 # Copy package files and install dependencies
 COPY package*.json ./
 RUN npm ci --only=production --no-cache
