@@ -80,25 +80,34 @@ class PocketIDClient {
   // Filter users by admin-related groups only
   async getAdminUsers() {
     try {
+      console.log('🔍 Fetching users from PocketID...');
       const usersResponse = await this.getUsers(1, 100);
+      console.log(`📊 PocketID returned ${usersResponse.items?.length || 0} total users`);
+      
       const adminUsers = [];
 
       for (const user of usersResponse.items || []) {
+        console.log(`👤 Checking user: ${user.email || user.username} (ID: ${user.id})`);
         const userGroups = await this.getUserGroups(user.id);
+        console.log(`   Groups: ${userGroups.map(g => g.name).join(', ') || 'none'}`);
         const groupNames = userGroups.map(g => g.name.toLowerCase());
         
         // Only include users with admin, ipmaia, or users groups
         if (groupNames.includes('admin') || 
             groupNames.includes('ipmaia') || 
             groupNames.includes('users')) {
+          console.log(`   ✅ User matches criteria - adding to sync list`);
           adminUsers.push({
             ...user,
             groups: userGroups,
             groupNames: groupNames
           });
+        } else {
+          console.log(`   ⏭️  User doesn't match criteria (admin/ipmaia/users) - skipping`);
         }
       }
 
+      console.log(`✅ Found ${adminUsers.length} users matching criteria (admin/ipmaia/users groups)`);
       return adminUsers;
     } catch (error) {
       console.error('❌ Failed to fetch admin users from PocketID:', error);
