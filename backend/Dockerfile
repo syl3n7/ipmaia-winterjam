@@ -2,8 +2,16 @@ FROM node:20.19.2-alpine3.20
 
 WORKDIR /app
 
-# Set production environment
-ENV NODE_ENV production
+# Accept build arguments for versioning
+ARG APP_VERSION=1.0.0-dev
+ARG BUILD_DATE=unknown
+ARG GIT_SHA=unknown
+
+# Set production environment and version info
+ENV NODE_ENV=production
+ENV APP_VERSION=$APP_VERSION
+ENV BUILD_DATE=$BUILD_DATE
+ENV GIT_SHA=$GIT_SHA
 
 # Install curl for health checks
 RUN apk add --no-cache curl

@@ -27,6 +27,28 @@ const PORT = process.env.PORT || 3001;
 // Trust proxy (important for reverse proxy setups like Zoraxy/NPM)
 app.set('trust proxy', 1);
 
+// Middleware to extract and attach client info to request
+app.use((req, res, next) => {
+  // Get real IP address (considering proxy headers)
+  const clientIp = req.headers['x-forwarded-for']?.split(',')[0].trim() ||
+                   req.headers['x-real-ip'] ||
+                   req.ip ||
+                   req.connection.remoteAddress;
+  
+  // Get user agent
+  const userAgent = req.headers['user-agent'] || 'Unknown';
+  
+  // Attach to request for easy access
+  req.clientInfo = {
+    ip: clientIp,
+    userAgent: userAgent,
+    forwardedFor: req.headers['x-forwarded-for'],
+    realIp: req.headers['x-real-ip']
+  };
+  
+  next();
+});
+
 // Debug middleware for proxy headers (remove in production)
 if (process.env.NODE_ENV !== 'production') {
   app.use((req, res, next) => {
@@ -203,7 +225,21 @@ app.get('/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     timestamp: new Date().toISOString(),
-    version: process.env.npm_package_version || '1.0.0'
+    version: process.env.APP_VERSION || '1.0.0-dev',
+    buildDate: process.env.BUILD_DATE || 'unknown',
+    gitSha: process.env.GIT_SHA || 'unknown'
+  });
+});
+
+// Version endpoint
+app.get('/api/version', (req, res) => {
+  res.json({
+    service: 'backend',
+    version: process.env.APP_VERSION || '1.0.0-dev',
+    buildDate: process.env.BUILD_DATE || 'unknown',
+    gitSha: process.env.GIT_SHA || 'unknown',
+    nodeVersion: process.version,
+    environment: process.env.NODE_ENV || 'development'
   });
 });
 

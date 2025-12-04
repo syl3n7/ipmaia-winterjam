@@ -42,6 +42,29 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Fetch all history for version info
+
+    - name: Generate version info
+      id: version
+      run: |
+        # Get short commit SHA
+        SHORT_SHA=$(git rev-parse --short HEAD)
+        # Get commit count (acts as build number)
+        BUILD_NUMBER=$(git rev-list --count HEAD)
+        # Get current date
+        BUILD_DATE=$(date -u +'%Y%m%d')
+        # Generate semantic version: MAJOR.BUILD_NUMBER.0
+        VERSION="1.${BUILD_NUMBER}.0"
+        # Full version with metadata
+        FULL_VERSION="${VERSION}+${SHORT_SHA}.${BUILD_DATE}"
+        
+        echo "version=${VERSION}" >> $GITHUB_OUTPUT
+        echo "full_version=${FULL_VERSION}" >> $GITHUB_OUTPUT
+        echo "short_sha=${SHORT_SHA}" >> $GITHUB_OUTPUT
+        echo "build_date=${BUILD_DATE}" >> $GITHUB_OUTPUT
+        
+        echo "📦 Frontend Version: ${FULL_VERSION}"
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
@@ -78,6 +101,9 @@ jobs:
         build-args: |
           NEXT_TELEMETRY_DISABLED=1
           NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL || 'https://api.ipmaia-winterjam.pt/api' }}
+          APP_VERSION=${{ steps.version.outputs.full_version }}
+          BUILD_DATE=${{ steps.version.outputs.build_date }}
+          GIT_SHA=${{ steps.version.outputs.short_sha }}
 
     - name: Generate deployment summary
       if: github.event_name != 'pull_request'
@@ -87,6 +113,7 @@ jobs:
         echo "### 📦 Image Details" >> $GITHUB_STEP_SUMMARY
         echo "- **Registry**: ${{ env.REGISTRY }}" >> $GITHUB_STEP_SUMMARY
         echo "- **Image**: ${{ env.IMAGE_NAME }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Version**: ${{ steps.version.outputs.full_version }}" >> $GITHUB_STEP_SUMMARY
         echo "- **Tags**: ${{ steps.meta.outputs.tags }}" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### 🚀 Quick Deploy" >> $GITHUB_STEP_SUMMARY

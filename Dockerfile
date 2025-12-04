@@ -8,7 +8,15 @@ WORKDIR /app
 
 # Accept build arguments
 ARG NEXT_PUBLIC_API_URL=https://api.ipmaia-winterjam.pt/api
+ARG APP_VERSION=1.0.0-dev
+ARG BUILD_DATE=unknown
+ARG GIT_SHA=unknown
+
+# Set environment variables for Next.js build
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_APP_VERSION=$APP_VERSION
+ENV NEXT_PUBLIC_BUILD_DATE=$BUILD_DATE
+ENV NEXT_PUBLIC_GIT_SHA=$GIT_SHA
 
 COPY package*.json ./
 RUN npm ci --no-cache

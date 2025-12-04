@@ -419,14 +419,14 @@ router.get('/oidc/callback', async (req, res) => {
     req.session.role = user.role;
     req.session.email = user.email;
 
-    // Log the login
+    // Log the login with enhanced client info
     await logAudit({
       userId: user.id,
       username: user.username,
       action: 'LOGIN',
       description: `User logged in via OIDC (role: ${user.role})`,
-      ipAddress: req.ip,
-      userAgent: req.get('user-agent')
+      ipAddress: req.clientInfo?.ip || req.ip,
+      userAgent: req.clientInfo?.userAgent || req.get('user-agent')
     });
 
     // Redirect to admin dashboard

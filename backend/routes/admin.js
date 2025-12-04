@@ -391,8 +391,7 @@ router.post('/system/clear-cache', requireSuperAdmin, async (req, res) => {
       username: req.session.username || req.session.email,
       action: 'SYSTEM_OPERATION',
       description: 'Cleared server cache',
-      ipAddress: req.ip,
-      userAgent: req.get('user-agent')
+      req
     });
     
     console.log('✅ Cache cleared successfully');
@@ -479,6 +478,80 @@ router.get('/system/maintenance', async (req, res) => {
   } catch (error) {
     console.error('❌ Error checking maintenance mode:', error);
     res.status(500).json({ error: 'Failed to check maintenance mode' });
+  }
+});
+
+// Get system metrics
+router.get('/system/metrics', async (req, res) => {
+  try {
+    // Memory usage
+    const memUsage = process.memoryUsage();
+    const memoryMB = {
+      rss: Math.round(memUsage.rss / 1024 / 1024), // Resident Set Size
+      heapTotal: Math.round(memUsage.heapTotal / 1024 / 1024),
+      heapUsed: Math.round(memUsage.heapUsed / 1024 / 1024),
+      external: Math.round(memUsage.external / 1024 / 1024)
+    };
+
+    // Process uptime
+    const uptimeSeconds = process.uptime();
+    const uptimeFormatted = {
+      days: Math.floor(uptimeSeconds / 86400),
+      hours: Math.floor((uptimeSeconds % 86400) / 3600),
+      minutes: Math.floor((uptimeSeconds % 3600) / 60),
+      seconds: Math.floor(uptimeSeconds % 60)
+    };
+
+    // Active sessions count
+    const sessionsResult = await pool.query('SELECT COUNT(*) as count FROM user_sessions');
+    const activeSessions = parseInt(sessionsResult.rows[0].count) || 0;
+
+    // Storage info (uploads directory)
+    const uploadsPath = path.join(__dirname, '../uploads');
+    let storageInfo = {
+      available: false,
+      totalFiles: 0,
+      totalSize: 0,
+      sponsors: 0
+    };
+
+    try {
+      if (fs.existsSync(uploadsPath)) {
+        storageInfo.available = true;
+        
+        // Count sponsor logos
+        const sponsorsPath = path.join(uploadsPath, 'sponsors');
+        if (fs.existsSync(sponsorsPath)) {
+          const sponsorFiles = fs.readdirSync(sponsorsPath);
+          storageInfo.sponsors = sponsorFiles.length;
+          
+          // Calculate total size
+          sponsorFiles.forEach(file => {
+            const filePath = path.join(sponsorsPath, file);
+            const stats = fs.statSync(filePath);
+            storageInfo.totalSize += stats.size;
+          });
+        }
+        
+        storageInfo.totalFiles = storageInfo.sponsors;
+      }
+    } catch (storageError) {
+      console.error('Error reading storage info:', storageError);
+    }
+
+    res.json({
+      memory: memoryMB,
+      uptime: uptimeFormatted,
+      uptimeSeconds: Math.floor(uptimeSeconds),
+      activeSessions,
+      storage: storageInfo,
+      nodeVersion: process.version,
+      platform: process.platform,
+      arch: process.arch
+    });
+  } catch (error) {
+    console.error('❌ Error fetching system metrics:', error);
+    res.status(500).json({ error: 'Failed to fetch system metrics' });
   }
 });
 
@@ -660,8 +733,7 @@ router.delete('/users/:id', requireSuperAdmin, async (req, res) => {
       tableName: 'users',
       recordId: id,
       description: `Deleted user: ${email} (${existingUser.rows[0].username})`,
-      ipAddress: req.ip,
-      userAgent: req.get('user-agent')
+      req
     });
     
     console.log('✅ User %s deleted by super admin %s', email, req.session.username);

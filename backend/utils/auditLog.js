@@ -1,6 +1,18 @@
 const { pool } = require('../config/database');
 
 /**
+ * Helper to extract client info from request
+ * @param {Object} req - Express request object
+ * @returns {Object} Client info with IP and user agent
+ */
+function getClientInfo(req) {
+  return {
+    ipAddress: req.clientInfo?.ip || req.ip || 'unknown',
+    userAgent: req.clientInfo?.userAgent || req.get?.('user-agent') || 'unknown'
+  };
+}
+
+/**
  * Log an action to the audit trail
  * @param {Object} params
  * @param {number} params.userId - User ID performing the action
@@ -13,6 +25,7 @@ const { pool } = require('../config/database');
  * @param {Object} params.newValues - New values (for creates/updates)
  * @param {string} params.ipAddress - IP address of requester
  * @param {string} params.userAgent - User agent of requester
+ * @param {Object} params.req - Express request object (alternative to ipAddress/userAgent)
  */
 async function logAudit({
   userId,
@@ -24,8 +37,15 @@ async function logAudit({
   oldValues = null,
   newValues = null,
   ipAddress = null,
-  userAgent = null
+  userAgent = null,
+  req = null
 }) {
+  // If req is provided, extract client info from it
+  if (req && (!ipAddress || !userAgent)) {
+    const clientInfo = getClientInfo(req);
+    ipAddress = ipAddress || clientInfo.ipAddress;
+    userAgent = userAgent || clientInfo.userAgent;
+  }
   try {
     await pool.query(
       `INSERT INTO audit_logs (
@@ -115,5 +135,6 @@ async function getAuditStats() {
 module.exports = {
   logAudit,
   getAuditLogs,
-  getAuditStats
+  getAuditStats,
+  getClientInfo
 };
