@@ -55,9 +55,12 @@ echo -e "${YELLOW}🛑 Stopping application services...${NC}"
 docker compose -f docker-compose.prod.yml stop backend frontend db 2>/dev/null || true
 docker compose -f docker-compose.prod.yml rm -f backend frontend db 2>/dev/null || true
 
-# Remove old images (optional - uncomment to clean up)
-# echo -e "${YELLOW}🧹 Cleaning up old images...${NC}"
-# docker system prune -f || true
+# Pull latest images from registry
+echo -e "${BLUE}📥 Pulling latest images from registry...${NC}"
+docker compose -f docker-compose.prod.yml pull frontend backend || {
+    echo -e "${YELLOW}⚠️  Could not pull images. Make sure you're authenticated to GitHub Container Registry.${NC}"
+    echo -e "${BLUE}📝 Run: echo \$GITHUB_PAT | docker login ghcr.io -u USERNAME --password-stdin${NC}"
+}
 
 # Check if SSL certificates exist
 if [ ! -f ssl/fullchain.pem ] || [ ! -f ssl/privkey.pem ]; then
@@ -75,9 +78,9 @@ if [ ! -f ssl/fullchain.pem ] || [ ! -f ssl/privkey.pem ]; then
     echo -e "${YELLOW}⚠️  Continuing without SSL - only HTTP will be available${NC}"
 fi
 
-# Build and start services
-echo -e "${BLUE}🏗️  Building and starting services...${NC}"
-docker compose -f docker-compose.prod.yml up -d --build
+# Start services with pulled images
+echo -e "${BLUE}🚀 Starting services...${NC}"
+docker compose -f docker-compose.prod.yml up -d
 
 # Wait for services to be healthy
 echo -e "${BLUE}⏳ Waiting for services to be ready...${NC}"

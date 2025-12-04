@@ -3,8 +3,30 @@ name: Build and Push Docker Image
 on:
   push:
     branches: [ main ]
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'Dockerfile'
+      - 'next.config.mjs'
+      - 'tailwind.config.js'
+      - 'postcss.config.mjs'
+      - 'jsconfig.json'
+      - '.github/workflows/docker.yml'
   pull_request:
     branches: [ main ]
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'Dockerfile'
+      - 'next.config.mjs'
+      - 'tailwind.config.js'
+      - 'postcss.config.mjs'
+      - 'jsconfig.json'
+      - '.github/workflows/docker.yml'
 
 env:
   REGISTRY: ghcr.io

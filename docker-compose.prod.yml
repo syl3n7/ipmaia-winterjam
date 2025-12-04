@@ -19,9 +19,7 @@ services:
 
   # Backend API with Auto-Migration
   backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
+    image: ghcr.io/syl3n7/ipmaia-winterjam-backend:latest
     restart: unless-stopped
     depends_on:
       db:
@@ -61,9 +59,7 @@ services:
 
   # Frontend Next.js Application
   frontend:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ghcr.io/syl3n7/ipmaia-winterjam:latest
     restart: unless-stopped
     depends_on:
       - backend
@@ -93,6 +89,30 @@ services:
       - backend
     networks:
       - winterjam-network
+
+  # Watchtower - Auto-update containers when new images are pushed
+  watchtower:
+    image: containrrr/watchtower:latest
+    restart: unless-stopped
+    environment:
+      WATCHTOWER_POLL_INTERVAL: 300  # Check every 5 minutes
+      WATCHTOWER_CLEANUP: "true"     # Remove old images
+      WATCHTOWER_INCLUDE_RESTARTING: "true"
+      WATCHTOWER_INCLUDE_STOPPED: "false"
+      WATCHTOWER_ROLLING_RESTART: "true"  # Restart one at a time
+      WATCHTOWER_NOTIFICATIONS: log
+      WATCHTOWER_DEBUG: "false"
+      # Notification settings for maintenance coordination
+      WATCHTOWER_HTTP_API_UPDATE: "true"
+      WATCHTOWER_HTTP_API_TOKEN: "${WATCHTOWER_TOKEN:-winterjam-secret}"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - "127.0.0.1:8080:8080"  # Only accessible from localhost
+    networks:
+      - winterjam-network
+    labels:
+      - "com.centurylinklabs.watchtower.enable=false"  # Don't update watchtower itself
 
 volumes:
   postgres_data:
