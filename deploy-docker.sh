@@ -50,10 +50,10 @@ else
     echo -e "${YELLOW}⚠️  Warning: Could not verify maintenance mode${NC}"
 fi
 
-# Stop application services (keep nginx up for maintenance page)
+# Stop application services (keep nginx and db up)
 echo -e "${YELLOW}🛑 Stopping application services...${NC}"
-docker compose -f docker-compose.prod.yml stop backend frontend db 2>/dev/null || true
-docker compose -f docker-compose.prod.yml rm -f backend frontend db 2>/dev/null || true
+docker compose -f docker-compose.prod.yml stop backend frontend 2>/dev/null || true
+docker compose -f docker-compose.prod.yml rm -f backend frontend 2>/dev/null || true
 
 # Pull latest images from registry
 echo -e "${BLUE}📥 Pulling latest images from registry...${NC}"

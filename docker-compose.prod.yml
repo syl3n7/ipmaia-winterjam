@@ -24,6 +24,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    env_file:
+      - .env
     environment:
       NODE_ENV: production
       PORT: 3001
@@ -63,6 +65,8 @@ services:
     restart: unless-stopped
     depends_on:
       - backend
+    env_file:
+      - .env
     environment:
       NODE_ENV: production
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.ipmaia-winterjam.pt/api}
