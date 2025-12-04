@@ -5,7 +5,22 @@ const Game = require('../models/Game');
 const { requireAdmin, requireSuperAdmin } = require('./auth');
 const fs = require('fs');
 const path = require('path');
+const multer = require('multer');
+const { parseCSV, sanitizeTeamName, sanitizeMemberNames } = require('../utils/csvParser');
 const router = express.Router();
+
+// Configure multer for file uploads
+const upload = multer({ 
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype === 'text/csv' || file.originalname.endsWith('.csv')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only CSV files are allowed'));
+    }
+  }
+});
 
 // All admin routes require admin privileges
 router.use(requireAdmin);
@@ -145,6 +160,150 @@ router.delete('/games/:id', requireSuperAdmin, async (req, res) => {
   } catch (error) {
     console.error('Error deleting game:', error);
     res.status(500).json({ error: 'Failed to delete game' });
+  }
+});
+
+// CSV Import endpoint - Import teams as games
+router.post('/games/import-teams', upload.single('csv'), async (req, res) => {
+  try {
+    console.log('📋 CSV Import - Starting import');
+    
+    if (!req.file) {
+      return res.status(400).json({ error: 'No CSV file provided' });
+    }
+
+    const { gameJamId } = req.body;
+    if (!gameJamId) {
+      return res.status(400).json({ error: 'gameJamId is required' });
+    }
+
+    // Verify game jam exists
+    const gameJam = await GameJam.findById(gameJamId);
+    if (!gameJam) {
+      return res.status(404).json({ error: `Game jam with ID ${gameJamId} not found` });
+    }
+
+    // Parse CSV
+    const csvText = req.file.buffer.toString('utf-8');
+    const { teams, errors } = parseCSV(csvText);
+
+    console.log(`📋 CSV Import - Parsed ${teams.length} teams with ${errors.length} errors`);
+
+    if (errors.length > 0) {
+      console.warn('⚠️ CSV Import - Warnings:', errors);
+    }
+
+    if (teams.length === 0) {
+      return res.status(400).json({ 
+        error: 'No valid teams found in CSV',
+        details: errors,
+        parsed: 0
+      });
+    }
+
+    // Create games from teams
+    const results = {
+      imported: [],
+      failed: [],
+      warnings: errors
+    };
+
+    for (const team of teams) {
+      try {
+        // Sanitize data
+        const teamName = sanitizeTeamName(team.teamName);
+        const members = sanitizeMemberNames(team.members);
+
+        // Create game record
+        const gameData = {
+          game_jam_id: gameJamId,
+          title: `${teamName} - [Pending Game Name]`, // Placeholder until game name is filled
+          description: `Team: ${teamName}\nMembers: ${members.length}\nEmail: ${team.emailContact}${team.phoneContact ? '\nPhone: ' + team.phoneContact : ''}`,
+          team_name: teamName,
+          team_members: members,
+          github_url: null,
+          itch_url: null,
+          screenshot_urls: [],
+          tags: [],
+          is_featured: false,
+          // Store team registration data in custom fields
+          custom_fields: {
+            institution: team.institution,
+            full_attendance: team.fullAttendance,
+            previous_participation: team.previousParticipation,
+            equipment_request: team.equipmentRequest,
+            allergies: team.allergies,
+            allergies_details: team.allergiesDetails,
+            specific_diet: team.specificDiet,
+            photo_consent: team.photoConsent,
+            regulation_accept: team.regulationAccept,
+            contact_email: team.emailContact,
+            contact_phone: team.phoneContact,
+            how_found: team.howFound,
+            team_size: team.teamSize,
+            dinner_attendance: team.dinnerAttendance,
+            friday_dinner: team.fridayDinner,
+            registration_timestamp: team.timestamp
+          },
+          custom_fields_visibility: {
+            institution: false,
+            full_attendance: false,
+            previous_participation: false,
+            equipment_request: false,
+            allergies: false,
+            allergies_details: false,
+            specific_diet: false,
+            photo_consent: false,
+            regulation_accept: false,
+            contact_email: false,
+            contact_phone: false,
+            how_found: false,
+            team_size: false,
+            dinner_attendance: false,
+            friday_dinner: false,
+            registration_timestamp: false
+          }
+        };
+
+        const game = await Game.create(gameData);
+        results.imported.push({
+          id: game.id,
+          teamName: teamName,
+          members: members,
+          gameId: game.id
+        });
+
+        console.log(`✅ Created game for team: ${teamName}`);
+      } catch (error) {
+        results.failed.push({
+          teamName: team.teamName,
+          error: error.message
+        });
+        console.error(`❌ Failed to create game for team ${team.teamName}:`, error);
+      }
+    }
+
+    res.status(201).json({
+      message: 'CSV import completed',
+      summary: {
+        total_teams_in_csv: teams.length,
+        successfully_imported: results.imported.length,
+        failed: results.failed.length,
+        warnings: results.warnings.length
+      },
+      results: results,
+      gameJam: {
+        id: gameJam.id,
+        name: gameJam.name
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ CSV Import Error:', error);
+    res.status(500).json({ 
+      error: 'Failed to process CSV import',
+      details: error.message 
+    });
   }
 });
 
