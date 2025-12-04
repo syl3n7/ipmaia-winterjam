@@ -246,15 +246,15 @@ router.post('/import', async (req, res) => {
             // Update existing by name
             const existingId = existingResult.rows[0].id;
             await GameJam.update(existingId, jamData);
-            console.log(`✅ Updated existing Game Jam: ${jam.name} (ID: ${existingId})`);
+            console.log('✅ Updated existing Game Jam: %s (ID: %s)', jam.name, existingId);
           } else {
             // Create new
             await GameJam.create(jamData);
-            console.log(`✅ Created new Game Jam: ${jam.name}`);
+            console.log('✅ Created new Game Jam: %s', jam.name);
           }
           results.gamejams_imported++;
         } catch (error) {
-          console.error(`❌ Failed to import game jam ${jam.name || 'unknown'}:`, error);
+          console.error('❌ Failed to import game jam %s:', jam.name || 'unknown', error);
           results.errors.push(`Failed to import game jam ${jam.name || 'unknown'}: ${error.message}`);
         }
       }
@@ -293,18 +293,18 @@ router.post('/import', async (req, res) => {
               // Update existing by title+jam
               const existingId = existingResult.rows[0].id;
               await Game.update(existingId, gameData);
-              console.log(`✅ Updated existing Game: ${game.title} (ID: ${existingId})`);
+              console.log('✅ Updated existing Game: %s (ID: %s)', game.title, existingId);
             } else {
               // Create new
               await Game.create(gameData);
-              console.log(`✅ Created new Game: ${game.title}`);
+              console.log('✅ Created new Game: %s', game.title);
             }
             results.games_imported++;
           } else {
             results.errors.push(`Game jam not found for game: ${game.title}`);
           }
         } catch (error) {
-          console.error(`❌ Failed to import game ${game.title || 'unknown'}:`, error);
+          console.error('❌ Failed to import game %s:', game.title || 'unknown', error);
           results.errors.push(`Failed to import game ${game.title || 'unknown'}: ${error.message}`);
         }
       }
@@ -574,7 +574,7 @@ router.put('/users/:id/role', requireSuperAdmin, async (req, res) => {
         'UPDATE users SET role = $1, updated_at = NOW() WHERE email = $2 RETURNING id, username, email, role',
         [role, email]
       );
-      console.log(`✅ Local user role updated: ${email} -> ${role}`);
+      console.log('✅ Local user role updated: %s -> %s', email, role);
       res.json(result.rows[0]);
     } else {
       // Create local user entry with role override
@@ -582,7 +582,7 @@ router.put('/users/:id/role', requireSuperAdmin, async (req, res) => {
         'INSERT INTO users (username, email, password_hash, role, is_active) VALUES ($1, $2, $3, $4, $5) RETURNING id, username, email, role',
         [email.split('@')[0], email, '', role, true]
       );
-      console.log(`✅ Created local user with role override: ${email} -> ${role}`);
+      console.log('✅ Created local user with role override: %s -> %s', email, role);
       res.json(result.rows[0]);
     }
   } catch (error) {
@@ -615,11 +615,11 @@ router.put('/users/:id/toggle', requireSuperAdmin, async (req, res) => {
         'INSERT INTO users (username, email, password_hash, role, is_active) VALUES ($1, $2, $3, $4, $5) RETURNING id, username, is_active',
         [email.split('@')[0], email, '', 'user', false]
       );
-      console.log(`✅ User ${email} deactivated (local override created)`);
+      console.log('✅ User %s deactivated (local override created)', email);
       return res.json(createResult.rows[0]);
     }
     
-    console.log(`✅ User ${email} ${result.rows[0].is_active ? 'activated' : 'deactivated'} by super admin ${req.session.username}`);
+    console.log('✅ User %s %s by super admin %s', email, result.rows[0].is_active ? 'activated' : 'deactivated', req.session.username);
     res.json(result.rows[0]);
   } catch (error) {
     console.error('Error toggling user status:', error);
@@ -664,7 +664,7 @@ router.delete('/users/:id', requireSuperAdmin, async (req, res) => {
       userAgent: req.get('user-agent')
     });
     
-    console.log(`✅ User ${email} deleted by super admin ${req.session.username}`);
+    console.log('✅ User %s deleted by super admin %s', email, req.session.username);
     res.json({ success: true, message: 'User deleted successfully' });
   } catch (error) {
     console.error('Error deleting user:', error);
@@ -717,7 +717,7 @@ router.post('/users/sync-from-pocketid', requireSuperAdmin, async (req, res) => 
         const localUser = existing.rows[0];
         // Skip update to preserve local overrides
         skipped++;
-        console.log(`   ⏭️  Skipped ${pocketUser.email} (preserving local settings)`);
+        console.log('   ⏭️  Skipped %s (preserving local settings)', pocketUser.email);
       } else {
         // Create new user
         // Check if user is disabled in PocketID
@@ -734,7 +734,7 @@ router.post('/users/sync-from-pocketid', requireSuperAdmin, async (req, res) => 
           isActive
         ]);
         created++;
-        console.log(`   ✅ Created ${pocketUser.email} with role: ${role} (active: ${isActive})`);
+        console.log('   ✅ Created %s with role: %s (active: %s)', pocketUser.email, role, isActive);
       }
     }
 

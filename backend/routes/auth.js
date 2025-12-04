@@ -106,11 +106,11 @@ const initOIDC = async () => {
             [userinfo.preferred_username || userinfo.email, userinfo.email, '', role, true]
           );
           user = result.rows[0];
-          console.log(`✅ Created new OIDC user: ${user.email} with role: ${role} (groups: ${groups.join(', ')})`);
+          console.log('✅ Created new OIDC user: %s with role: %s (groups: %s)', user.email, role, groups.join(', '));
         } else {
           // Check if user is deactivated locally
           if (!user.is_active) {
-            console.log(`🚫 Login blocked: User ${user.email} is deactivated locally`);
+            console.log('🚫 Login blocked: User %s is deactivated locally', user.email);
             return done(null, false, { message: 'Your account has been deactivated. Please contact an administrator.' });
           }
           // Update existing user's role if their groups/email have changed
@@ -135,7 +135,7 @@ const initOIDC = async () => {
               [newRole, user.id]
             );
             user.role = newRole;
-            console.log(`🔄 Updated existing user ${user.email} role to: ${newRole} (groups: ${groups.join(', ')})`);
+            console.log('🔄 Updated existing user %s role to: %s (groups: %s)', user.email, newRole, groups.join(', '));
           }
         }
 
@@ -350,7 +350,7 @@ router.get('/oidc/callback', async (req, res) => {
         role = 'admin';
       }
       
-      console.log(`🎯 Determined role for new user: ${role} (email: ${userinfo.email}, groups: ${JSON.stringify(groups)})`);
+      console.log('🎯 Determined role for new user: %s (email: %s, groups: %s)', role, userinfo.email, JSON.stringify(groups));
       
       // Create new user
       result = await pool.query(
@@ -358,7 +358,7 @@ router.get('/oidc/callback', async (req, res) => {
         [userinfo.preferred_username || userinfo.email, userinfo.email, '', role, true]
       );
       user = result.rows[0];
-      console.log(`✅ Created new OIDC user: ${user.email} with role: ${role} (groups: ${groups.join(', ')})`);
+      console.log('✅ Created new OIDC user: %s with role: %s (groups: %s)', user.email, role, groups.join(', '));
     } else {
       // Update existing user's role if their groups/email have changed
       const groups = userinfo.groups || 
@@ -384,7 +384,7 @@ router.get('/oidc/callback', async (req, res) => {
         newRole = 'admin';
       }
       
-      console.log(`🎯 Determined role for existing user: ${newRole} (email: ${userinfo.email}, groups: ${JSON.stringify(groups)})`);
+      console.log('🎯 Determined role for existing user: %s (email: %s, groups: %s)', newRole, userinfo.email, JSON.stringify(groups));
       
       if (user.role !== newRole) {
         await pool.query(
@@ -392,7 +392,7 @@ router.get('/oidc/callback', async (req, res) => {
           [newRole, user.id]
         );
         user.role = newRole;
-        console.log(`🔄 Updated existing user ${user.email} role from ${user.role} to: ${newRole} (groups: ${groups.join(', ')})`);
+        console.log('🔄 Updated existing user %s role from %s to: %s (groups: %s)', user.email, user.role, newRole, groups.join(', '));
       }
     }
 
