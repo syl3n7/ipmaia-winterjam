@@ -5,6 +5,11 @@ RUN npm ci --only=production --no-cache
 
 FROM node:20.19.2-alpine3.20 AS builder
 WORKDIR /app
+
+# Accept build arguments
+ARG NEXT_PUBLIC_API_URL=https://api.ipmaia-winterjam.pt/api
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+
 COPY package*.json ./
 RUN npm ci --no-cache
 COPY . .
