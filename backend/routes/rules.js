@@ -228,10 +228,21 @@ router.post('/admin/upload-pdf', uploadLimiter, upload.single('pdf'), async (req
       });
     }
 
+    // Validate file path to prevent path traversal attacks
+    const uploadDir = path.resolve(__dirname, '../uploads/pdfs');
+    const filePath = path.resolve(req.file.path);
+    
+    if (!filePath.startsWith(uploadDir)) {
+      return res.status(400).json({ 
+        error: 'Invalid file path',
+        message: 'Caminho de ficheiro inválido'
+      });
+    }
+
     // Additional security validation
     if (req.file.size > 10 * 1024 * 1024) {
       // Delete the uploaded file if it exceeds size
-      await fs.unlink(req.file.path).catch(console.error);
+      await fs.unlink(filePath).catch(console.error);
       return res.status(400).json({ 
         error: 'File too large',
         message: 'Ficheiro demasiado grande (máximo 10MB)'
@@ -239,7 +250,7 @@ router.post('/admin/upload-pdf', uploadLimiter, upload.single('pdf'), async (req
     }
 
     // Verify file is actually a PDF by checking magic bytes
-    const fileBuffer = await fs.readFile(req.file.path);
+    const fileBuffer = await fs.readFile(filePath);
     const isPDF = fileBuffer.length > 4 && 
                   fileBuffer[0] === 0x25 && // %
                   fileBuffer[1] === 0x50 && // P
@@ -247,7 +258,7 @@ router.post('/admin/upload-pdf', uploadLimiter, upload.single('pdf'), async (req
                   fileBuffer[3] === 0x46;   // F
     
     if (!isPDF) {
-      await fs.unlink(req.file.path).catch(console.error);
+      await fs.unlink(filePath).catch(console.error);
       return res.status(400).json({ 
         error: 'Invalid file type',
         message: 'O ficheiro não é um PDF válido'
