@@ -18,6 +18,7 @@ function AdminLayoutContent({ children }) {
     { href: '/admin/sponsors', label: '🎪 Sponsors', section: 'sponsors' },
     { href: '/admin/frontpage', label: '🏠 Front Page', section: 'frontpage' },
     { href: '/admin/rules', label: '📋 Rules', section: 'rules' },
+    { href: '/admin/raffle', label: '🎡 Raffle Wheel', section: 'raffle' },
     { href: '/admin/system', label: '⚙️ System', section: 'system' },
   ];
 
