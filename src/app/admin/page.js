@@ -39,6 +39,7 @@ export default function AdminDashboard() {
     { href: '/admin/sponsors', icon: '🎪', label: 'Manage Sponsors', color: 'bg-purple-600' },
     { href: '/admin/frontpage', icon: '🏠', label: 'Edit Front Page', color: 'bg-yellow-600' },
     { href: '/admin/rules', icon: '📋', label: 'Manage Rules', color: 'bg-red-600' },
+    { href: '/admin/forms', icon: '📝', label: 'Forms Manager', color: 'bg-indigo-600' },
     { href: '/admin/system', icon: '⚙️', label: 'System Settings', color: 'bg-gray-600' },
   ];
 
