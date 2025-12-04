@@ -24,8 +24,6 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    env_file:
-      - .env
     environment:
       NODE_ENV: production
       PORT: ${BACKEND_PORT:-3001}
@@ -65,8 +63,6 @@ services:
     restart: unless-stopped
     depends_on:
       - backend
-    env_file:
-      - .env
     environment:
       NODE_ENV: production
       PORT: ${FRONTEND_PORT:-3000}
