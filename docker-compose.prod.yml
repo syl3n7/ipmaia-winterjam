@@ -96,20 +96,16 @@ services:
     image: containrrr/watchtower:latest
     restart: unless-stopped
     environment:
-      WATCHTOWER_SCHEDULE: "0 */5 * * * *"  # Check every 5 minutes (cron format)
-      WATCHTOWER_CLEANUP: "true"     # Remove old images
+      WATCHTOWER_POLL_INTERVAL: "300"  # Check every 5 minutes (300 seconds)
+      WATCHTOWER_CLEANUP: "true"  # Remove old images after update
+      WATCHTOWER_ROLLING_RESTART: "true"  # Restart one container at a time
       WATCHTOWER_INCLUDE_RESTARTING: "true"
       WATCHTOWER_INCLUDE_STOPPED: "false"
-      WATCHTOWER_ROLLING_RESTART: "true"  # Restart one at a time
       WATCHTOWER_DEBUG: "false"
-      DOCKER_API_VERSION: "1.44"  # Use newer Docker API
-      # Notification settings for maintenance coordination
-      WATCHTOWER_HTTP_API_UPDATE: "true"
-      WATCHTOWER_HTTP_API_TOKEN: "${WATCHTOWER_TOKEN:-winterjam-secret}"
+      TZ: "Europe/Lisbon"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-    ports:
-      - "127.0.0.1:8080:8080"  # Only accessible from localhost
+      - /root/.docker/config.json:/config.json
     networks:
       - winterjam-network
     labels:
