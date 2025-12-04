@@ -99,7 +99,7 @@ services:
     image: containrrr/watchtower:latest
     restart: unless-stopped
     environment:
-      WATCHTOWER_POLL_INTERVAL: 300  # Check every 5 minutes
+      WATCHTOWER_SCHEDULE: "0 */5 * * * *"  # Check every 5 minutes (cron format)
       WATCHTOWER_CLEANUP: "true"     # Remove old images
       WATCHTOWER_INCLUDE_RESTARTING: "true"
       WATCHTOWER_INCLUDE_STOPPED: "false"
