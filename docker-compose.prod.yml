@@ -28,7 +28,7 @@ services:
       - .env
     environment:
       NODE_ENV: production
-      PORT: 3001
+      PORT: ${BACKEND_PORT:-3001}
       DB_HOST: db
       DB_PORT: 5432
       DB_NAME: ${DB_NAME:-winterjam}
@@ -69,6 +69,7 @@ services:
       - .env
     environment:
       NODE_ENV: production
+      PORT: ${FRONTEND_PORT:-3000}
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.ipmaia-winterjam.pt/api}
     volumes:
       - shared_public:/app/public
