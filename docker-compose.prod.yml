@@ -105,6 +105,7 @@ services:
       WATCHTOWER_INCLUDE_STOPPED: "false"
       WATCHTOWER_ROLLING_RESTART: "true"  # Restart one at a time
       WATCHTOWER_DEBUG: "false"
+      DOCKER_API_VERSION: "1.44"  # Use newer Docker API
       # Notification settings for maintenance coordination
       WATCHTOWER_HTTP_API_UPDATE: "true"
       WATCHTOWER_HTTP_API_TOKEN: "${WATCHTOWER_TOKEN:-winterjam-secret}"
