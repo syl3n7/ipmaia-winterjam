@@ -102,6 +102,7 @@ services:
       WATCHTOWER_INCLUDE_RESTARTING: "true"
       WATCHTOWER_INCLUDE_STOPPED: "false"
       WATCHTOWER_DEBUG: "false"
+      DOCKER_API_VERSION: "1.44"  # Required by Docker daemon
       TZ: "Europe/Lisbon"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
