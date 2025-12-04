@@ -458,8 +458,11 @@ router.post('/upload-logo/:id', requireAdmin, uploadLimiter, upload.single('logo
 
     // Delete old logo file if it exists
     if (existingResult.rows[0].logo_filename) {
-      const oldFilePath = path.join(__dirname, '../uploads/sponsors', existingResult.rows[0].logo_filename);
-      await fs.unlink(oldFilePath).catch(console.error);
+      const uploadDir = path.resolve(__dirname, '../uploads/sponsors');
+      const oldFilePath = path.resolve(path.join(uploadDir, existingResult.rows[0].logo_filename));
+      if (oldFilePath.startsWith(uploadDir)) {
+        await fs.unlink(oldFilePath).catch(console.error);
+      }
     }
 
     // Update sponsor with new logo filename
@@ -493,7 +496,17 @@ router.post('/upload-logo/:id', requireAdmin, uploadLimiter, upload.single('logo
 router.get('/logo/:filename', async (req, res) => {
   try {
     const filename = req.params.filename;
-    const filePath = path.join(__dirname, '../uploads/sponsors', filename);
+    
+    // Validate file path to prevent path traversal attacks
+    const uploadDir = path.resolve(__dirname, '../uploads/sponsors');
+    const filePath = path.resolve(path.join(uploadDir, filename));
+    
+    if (!filePath.startsWith(uploadDir)) {
+      return res.status(400).json({
+        error: 'Invalid file path',
+        message: 'Caminho de ficheiro inválido'
+      });
+    }
 
     // Check if file exists
     try {

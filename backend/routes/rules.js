@@ -165,7 +165,16 @@ router.get('/download', async (req, res) => {
       });
     }
     
-    const filePath = path.join(__dirname, '../uploads/pdfs', rules.pdf_filename);
+    // Validate file path to prevent path traversal attacks
+    const uploadDir = path.resolve(__dirname, '../uploads/pdfs');
+    const filePath = path.resolve(path.join(uploadDir, rules.pdf_filename));
+    
+    if (!filePath.startsWith(uploadDir)) {
+      return res.status(400).json({ 
+        error: 'Invalid file path',
+        message: 'Caminho de ficheiro inválido'
+      });
+    }
     
     // Check if file exists
     try {
@@ -286,8 +295,11 @@ router.post('/admin/upload-pdf', uploadLimiter, upload.single('pdf'), async (req
       if (activeRules) {
         // Delete old PDF file if it exists
         if (activeRules.pdf_filename) {
-          const oldFilePath = path.join(__dirname, '../uploads/pdfs', activeRules.pdf_filename);
-          await fs.unlink(oldFilePath).catch(console.error);
+          const uploadDir = path.resolve(__dirname, '../uploads/pdfs');
+          const oldFilePath = path.resolve(path.join(uploadDir, activeRules.pdf_filename));
+          if (oldFilePath.startsWith(uploadDir)) {
+            await fs.unlink(oldFilePath).catch(console.error);
+          }
         }
         
         // Update existing active rules

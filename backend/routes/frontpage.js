@@ -213,8 +213,11 @@ router.post('/admin/upload-background', requireAdmin, uploadLimiter, upload.sing
 
     // Delete old background file if it exists
     if (oldBgResult.rows.length > 0 && oldBgResult.rows[0].setting_value) {
-      const oldFilePath = path.join(__dirname, '../uploads/images', oldBgResult.rows[0].setting_value);
-      await fs.unlink(oldFilePath).catch(console.error);
+      const uploadDir = path.resolve(__dirname, '../uploads/images');
+      const oldFilePath = path.resolve(path.join(uploadDir, oldBgResult.rows[0].setting_value));
+      if (oldFilePath.startsWith(uploadDir)) {
+        await fs.unlink(oldFilePath).catch(console.error);
+      }
     }
 
     // Store full URL for cross-domain access
@@ -301,7 +304,17 @@ router.get('/background', async (req, res) => {
     }
     
     const filename = result.rows[0].setting_value;
-    const filePath = path.join(__dirname, '../uploads/images', filename);
+    
+    // Validate file path to prevent path traversal attacks
+    const uploadDir = path.resolve(__dirname, '../uploads/images');
+    const filePath = path.resolve(path.join(uploadDir, filename));
+    
+    if (!filePath.startsWith(uploadDir)) {
+      return res.status(400).json({ 
+        error: 'Invalid file path',
+        message: 'Caminho de ficheiro inválido'
+      });
+    }
     
     // Check if file exists
     try {
