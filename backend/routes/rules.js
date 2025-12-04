@@ -5,6 +5,7 @@ const fs = require('fs').promises;
 const rateLimit = require('express-rate-limit');
 const Rules = require('../models/Rules');
 const { requireAdmin } = require('./auth');
+const { logAudit } = require('../utils/auditLog');
 
 const router = express.Router();
 
@@ -127,6 +128,31 @@ router.get('/pdf-url', async (req, res) => {
   }
 });
 
+// Get last updated timestamp (public)
+router.get('/last-updated', async (req, res) => {
+  try {
+    const rules = await Rules.getActive();
+    
+    if (!rules) {
+      return res.json({ 
+        lastUpdated: null,
+        message: 'No rules uploaded yet'
+      });
+    }
+    
+    res.json({ 
+      lastUpdated: rules.updated_at || rules.created_at,
+      message: 'Last updated timestamp retrieved successfully'
+    });
+  } catch (error) {
+    console.error('Error fetching last updated:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch last updated',
+      message: 'Erro ao carregar última atualização'
+    });
+  }
+});
+
 // Download/serve PDF file (public)
 router.get('/download', async (req, res) => {
   try {
@@ -139,7 +165,16 @@ router.get('/download', async (req, res) => {
       });
     }
     
-    const filePath = path.join(__dirname, '../uploads/pdfs', rules.pdf_filename);
+    // Validate file path to prevent path traversal attacks
+    const uploadDir = path.resolve(__dirname, '../uploads/pdfs');
+    const filePath = path.resolve(path.join(uploadDir, rules.pdf_filename));
+    
+    if (!filePath.startsWith(uploadDir)) {
+      return res.status(400).json({ 
+        error: 'Invalid file path',
+        message: 'Caminho de ficheiro inválido'
+      });
+    }
     
     // Check if file exists
     try {
@@ -202,10 +237,21 @@ router.post('/admin/upload-pdf', uploadLimiter, upload.single('pdf'), async (req
       });
     }
 
+    // Validate file path to prevent path traversal attacks
+    const uploadDir = path.resolve(__dirname, '../uploads/pdfs');
+    const filePath = path.resolve(req.file.path);
+    
+    if (!filePath.startsWith(uploadDir)) {
+      return res.status(400).json({ 
+        error: 'Invalid file path',
+        message: 'Caminho de ficheiro inválido'
+      });
+    }
+
     // Additional security validation
     if (req.file.size > 10 * 1024 * 1024) {
       // Delete the uploaded file if it exceeds size
-      await fs.unlink(req.file.path).catch(console.error);
+      await fs.unlink(filePath).catch(console.error);
       return res.status(400).json({ 
         error: 'File too large',
         message: 'Ficheiro demasiado grande (máximo 10MB)'
@@ -213,7 +259,7 @@ router.post('/admin/upload-pdf', uploadLimiter, upload.single('pdf'), async (req
     }
 
     // Verify file is actually a PDF by checking magic bytes
-    const fileBuffer = await fs.readFile(req.file.path);
+    const fileBuffer = await fs.readFile(filePath);
     const isPDF = fileBuffer.length > 4 && 
                   fileBuffer[0] === 0x25 && // %
                   fileBuffer[1] === 0x50 && // P
@@ -221,7 +267,7 @@ router.post('/admin/upload-pdf', uploadLimiter, upload.single('pdf'), async (req
                   fileBuffer[3] === 0x46;   // F
     
     if (!isPDF) {
-      await fs.unlink(req.file.path).catch(console.error);
+      await fs.unlink(filePath).catch(console.error);
       return res.status(400).json({ 
         error: 'Invalid file type',
         message: 'O ficheiro não é um PDF válido'
@@ -234,8 +280,9 @@ router.post('/admin/upload-pdf', uploadLimiter, upload.single('pdf'), async (req
     // Process the rules content from form data
     const sections = processRulesContent(req.body);
     
-    // Generate the API URL for downloading
-    const apiUrl = process.env.API_URL || 'http://localhost:3001/api';
+    // Generate the API URL for downloading - handle trailing slashes
+    const apiUrlRaw = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+    const apiUrl = apiUrlRaw.replace(/\/+$/, '');
     const pdfUrl = `${apiUrl}/rules/download`;
     
     // Create or update rules in database
@@ -248,8 +295,11 @@ router.post('/admin/upload-pdf', uploadLimiter, upload.single('pdf'), async (req
       if (activeRules) {
         // Delete old PDF file if it exists
         if (activeRules.pdf_filename) {
-          const oldFilePath = path.join(__dirname, '../uploads/pdfs', activeRules.pdf_filename);
-          await fs.unlink(oldFilePath).catch(console.error);
+          const uploadDir = path.resolve(__dirname, '../uploads/pdfs');
+          const oldFilePath = path.resolve(path.join(uploadDir, activeRules.pdf_filename));
+          if (oldFilePath.startsWith(uploadDir)) {
+            await fs.unlink(oldFilePath).catch(console.error);
+          }
         }
         
         // Update existing active rules
@@ -274,6 +324,18 @@ router.post('/admin/upload-pdf', uploadLimiter, upload.single('pdf'), async (req
       console.error('⚠️ Database error (non-critical):', dbError.message);
       // Continue even if database fails - PDF is uploaded
     }
+
+    // Log the upload
+    await logAudit({
+      userId: req.session.userId,
+      username: req.session.username || req.session.email,
+      action: 'UPDATE',
+      tableName: 'rules',
+      description: `Uploaded new rulebook PDF: ${req.file.filename}`,
+      newValues: { filename: req.file.filename, size: req.file.size },
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent')
+    });
 
     res.json({
       message: 'PDF uploaded successfully and rules updated',

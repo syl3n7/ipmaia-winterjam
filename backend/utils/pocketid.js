@@ -29,7 +29,23 @@ class PocketIDClient {
         throw new Error(`PocketID API error: ${response.status} - ${error}`);
       }
 
-      return await response.json();
+      // For health check endpoints, don't try to parse JSON
+      if (options.expectJson === false) {
+        return response;
+      }
+
+      // Try to parse as JSON, return empty object if response is empty
+      const text = await response.text();
+      if (!text || text.trim() === '') {
+        return {};
+      }
+      
+      try {
+        return JSON.parse(text);
+      } catch (e) {
+        console.warn(`⚠️  Response from ${endpoint} is not valid JSON: ${text}`);
+        return { rawResponse: text };
+      }
     } catch (error) {
       console.error('❌ PocketID API request failed:', error);
       throw error;
@@ -37,8 +53,10 @@ class PocketIDClient {
   }
 
   // Get all users (with pagination)
-  async getUsers(page = 1, pageSize = 50) {
-    return await this.request(`/api/users?page=${page}&pageSize=${pageSize}`);
+  async getUsers(page = 1, limit = 50) {
+    const response = await this.request(`/api/users?pagination[page]=${page}&pagination[limit]=${limit}`);
+    console.log('📋 Raw PocketID response:', JSON.stringify(response, null, 2));
+    return response;
   }
 
   // Get specific user by ID
@@ -52,8 +70,8 @@ class PocketIDClient {
   }
 
   // Get all user groups
-  async getAllGroups(page = 1, pageSize = 50) {
-    return await this.request(`/api/user-groups?page=${page}&pageSize=${pageSize}`);
+  async getAllGroups(page = 1, limit = 50) {
+    return await this.request(`/api/user-groups?pagination[page]=${page}&pagination[limit]=${limit}`);
   }
 
   // Get specific group by ID
@@ -64,25 +82,35 @@ class PocketIDClient {
   // Filter users by admin-related groups only
   async getAdminUsers() {
     try {
+      console.log('🔍 Fetching users from PocketID...');
       const usersResponse = await this.getUsers(1, 100);
+      console.log(`📊 PocketID returned ${usersResponse.data?.length || 0} total users`);
+      
       const adminUsers = [];
 
-      for (const user of usersResponse.items || []) {
-        const userGroups = await this.getUserGroups(user.id);
+      for (const user of usersResponse.data || []) {
+        console.log(`👤 Checking user: ${user.email || user.username} (ID: ${user.id})`);
+        const userGroupsResponse = await this.getUserGroups(user.id);
+        // getUserGroups returns an array directly, not wrapped in data
+        const userGroups = Array.isArray(userGroupsResponse) ? userGroupsResponse : (userGroupsResponse.data || []);
+        console.log(`   Groups: ${userGroups.map(g => g.name).join(', ') || 'none'}`);
         const groupNames = userGroups.map(g => g.name.toLowerCase());
         
-        // Only include users with admin, ipmaia, or users groups
+        // Only include users with admin or ipmaia groups
         if (groupNames.includes('admin') || 
-            groupNames.includes('ipmaia') || 
-            groupNames.includes('users')) {
+            groupNames.includes('ipmaia')) {
+          console.log(`   ✅ User matches criteria - adding to sync list`);
           adminUsers.push({
             ...user,
             groups: userGroups,
             groupNames: groupNames
           });
+        } else {
+          console.log(`   ⏭️  User doesn't match criteria (admin/ipmaia only) - skipping`);
         }
       }
 
+      console.log(`✅ Found ${adminUsers.length} users matching criteria (admin/ipmaia groups only)`);
       return adminUsers;
     } catch (error) {
       console.error('❌ Failed to fetch admin users from PocketID:', error);
@@ -91,16 +119,36 @@ class PocketIDClient {
   }
 
   // Get audit logs from PocketID
-  async getAuditLogs(page = 1, pageSize = 50) {
-    return await this.request(`/api/audit-logs?page=${page}&pageSize=${pageSize}`);
+  async getAuditLogs(page = 1, limit = 50) {
+    return await this.request(`/api/audit-logs?pagination[page]=${page}&pagination[limit]=${limit}`);
   }
 
   // Check if API is configured and working
   async healthCheck() {
     try {
-      await this.request('/healthz');
+      // Try multiple common health check endpoints
+      const endpoints = ['/healthz', '/health', '/api/health', '/api/healthz'];
+      
+      for (const endpoint of endpoints) {
+        try {
+          const response = await this.request(endpoint, { expectJson: false });
+          if (response.ok || response.status === 200) {
+            console.log(`✅ PocketID health check passed on ${endpoint}`);
+            return true;
+          }
+        } catch (err) {
+          // Try next endpoint
+          continue;
+        }
+      }
+      
+      // If all health checks fail, try to get users as a fallback test
+      console.log('⚠️  Health endpoints failed, trying to fetch users as fallback...');
+      await this.getUsers(1, 1);
+      console.log('✅ PocketID connection verified via user fetch');
       return true;
     } catch (error) {
+      console.error('❌ PocketID health check failed:', error.message);
       return false;
     }
   }

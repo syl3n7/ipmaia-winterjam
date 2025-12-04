@@ -23,8 +23,11 @@ export default function AdminRules() {
         const rules = await response.json();
 
         if (rules && rules.pdf_url) {
+          // Construct the PDF URL using the frontend's API URL to ensure consistency
+          const pdfUrl = `${process.env.NEXT_PUBLIC_API_URL}/rules/download`;
+          
           setRulesStatus({
-            pdf_url: rules.pdf_url,
+            pdf_url: pdfUrl,
             created_at: rules.created_at,
             updated_at: rules.updated_at,
           });

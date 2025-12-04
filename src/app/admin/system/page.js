@@ -11,30 +11,74 @@ export default function AdminSystem() {
   const [auditLogs, setAuditLogs] = useState([]);
   const [auditStats, setAuditStats] = useState(null);
   const [showAuditLogs, setShowAuditLogs] = useState(false);
+  const [maintenanceMode, setMaintenanceMode] = useState(false);
+  const [systemMetrics, setSystemMetrics] = useState(null);
 
   useEffect(() => {
     loadSystemInfo();
+    loadSystemMetrics();
     if (isSuperAdmin) {
       loadAuditLogs();
+      loadMaintenanceStatus();
     }
+    
+    // Auto-refresh metrics every 30 seconds
+    const metricsInterval = setInterval(() => {
+      loadSystemMetrics();
+    }, 30000);
+    
+    return () => clearInterval(metricsInterval);
   }, [isSuperAdmin]);
+
+  const loadMaintenanceStatus = async () => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/system/maintenance`, {
+        credentials: 'include',
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setMaintenanceMode(data.enabled);
+      }
+    } catch (error) {
+      console.error('Failed to load maintenance status:', error);
+    }
+  };
+
+  const loadSystemMetrics = async () => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/system/metrics`, {
+        credentials: 'include',
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setSystemMetrics(data);
+      }
+    } catch (error) {
+      console.error('Failed to load system metrics:', error);
+    }
+  };
 
   const loadSystemInfo = async () => {
     setLoading(true);
     const startTime = Date.now();
 
     try {
-      const [gameJamsRes, gamesRes, sponsorsRes, healthRes] = await Promise.allSettled([
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/gamejams`, {
+      // Extract base URL from API URL (remove /api suffix if present)
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+      const baseUrl = apiUrl.replace(/\/api$/, '');
+
+      const [gameJamsRes, gamesRes, sponsorsRes, healthRes, backendVersionRes] = await Promise.allSettled([
+        fetch(`${apiUrl}/admin/gamejams`, {
           credentials: 'include',
         }),
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/games`, {
+        fetch(`${apiUrl}/admin/games`, {
           credentials: 'include',
         }),
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/sponsors/admin`, {
+        fetch(`${apiUrl}/sponsors/admin`, {
           credentials: 'include',
         }),
-        fetch(`${process.env.NEXT_PUBLIC_API_URL.replace('/api', '')}/health`),
+        fetch(`${baseUrl}/health`),
+        fetch(`${apiUrl}/version`),
       ]);
 
       const responseTime = Date.now() - startTime;
@@ -55,6 +99,18 @@ export default function AdminSystem() {
         healthRes.status === 'fulfilled' && healthRes.value.ok
           ? await healthRes.value.json()
           : { status: 'Error' };
+      const backendVersion =
+        backendVersionRes.status === 'fulfilled' && backendVersionRes.value.ok
+          ? await backendVersionRes.value.json()
+          : null;
+
+      // Frontend version from environment variables
+      const frontendVersion = {
+        service: 'frontend',
+        version: process.env.NEXT_PUBLIC_APP_VERSION || '1.0.0-dev',
+        buildDate: process.env.NEXT_PUBLIC_BUILD_DATE || 'unknown',
+        gitSha: process.env.NEXT_PUBLIC_GIT_SHA || 'unknown',
+      };
 
       setSystemData({
         health,
@@ -62,6 +118,8 @@ export default function AdminSystem() {
         games,
         sponsors,
         responseTime,
+        backendVersion,
+        frontendVersion,
       });
       setLastCheck(new Date());
     } catch (error) {
@@ -229,7 +287,8 @@ export default function AdminSystem() {
 
       if (response.ok) {
         const result = await response.json();
-        alert(`✅ Maintenance mode ${result.enabled ? 'ENABLED' : 'DISABLED'}`);
+        setMaintenanceMode(result.enabled);
+        alert(`✅ ${result.message}`);
         await loadSystemInfo();
       } else {
         alert('❌ Failed to toggle maintenance mode');
@@ -324,15 +383,21 @@ export default function AdminSystem() {
           </div>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-gray-400">Status</span>
+              <span className="text-gray-400">Backend Status</span>
               <span className={isHealthy ? 'text-green-400' : 'text-red-400'}>
                 {isHealthy ? 'Online' : 'Offline'}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-400">Version</span>
-              <span className="text-white">
-                {systemData?.health?.version || '1.0.0'}
+              <span className="text-gray-400">Backend Version</span>
+              <span className="text-white font-mono text-xs">
+                {systemData?.backendVersion?.version || systemData?.health?.version || '1.0.0-dev'}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-400">Frontend Version</span>
+              <span className="text-white font-mono text-xs">
+                {systemData?.frontendVersion?.version || '1.0.0-dev'}
               </span>
             </div>
             <div className="flex justify-between">
@@ -376,8 +441,13 @@ export default function AdminSystem() {
         <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-white">⚡ Performance</h3>
-            <span className="px-3 py-1 rounded-full text-xs font-semibold bg-blue-600 text-white">
-              Good
+            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+              systemData?.responseTime < 200 ? 'bg-green-600' :
+              systemData?.responseTime < 500 ? 'bg-yellow-600' :
+              'bg-red-600'
+            } text-white`}>
+              {systemData?.responseTime < 200 ? 'Excellent' :
+               systemData?.responseTime < 500 ? 'Good' : 'Slow'}
             </span>
           </div>
           <div className="space-y-2 text-sm">
@@ -388,12 +458,24 @@ export default function AdminSystem() {
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-400">Active Users</span>
-              <span className="text-white font-semibold">1</span>
+              <span className="text-gray-400">Active Sessions</span>
+              <span className="text-white font-semibold">
+                {systemMetrics?.activeSessions ?? '-'}
+              </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-400">Memory</span>
-              <span className="text-white">N/A</span>
+              <span className="text-gray-400">Memory (Heap)</span>
+              <span className="text-white font-semibold">
+                {systemMetrics ? `${systemMetrics.memory.heapUsed}MB / ${systemMetrics.memory.heapTotal}MB` : 'Loading...'}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-400">Uptime</span>
+              <span className="text-white font-semibold">
+                {systemMetrics?.uptime ? 
+                  `${systemMetrics.uptime.days}d ${systemMetrics.uptime.hours}h ${systemMetrics.uptime.minutes}m` : 
+                  'Loading...'}
+              </span>
             </div>
           </div>
         </div>
@@ -403,21 +485,35 @@ export default function AdminSystem() {
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-white">💾 Storage</h3>
             <span className="px-3 py-1 rounded-full text-xs font-semibold bg-purple-600 text-white">
-              Available
+              {systemMetrics?.storage?.available ? 'Available' : 'Checking...'}
             </span>
           </div>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-gray-400">Uploads</span>
-              <span className="text-white">N/A</span>
+              <span className="text-gray-400">Sponsor Logos</span>
+              <span className="text-white font-semibold">
+                {systemMetrics?.storage?.sponsors ?? '-'}
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-400">Total Files</span>
-              <span className="text-white">N/A</span>
+              <span className="text-white font-semibold">
+                {systemMetrics?.storage?.totalFiles ?? '-'}
+              </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-400">Disk Usage</span>
-              <span className="text-white">N/A</span>
+              <span className="text-gray-400">Total Size</span>
+              <span className="text-white font-semibold">
+                {systemMetrics?.storage?.totalSize ? 
+                  `${(systemMetrics.storage.totalSize / 1024 / 1024).toFixed(2)} MB` : 
+                  '-'}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-400">RSS Memory</span>
+              <span className="text-white font-semibold">
+                {systemMetrics ? `${systemMetrics.memory.rss}MB` : '-'}
+              </span>
             </div>
           </div>
         </div>
@@ -559,13 +655,27 @@ export default function AdminSystem() {
               <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
                 <h4 className="text-lg font-semibold text-white mb-2">🚧 Maintenance Mode</h4>
                 <p className="text-gray-400 text-sm mb-3">
-                  Toggle maintenance mode. Visitors will see maintenance page.
+                  Toggle maintenance mode. Visitors will see maintenance page. Admin panel remains accessible.
                 </p>
+                <div className="mb-3 flex items-center gap-2">
+                  <span className="text-sm text-gray-400">Status:</span>
+                  <span className={`px-2 py-1 rounded text-sm font-semibold ${
+                    maintenanceMode 
+                      ? 'bg-yellow-600 text-white' 
+                      : 'bg-green-600 text-white'
+                  }`}>
+                    {maintenanceMode ? '🚧 ENABLED' : '✅ DISABLED'}
+                  </span>
+                </div>
                 <button 
                   onClick={handleToggleMaintenanceMode}
-                  className="w-full px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded transition-colors"
+                  className={`w-full px-4 py-2 text-white rounded transition-colors ${
+                    maintenanceMode
+                      ? 'bg-green-600 hover:bg-green-700'
+                      : 'bg-yellow-600 hover:bg-yellow-700'
+                  }`}
                 >
-                  Toggle Maintenance
+                  {maintenanceMode ? 'Disable Maintenance' : 'Enable Maintenance'}
                 </button>
               </div>
 
@@ -642,41 +752,57 @@ export default function AdminSystem() {
                       <tr>
                         <th className="px-4 py-2 text-left text-xs font-medium text-gray-300">Time</th>
                         <th className="px-4 py-2 text-left text-xs font-medium text-gray-300">User</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-300">IP Address</th>
                         <th className="px-4 py-2 text-left text-xs font-medium text-gray-300">Action</th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-300">Table</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-300">Target</th>
                         <th className="px-4 py-2 text-left text-xs font-medium text-gray-300">Description</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-700">
                       {auditLogs.map((log) => (
                         <tr key={log.id} className="hover:bg-gray-700">
-                          <td className="px-4 py-2 text-gray-300 whitespace-nowrap">
-                            {new Date(log.created_at).toLocaleString()}
+                          <td className="px-4 py-2 text-gray-300 whitespace-nowrap text-xs">
+                            {new Date(log.created_at).toLocaleString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
                           </td>
-                          <td className="px-4 py-2 text-gray-300">
+                          <td className="px-4 py-2 text-gray-300 font-medium">
                             {log.username || 'System'}
+                          </td>
+                          <td className="px-4 py-2 text-gray-400 font-mono text-xs" title={log.user_agent}>
+                            {log.ip_address || '-'}
                           </td>
                           <td className="px-4 py-2">
                             <span className={`px-2 py-1 rounded text-xs font-semibold ${
                               log.action === 'CREATE' ? 'bg-green-600' :
                               log.action === 'UPDATE' ? 'bg-blue-600' :
                               log.action === 'DELETE' ? 'bg-red-600' :
+                              log.action === 'LOGIN' ? 'bg-purple-600' :
+                              log.action === 'LOGOUT' ? 'bg-orange-600' :
                               'bg-gray-600'
                             } text-white`}>
                               {log.action}
                             </span>
                           </td>
-                          <td className="px-4 py-2 text-gray-300">
-                            {log.table_name || '-'}
+                          <td className="px-4 py-2 text-gray-300 text-xs">
+                            {log.table_name ? (
+                              <span>
+                                <span className="text-blue-400">{log.table_name}</span>
+                                {log.record_id && <span className="text-gray-500">#{log.record_id}</span>}
+                              </span>
+                            ) : '-'}
                           </td>
-                          <td className="px-4 py-2 text-gray-300">
+                          <td className="px-4 py-2 text-gray-300 max-w-md truncate" title={log.description}>
                             {log.description}
                           </td>
                         </tr>
                       ))}
                       {auditLogs.length === 0 && (
                         <tr>
-                          <td colSpan="5" className="px-4 py-8 text-center text-gray-400">
+                          <td colSpan="6" className="px-4 py-8 text-center text-gray-400">
                             No audit logs found. Activity will appear here once the audit system is active.
                           </td>
                         </tr>

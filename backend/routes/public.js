@@ -213,13 +213,13 @@ router.get('/archive/:year/:season', async (req, res) => {
       
       // Return the most recent game jam for this year
       const gameJam = yearGameJams.sort((a, b) => new Date(b.start_date) - new Date(a.start_date))[0];
-      console.log(`🎯 Selected game jam from year fallback: ${gameJam.name}`);
+      console.log('🎯 Selected game jam from year fallback: %s', gameJam.name);
       return res.json(gameJam);
     }
     
     // Return the most recent game jam for this year/season
     const gameJam = gameJams.sort((a, b) => new Date(b.start_date) - new Date(a.start_date))[0];
-    console.log(`🎯 Selected game jam: ${gameJam.name}`);
+    console.log('🎯 Selected game jam: %s', gameJam.name);
     
     res.json(gameJam);
   } catch (error) {

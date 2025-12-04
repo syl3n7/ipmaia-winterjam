@@ -27,6 +27,28 @@ const PORT = process.env.PORT || 3001;
 // Trust proxy (important for reverse proxy setups like Zoraxy/NPM)
 app.set('trust proxy', 1);
 
+// Middleware to extract and attach client info to request
+app.use((req, res, next) => {
+  // Get real IP address (considering proxy headers)
+  const clientIp = req.headers['x-forwarded-for']?.split(',')[0].trim() ||
+                   req.headers['x-real-ip'] ||
+                   req.ip ||
+                   req.connection.remoteAddress;
+  
+  // Get user agent
+  const userAgent = req.headers['user-agent'] || 'Unknown';
+  
+  // Attach to request for easy access
+  req.clientInfo = {
+    ip: clientIp,
+    userAgent: userAgent,
+    forwardedFor: req.headers['x-forwarded-for'],
+    realIp: req.headers['x-real-ip']
+  };
+  
+  next();
+});
+
 // Debug middleware for proxy headers (remove in production)
 if (process.env.NODE_ENV !== 'production') {
   app.use((req, res, next) => {
@@ -69,6 +91,25 @@ const limiter = rateLimit({
     return process.env.NODE_ENV === 'production' ? 100 : 1000; // Standard limits
   },
   message: 'Too many requests from this IP, please try again later.',
+  // Skip rate limiting for internal Docker network requests
+  skip: (req) => {
+    const ip = req.ip || req.connection.remoteAddress || '';
+    // Docker bridge network typically uses 172.x.x.x range
+    // Also skip localhost and private network ranges
+    const isInternalIP = 
+      ip.startsWith('172.') ||      // Docker default bridge network
+      ip.startsWith('10.') ||        // Private network
+      ip.startsWith('192.168.') ||   // Private network
+      ip === '::1' ||                // IPv6 localhost
+      ip === '127.0.0.1' ||          // IPv4 localhost
+      ip === '::ffff:127.0.0.1';     // IPv4-mapped IPv6 localhost
+    
+    if (isInternalIP && process.env.NODE_ENV === 'production') {
+      console.log(`⚡ Skipping rate limit for internal IP: ${ip}`);
+    }
+    
+    return isInternalIP;
+  }
 });
 
 app.use(limiter);
@@ -125,7 +166,10 @@ app.use((req, res, next) => {
   if (req.path.startsWith('/api/admin') || 
       req.path.startsWith('/api/rules/admin') || 
       req.path.startsWith('/api/frontpage/admin') ||
-      req.path.startsWith('/api/sponsors/upload-logo')) {
+      req.path.startsWith('/api/sponsors/upload-logo') ||
+      req.path.startsWith('/api/sponsors/admin') ||
+      (req.path.match(/^\/api\/sponsors\/\d+$/) && (req.method === 'PUT' || req.method === 'DELETE')) ||
+      (req.path === '/api/sponsors' && req.method === 'POST')) {
     return next();
   }
   // Apply CSRF for other routes
@@ -153,20 +197,12 @@ passport.deserializeUser(async (id, done) => {
 // Serve static files (uploaded images, etc.)
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// ADMIN INTERFACE: Both old and new admin can coexist during transition
-// Old admin (backend HTML) is at: http://localhost:3001/admin
-// New admin (Next.js) is at: http://localhost:3000/admin
-// 
-// To switch to new admin only, uncomment the redirect below and comment out the static serving
-
-// OPTION 1: Redirect to new frontend admin (for full migration)
-// app.get('/admin*', (req, res) => {
-//   const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-//   res.redirect(`${frontendUrl}/admin`);
-// });
-
-// OPTION 2: Serve old backend admin (for transition period) - CURRENTLY ACTIVE
-app.use('/admin', express.static(path.join(__dirname, 'admin/dist')));
+// ADMIN INTERFACE: Redirect to Next.js admin panel
+// All /admin requests are redirected to the frontend at /admin
+app.get('/admin*', (req, res) => {
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+  res.redirect(`${frontendUrl}/admin`);
+});
 
 // Serve favicon for admin panel
 app.get('/favicon.ico', (req, res) => {
@@ -189,7 +225,21 @@ app.get('/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     timestamp: new Date().toISOString(),
-    version: process.env.npm_package_version || '1.0.0'
+    version: process.env.APP_VERSION || '1.0.0-dev',
+    buildDate: process.env.BUILD_DATE || 'unknown',
+    gitSha: process.env.GIT_SHA || 'unknown'
+  });
+});
+
+// Version endpoint
+app.get('/api/version', (req, res) => {
+  res.json({
+    service: 'backend',
+    version: process.env.APP_VERSION || '1.0.0-dev',
+    buildDate: process.env.BUILD_DATE || 'unknown',
+    gitSha: process.env.GIT_SHA || 'unknown',
+    nodeVersion: process.version,
+    environment: process.env.NODE_ENV || 'development'
   });
 });
 
@@ -216,9 +266,6 @@ app.get('/debug/files', (req, res) => {
     res.json({ error: error.message });
   }
 });
-
-// Note: Admin routes removed - admin interface migrated to Next.js frontend at /admin
-// All /admin* requests are now redirected to the frontend (see redirect above)
 
 // 404 handler
 app.use((req, res) => {

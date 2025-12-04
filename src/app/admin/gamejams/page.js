@@ -196,10 +196,11 @@ export default function AdminGameJams() {
       description: gameJam.description || '',
       is_active: gameJam.is_active ?? true,
       
-      start_date: gameJam.start_date?.split('T')[0] || '',
-      end_date: gameJam.end_date?.split('T')[0] || '',
-      registration_start_date: gameJam.registration_start_date?.split('T')[0] || '',
-      registration_end_date: gameJam.registration_end_date?.split('T')[0] || '',
+      // Format datetime fields for datetime-local input (YYYY-MM-DDTHH:mm)
+      start_date: gameJam.start_date?.slice(0, 16) || '',
+      end_date: gameJam.end_date?.slice(0, 16) || '',
+      registration_start_date: gameJam.registration_start_date?.slice(0, 16) || '',
+      registration_end_date: gameJam.registration_end_date?.slice(0, 16) || '',
       
       registration_url: gameJam.registration_url || '',
       
@@ -383,7 +384,7 @@ export default function AdminGameJams() {
                       Start Date *
                     </label>
                     <input
-                      type="date"
+                      type="datetime-local"
                       value={formData.start_date}
                       onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
                       className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded text-white focus:outline-none focus:border-blue-500"
@@ -395,7 +396,7 @@ export default function AdminGameJams() {
                       End Date *
                     </label>
                     <input
-                      type="date"
+                      type="datetime-local"
                       value={formData.end_date}
                       onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
                       className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded text-white focus:outline-none focus:border-blue-500"
@@ -413,7 +414,7 @@ export default function AdminGameJams() {
                       Registration Opens
                     </label>
                     <input
-                      type="date"
+                      type="datetime-local"
                       value={formData.registration_start_date}
                       onChange={(e) => setFormData({ ...formData, registration_start_date: e.target.value })}
                       className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded text-white focus:outline-none focus:border-blue-500"
@@ -424,7 +425,7 @@ export default function AdminGameJams() {
                       Registration Closes
                     </label>
                     <input
-                      type="date"
+                      type="datetime-local"
                       value={formData.registration_end_date}
                       onChange={(e) => setFormData({ ...formData, registration_end_date: e.target.value })}
                       className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded text-white focus:outline-none focus:border-blue-500"
@@ -718,14 +719,36 @@ export default function AdminGameJams() {
                     )}
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-300">
-                    {jam.start_date?.split('T')[0]} <br />
-                    <span className="text-xs text-gray-500">to {jam.end_date?.split('T')[0]}</span>
+                    {jam.start_date ? (
+                      <>
+                        {new Date(jam.start_date).toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                        <span className="text-xs text-gray-400 ml-1">
+                          {new Date(jam.start_date).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                        <br />
+                        <span className="text-xs text-gray-500">
+                          to {new Date(jam.end_date).toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                          <span className="text-gray-400 ml-1">
+                            {new Date(jam.end_date).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </span>
+                      </>
+                    ) : '-'}
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-300">
                     {jam.registration_start_date ? (
                       <>
-                        {jam.registration_start_date.split('T')[0]}<br />
-                        <span className="text-xs text-gray-500">to {jam.registration_end_date?.split('T')[0]}</span>
+                        {new Date(jam.registration_start_date).toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                        <span className="text-xs text-gray-400 ml-1">
+                          {new Date(jam.registration_start_date).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                        <br />
+                        <span className="text-xs text-gray-500">
+                          to {new Date(jam.registration_end_date).toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                          <span className="text-gray-400 ml-1">
+                            {new Date(jam.registration_end_date).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </span>
                       </>
                     ) : (
                       <span className="text-gray-500">Not set</span>

@@ -2,8 +2,19 @@ FROM node:20.19.2-alpine3.20
 
 WORKDIR /app
 
-# Set production environment
-ENV NODE_ENV production
+# Accept build arguments for versioning
+ARG APP_VERSION=1.0.0-dev
+ARG BUILD_DATE=unknown
+ARG GIT_SHA=unknown
+
+# Set production environment and version info
+ENV NODE_ENV=production
+ENV APP_VERSION=$APP_VERSION
+ENV BUILD_DATE=$BUILD_DATE
+ENV GIT_SHA=$GIT_SHA
+
+# Install curl for health checks
+RUN apk add --no-cache curl
 
 # Copy package files and install dependencies
 COPY package*.json ./
@@ -12,20 +23,7 @@ RUN npm ci --only=production --no-cache
 # Copy application code
 COPY . .
 
-# Explicitly copy the admin folder to ensure it's included
-COPY admin/ ./admin/
-
-# Debug: List what we have
-RUN echo "=== Docker Build Debug ===" && \
-    echo "Contents of /app:" && \
-    ls -la /app/ && \
-    echo "Contents of /app/admin:" && \
-    ls -la /app/admin/ || echo "admin folder missing!" && \
-    echo "Contents of /app/admin/dist:" && \
-    ls -la /app/admin/dist/ || echo "admin/dist folder missing!" && \
-    echo "admin/dist/index.html exists:" && \
-    test -f /app/admin/dist/index.html && echo "YES" || echo "NO"
-
+# Create uploads directory
 RUN mkdir -p uploads
 
 # Create scripts directory and copy scripts explicitly

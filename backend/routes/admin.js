@@ -3,6 +3,8 @@ const { pool } = require('../config/database');
 const GameJam = require('../models/GameJam');
 const Game = require('../models/Game');
 const { requireAdmin, requireSuperAdmin } = require('./auth');
+const fs = require('fs');
+const path = require('path');
 const router = express.Router();
 
 // All admin routes require admin privileges
@@ -244,15 +246,15 @@ router.post('/import', async (req, res) => {
             // Update existing by name
             const existingId = existingResult.rows[0].id;
             await GameJam.update(existingId, jamData);
-            console.log(`✅ Updated existing Game Jam: ${jam.name} (ID: ${existingId})`);
+            console.log('✅ Updated existing Game Jam: %s (ID: %s)', jam.name, existingId);
           } else {
             // Create new
             await GameJam.create(jamData);
-            console.log(`✅ Created new Game Jam: ${jam.name}`);
+            console.log('✅ Created new Game Jam: %s', jam.name);
           }
           results.gamejams_imported++;
         } catch (error) {
-          console.error(`❌ Failed to import game jam ${jam.name || 'unknown'}:`, error);
+          console.error('❌ Failed to import game jam %s:', jam.name || 'unknown', error);
           results.errors.push(`Failed to import game jam ${jam.name || 'unknown'}: ${error.message}`);
         }
       }
@@ -291,18 +293,18 @@ router.post('/import', async (req, res) => {
               // Update existing by title+jam
               const existingId = existingResult.rows[0].id;
               await Game.update(existingId, gameData);
-              console.log(`✅ Updated existing Game: ${game.title} (ID: ${existingId})`);
+              console.log('✅ Updated existing Game: %s (ID: %s)', game.title, existingId);
             } else {
               // Create new
               await Game.create(gameData);
-              console.log(`✅ Created new Game: ${game.title}`);
+              console.log('✅ Created new Game: %s', game.title);
             }
             results.games_imported++;
           } else {
             results.errors.push(`Game jam not found for game: ${game.title}`);
           }
         } catch (error) {
-          console.error(`❌ Failed to import game ${game.title || 'unknown'}:`, error);
+          console.error('❌ Failed to import game %s:', game.title || 'unknown', error);
           results.errors.push(`Failed to import game ${game.title || 'unknown'}: ${error.message}`);
         }
       }
@@ -367,138 +369,8 @@ router.post('/import', async (req, res) => {
   }
 });
 
-// Sponsor Management
-router.get('/sponsors', async (req, res) => {
-  try {
-    const result = await pool.query(
-      'SELECT * FROM sponsors ORDER BY created_at DESC'
-    );
-    res.json(result.rows);
-  } catch (error) {
-    console.error('Error fetching sponsors:', error);
-    res.status(500).json({ error: 'Failed to fetch sponsors' });
-  }
-});
-
-router.post('/sponsors', async (req, res) => {
-  try {
-    const { name, tier, logo_filename, website_url, description } = req.body;
-
-    if (!name || !tier) {
-      return res.status(400).json({ error: 'Nome e nível são obrigatórios' });
-    }
-
-    const result = await pool.query(
-      `INSERT INTO sponsors (name, tier, logo_filename, website_url, description, is_active)
-       VALUES ($1, $2, $3, $4, $5, true)
-       RETURNING *`,
-      [name, tier, logo_filename, website_url, description]
-    );
-
-    res.status(201).json(result.rows[0]);
-  } catch (error) {
-    console.error('Error creating sponsor:', error);
-    res.status(500).json({ error: 'Failed to create sponsor' });
-  }
-});
-
-router.put('/sponsors/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { name, tier, logo_filename, website_url, description, is_active } = req.body;
-
-    // Check if sponsor exists
-    const existingResult = await pool.query(
-      'SELECT id, name, tier, logo_filename, website_url, description, is_active FROM sponsors WHERE id = $1',
-      [id]
-    );
-
-    if (existingResult.rows.length === 0) {
-      return res.status(404).json({ error: 'Patrocinador não encontrado' });
-    }
-
-    const existing = existingResult.rows[0];
-
-    // Build dynamic update query - only update fields that are provided
-    const updates = [];
-    const values = [];
-    let paramIndex = 1;
-
-    if (name !== undefined) {
-      updates.push(`name = $${paramIndex++}`);
-      values.push(name.trim());
-    }
-
-    if (tier !== undefined) {
-      updates.push(`tier = $${paramIndex++}`);
-      values.push(tier);
-    }
-
-    if (logo_filename !== undefined) {
-      updates.push(`logo_filename = $${paramIndex++}`);
-      values.push(logo_filename ? logo_filename.trim() : null);
-    }
-
-    if (website_url !== undefined) {
-      updates.push(`website_url = $${paramIndex++}`);
-      values.push(website_url ? website_url.trim() : null);
-    }
-
-    if (description !== undefined) {
-      updates.push(`description = $${paramIndex++}`);
-      values.push(description ? description.trim() : null);
-    }
-
-    if (is_active !== undefined) {
-      updates.push(`is_active = $${paramIndex++}`);
-      values.push(Boolean(is_active));
-    }
-
-    // Always update updated_at
-    updates.push(`updated_at = NOW()`);
-
-    // Add id at the end
-    values.push(id);
-
-    if (updates.length === 1) { // Only updated_at
-      return res.status(400).json({ error: 'Nenhum campo para atualizar' });
-    }
-
-    const query = `
-      UPDATE sponsors
-      SET ${updates.join(', ')}
-      WHERE id = $${paramIndex}
-      RETURNING *
-    `;
-
-    const result = await pool.query(query, values);
-
-    res.json(result.rows[0]);
-  } catch (error) {
-    console.error('Error updating sponsor:', error);
-    res.status(500).json({ error: 'Failed to update sponsor' });
-  }
-});
-
-router.delete('/sponsors/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const result = await pool.query(
-      'DELETE FROM sponsors WHERE id = $1 RETURNING *',
-      [id]
-    );
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Patrocinador não encontrado' });
-    }
-
-    res.json({ message: 'Patrocinador removido com sucesso' });
-  } catch (error) {
-    console.error('Error deleting sponsor:', error);
-    res.status(500).json({ error: 'Failed to delete sponsor' });
-  }
-});
+// NOTE: Sponsor management has been moved to /api/sponsors routes (see routes/sponsors.js)
+// This avoids duplication and provides better organization
 
 // Super Admin System Operations
 router.post('/system/clear-cache', requireSuperAdmin, async (req, res) => {
@@ -510,6 +382,16 @@ router.post('/system/clear-cache', requireSuperAdmin, async (req, res) => {
       if (key.includes('/models/') || key.includes('/routes/')) {
         delete require.cache[key];
       }
+    });
+    
+    // Log the action
+    const { logAudit } = require('../utils/auditLog');
+    await logAudit({
+      userId: req.session.userId,
+      username: req.session.username || req.session.email,
+      action: 'SYSTEM_OPERATION',
+      description: 'Cleared server cache',
+      req
     });
     
     console.log('✅ Cache cleared successfully');
@@ -548,26 +430,129 @@ router.post('/system/restart', requireSuperAdmin, async (req, res) => {
 });
 
 // Maintenance mode toggle
-let maintenanceMode = false;
+const MAINTENANCE_FILE = '/var/maintenance_flag/maintenance.on';
+const MAINTENANCE_DIR = '/var/maintenance_flag';
+
 router.post('/system/maintenance', requireSuperAdmin, async (req, res) => {
   try {
-    maintenanceMode = !maintenanceMode;
-    console.log(`🚧 Maintenance mode ${maintenanceMode ? 'ENABLED' : 'DISABLED'}`);
+    // Ensure maintenance directory exists
+    if (!fs.existsSync(MAINTENANCE_DIR)) {
+      fs.mkdirSync(MAINTENANCE_DIR, { recursive: true });
+    }
+
+    // Check current state
+    const currentState = fs.existsSync(MAINTENANCE_FILE);
+    const newState = !currentState;
+
+    if (newState) {
+      // Enable maintenance mode
+      fs.writeFileSync(MAINTENANCE_FILE, new Date().toISOString());
+      console.log('🚧 Maintenance mode ENABLED');
+    } else {
+      // Disable maintenance mode
+      if (fs.existsSync(MAINTENANCE_FILE)) {
+        fs.unlinkSync(MAINTENANCE_FILE);
+      }
+      console.log('✅ Maintenance mode DISABLED');
+    }
     
     res.json({ 
       success: true, 
-      enabled: maintenanceMode,
-      message: `Maintenance mode ${maintenanceMode ? 'enabled' : 'disabled'}`,
+      enabled: newState,
+      message: `Maintenance mode ${newState ? 'enabled' : 'disabled'}. Admin panel remains accessible at api.ipmaia-winterjam.pt/admin`,
       timestamp: new Date().toISOString()
     });
   } catch (error) {
     console.error('❌ Error toggling maintenance mode:', error);
-    res.status(500).json({ error: 'Failed to toggle maintenance mode' });
+    res.status(500).json({ 
+      error: 'Failed to toggle maintenance mode',
+      details: error.message 
+    });
   }
 });
 
 router.get('/system/maintenance', async (req, res) => {
-  res.json({ enabled: maintenanceMode });
+  try {
+    const enabled = fs.existsSync(MAINTENANCE_FILE);
+    res.json({ enabled });
+  } catch (error) {
+    console.error('❌ Error checking maintenance mode:', error);
+    res.status(500).json({ error: 'Failed to check maintenance mode' });
+  }
+});
+
+// Get system metrics
+router.get('/system/metrics', async (req, res) => {
+  try {
+    // Memory usage
+    const memUsage = process.memoryUsage();
+    const memoryMB = {
+      rss: Math.round(memUsage.rss / 1024 / 1024), // Resident Set Size
+      heapTotal: Math.round(memUsage.heapTotal / 1024 / 1024),
+      heapUsed: Math.round(memUsage.heapUsed / 1024 / 1024),
+      external: Math.round(memUsage.external / 1024 / 1024)
+    };
+
+    // Process uptime
+    const uptimeSeconds = process.uptime();
+    const uptimeFormatted = {
+      days: Math.floor(uptimeSeconds / 86400),
+      hours: Math.floor((uptimeSeconds % 86400) / 3600),
+      minutes: Math.floor((uptimeSeconds % 3600) / 60),
+      seconds: Math.floor(uptimeSeconds % 60)
+    };
+
+    // Active sessions count
+    const sessionsResult = await pool.query('SELECT COUNT(*) as count FROM user_sessions');
+    const activeSessions = parseInt(sessionsResult.rows[0].count) || 0;
+
+    // Storage info (uploads directory)
+    const uploadsPath = path.join(__dirname, '../uploads');
+    let storageInfo = {
+      available: false,
+      totalFiles: 0,
+      totalSize: 0,
+      sponsors: 0
+    };
+
+    try {
+      if (fs.existsSync(uploadsPath)) {
+        storageInfo.available = true;
+        
+        // Count sponsor logos
+        const sponsorsPath = path.join(uploadsPath, 'sponsors');
+        if (fs.existsSync(sponsorsPath)) {
+          const sponsorFiles = fs.readdirSync(sponsorsPath);
+          storageInfo.sponsors = sponsorFiles.length;
+          
+          // Calculate total size
+          sponsorFiles.forEach(file => {
+            const filePath = path.join(sponsorsPath, file);
+            const stats = fs.statSync(filePath);
+            storageInfo.totalSize += stats.size;
+          });
+        }
+        
+        storageInfo.totalFiles = storageInfo.sponsors;
+      }
+    } catch (storageError) {
+      console.error('Error reading storage info:', storageError);
+    }
+
+    res.json({
+      memory: memoryMB,
+      uptime: uptimeFormatted,
+      uptimeSeconds: Math.floor(uptimeSeconds),
+      activeSessions,
+      storage: storageInfo,
+      nodeVersion: process.version,
+      platform: process.platform,
+      arch: process.arch
+    });
+  } catch (error) {
+    console.error('❌ Error fetching system metrics:', error);
+    res.status(500).json({ error: 'Failed to fetch system metrics' });
+  }
 });
 
 // Test database connection
@@ -609,56 +594,23 @@ const pocketid = require('../utils/pocketid');
 router.get('/users', requireSuperAdmin, async (req, res) => {
   try {
     const usePocketID = process.env.POCKETID_API_URL && process.env.POCKETID_API_KEY;
+    console.log('🔍 PocketID Configuration Check:');
+    console.log('   - POCKETID_API_URL:', process.env.POCKETID_API_URL ? '✅ Set' : '❌ Missing');
+    console.log('   - POCKETID_API_KEY:', process.env.POCKETID_API_KEY ? '✅ Set' : '❌ Missing');
     
-    if (usePocketID) {
-      // Fetch users from PocketID API (only admin-related groups)
-      console.log('🔍 Fetching users from PocketID API...');
-      const pocketidUsers = await pocketid.getAdminUsers();
-      
-      // Also get local database users for role mapping
-      const localResult = await pool.query(
-        'SELECT id, username, email, role, is_active FROM users'
-      );
-      const localUsersMap = new Map(localResult.rows.map(u => [u.email, u]));
-      
-      // Merge PocketID data with local role data
-      const mergedUsers = pocketidUsers.map(pocketUser => {
-        const localUser = localUsersMap.get(pocketUser.email);
-        const groupNames = pocketUser.groupNames || [];
-        
-        // Determine role from PocketID groups
-        let role = 'user';
-        if (groupNames.includes('admin') && pocketUser.email === process.env.OIDC_ADMIN_EMAIL) {
-          role = 'super_admin';
-        } else if (groupNames.includes('admin') || groupNames.includes('ipmaia') || groupNames.includes('users')) {
-          role = 'admin';
-        }
-        
-        return {
-          id: pocketUser.id,
-          username: pocketUser.username,
-          email: pocketUser.email,
-          firstName: pocketUser.firstName,
-          lastName: pocketUser.lastName,
-          role: localUser?.role || role, // Use local role if exists, otherwise derive from groups
-          is_active: localUser?.is_active ?? true,
-          groups: pocketUser.groups,
-          groupNames: groupNames,
-          createdAt: pocketUser.createdAt,
-          source: 'pocketid'
-        };
-      });
-      
-      console.log(`✅ Fetched ${mergedUsers.length} admin users from PocketID`);
-      res.json(mergedUsers);
-    } else {
-      // Fallback to local database users
-      console.log('⚠️ PocketID API not configured, using local database');
-      const result = await pool.query(
-        'SELECT id, username, email, role, is_active, created_at, updated_at FROM users ORDER BY created_at DESC'
-      );
-      res.json(result.rows.map(u => ({ ...u, source: 'local' })));
-    }
+    // Always fetch from local database now
+    // Users should be synced from PocketID first using the sync endpoint
+    const result = await pool.query(
+      'SELECT id, username, email, role, is_active, created_at, updated_at FROM users ORDER BY created_at DESC'
+    );
+    
+    const users = result.rows.map(u => ({ 
+      ...u, 
+      source: usePocketID ? 'synced_from_pocketid' : 'local' 
+    }));
+    
+    console.log(`✅ Fetched ${users.length} users from local database`);
+    res.json(users);
   } catch (error) {
     console.error('Error fetching users:', error);
     res.status(500).json({ error: 'Failed to fetch users' });
@@ -695,7 +647,7 @@ router.put('/users/:id/role', requireSuperAdmin, async (req, res) => {
         'UPDATE users SET role = $1, updated_at = NOW() WHERE email = $2 RETURNING id, username, email, role',
         [role, email]
       );
-      console.log(`✅ Local user role updated: ${email} -> ${role}`);
+      console.log('✅ Local user role updated: %s -> %s', email, role);
       res.json(result.rows[0]);
     } else {
       // Create local user entry with role override
@@ -703,7 +655,7 @@ router.put('/users/:id/role', requireSuperAdmin, async (req, res) => {
         'INSERT INTO users (username, email, password_hash, role, is_active) VALUES ($1, $2, $3, $4, $5) RETURNING id, username, email, role',
         [email.split('@')[0], email, '', role, true]
       );
-      console.log(`✅ Created local user with role override: ${email} -> ${role}`);
+      console.log('✅ Created local user with role override: %s -> %s', email, role);
       res.json(result.rows[0]);
     }
   } catch (error) {
@@ -736,11 +688,11 @@ router.put('/users/:id/toggle', requireSuperAdmin, async (req, res) => {
         'INSERT INTO users (username, email, password_hash, role, is_active) VALUES ($1, $2, $3, $4, $5) RETURNING id, username, is_active',
         [email.split('@')[0], email, '', 'user', false]
       );
-      console.log(`✅ User ${email} deactivated (local override created)`);
+      console.log('✅ User %s deactivated (local override created)', email);
       return res.json(createResult.rows[0]);
     }
     
-    console.log(`✅ User ${email} ${result.rows[0].is_active ? 'activated' : 'deactivated'} by super admin ${req.session.username}`);
+    console.log('✅ User %s %s by super admin %s', email, result.rows[0].is_active ? 'activated' : 'deactivated', req.session.username);
     res.json(result.rows[0]);
   } catch (error) {
     console.error('Error toggling user status:', error);
@@ -748,10 +700,145 @@ router.put('/users/:id/toggle', requireSuperAdmin, async (req, res) => {
   }
 });
 
+// Delete user from local database
+router.delete('/users/:id', requireSuperAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { email } = req.body;
+    
+    // Prevent deleting own account
+    if (req.session.email && req.session.email === email) {
+      return res.status(403).json({ error: 'Cannot delete your own account' });
+    }
+    
+    // Check if user exists
+    const existingUser = await pool.query(
+      'SELECT username FROM users WHERE id = $1',
+      [id]
+    );
+    
+    if (existingUser.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    // Delete the user
+    await pool.query('DELETE FROM users WHERE id = $1', [id]);
+    
+    // Log the deletion
+    const { logAudit } = require('../utils/auditLog');
+    await logAudit({
+      userId: req.session.userId,
+      username: req.session.username || req.session.email,
+      action: 'DELETE_USER',
+      tableName: 'users',
+      recordId: id,
+      description: `Deleted user: ${email} (${existingUser.rows[0].username})`,
+      req
+    });
+    
+    console.log('✅ User %s deleted by super admin %s', email, req.session.username);
+    res.json({ success: true, message: 'User deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    res.status(500).json({ error: 'Failed to delete user' });
+  }
+});
+
+// Sync users from PocketID to local database
+router.post('/users/sync-from-pocketid', requireSuperAdmin, async (req, res) => {
+  try {
+    const usePocketID = process.env.POCKETID_API_URL && process.env.POCKETID_API_KEY;
+    
+    if (!usePocketID) {
+      return res.status(400).json({
+        success: false,
+        error: 'PocketID API not configured'
+      });
+    }
+
+    console.log('🔄 Starting PocketID user sync...');
+    const pocketidUsers = await pocketid.getAdminUsers();
+    
+    let created = 0;
+    let updated = 0;
+    let skipped = 0;
+
+    for (const pocketUser of pocketidUsers) {
+      const groupNames = pocketUser.groupNames || [];
+      
+      // Determine role from PocketID groups
+      let role = 'admin'; // Default to admin since we only sync admin/ipmaia users
+      if (groupNames.includes('admin') && pocketUser.email === process.env.OIDC_ADMIN_EMAIL) {
+        role = 'super_admin';
+      }
+
+      // Prepare username from PocketID data
+      const username = pocketUser.username || 
+                      pocketUser.displayName || 
+                      pocketUser.email?.split('@')[0] || 
+                      'user';
+
+      // Check if user exists
+      const existing = await pool.query(
+        'SELECT id, role, is_active FROM users WHERE email = $1',
+        [pocketUser.email]
+      );
+
+      if (existing.rows.length > 0) {
+        // User exists - only update if they don't have a local role override
+        const localUser = existing.rows[0];
+        // Skip update to preserve local overrides
+        skipped++;
+        console.log('   ⏭️  Skipped %s (preserving local settings)', pocketUser.email);
+      } else {
+        // Create new user
+        // Check if user is disabled in PocketID
+        const isActive = !pocketUser.disabled;
+        
+        await pool.query(`
+          INSERT INTO users (username, email, password_hash, role, is_active, created_at, updated_at)
+          VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+        `, [
+          username,
+          pocketUser.email,
+          '', // No password for OIDC users
+          role,
+          isActive
+        ]);
+        created++;
+        console.log('   ✅ Created %s with role: %s (active: %s)', pocketUser.email, role, isActive);
+      }
+    }
+
+    console.log(`🎉 Sync complete: ${created} created, ${updated} updated, ${skipped} skipped`);
+
+    res.json({
+      success: true,
+      created,
+      updated,
+      skipped,
+      total: pocketidUsers.length,
+      message: `Synced ${created} new users from PocketID`
+    });
+  } catch (error) {
+    console.error('❌ Error syncing users from PocketID:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to sync users from PocketID',
+      details: error.message
+    });
+  }
+});
+
 // PocketID connection status
 router.get('/pocketid/status', requireSuperAdmin, async (req, res) => {
   try {
     const configured = !!(process.env.POCKETID_API_URL && process.env.POCKETID_API_KEY);
+    
+    console.log('🔍 PocketID Status Check:');
+    console.log('   - Configured:', configured);
+    console.log('   - API URL:', process.env.POCKETID_API_URL);
+    console.log('   - API Key:', process.env.POCKETID_API_KEY ? '***set***' : 'missing');
     
     if (!configured) {
       return res.json({
@@ -761,7 +848,9 @@ router.get('/pocketid/status', requireSuperAdmin, async (req, res) => {
       });
     }
     
+    console.log('🔄 Testing PocketID connection...');
     const connected = await pocketid.healthCheck();
+    console.log('   - Connected:', connected);
     
     res.json({
       configured: true,
@@ -770,7 +859,7 @@ router.get('/pocketid/status', requireSuperAdmin, async (req, res) => {
       message: connected ? 'Connected to PocketID' : 'Failed to connect to PocketID'
     });
   } catch (error) {
-    console.error('Error checking PocketID status:', error);
+    console.error('❌ Error checking PocketID status:', error);
     res.json({
       configured: true,
       connected: false,

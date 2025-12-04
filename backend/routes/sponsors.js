@@ -4,6 +4,7 @@ const path = require('path');
 const fs = require('fs').promises;
 const rateLimit = require('express-rate-limit');
 const { pool } = require('../config/database');
+const { requireAdmin } = require('./auth');
 const router = express.Router();
 
 // Rate limiter for logo uploads
@@ -132,7 +133,7 @@ router.get('/', async (req, res) => {
 });
 
 // GET /api/sponsors/admin - Get all sponsors for admin (including inactive)
-router.get('/admin', async (req, res) => {
+router.get('/admin', requireAdmin, async (req, res) => {
   try {
     // Get all sponsors from database
     const result = await pool.query(`
@@ -171,8 +172,8 @@ router.get('/admin', async (req, res) => {
   }
 });
 
-// POST /api/sponsors - Create new sponsor
-router.post('/', async (req, res) => {
+// POST /api/sponsors - Create new sponsor (admin only)
+router.post('/', requireAdmin, async (req, res) => {
   try {
     const { name, tier, logo_filename, website_url, description, is_active } = req.body;
 
@@ -229,8 +230,8 @@ router.post('/', async (req, res) => {
   }
 });
 
-// PUT /api/sponsors/:id - Update sponsor
-router.put('/:id', async (req, res) => {
+// PUT /api/sponsors/:id - Update sponsor (admin only)
+router.put('/:id', requireAdmin, async (req, res) => {
   try {
     const id = parseInt(req.params.id);
     const { name, tier, logo_filename, website_url, description, is_active } = req.body;
@@ -244,7 +245,7 @@ router.put('/:id', async (req, res) => {
 
     // Check if sponsor exists
     const existingResult = await pool.query(
-      'SELECT id FROM sponsors WHERE id = $1',
+      'SELECT id, is_active FROM sponsors WHERE id = $1',
       [id]
     );
 
@@ -310,14 +311,11 @@ router.put('/:id', async (req, res) => {
 
     if (is_active !== undefined) {
       updates.push(`is_active = $${paramIndex++}`);
-      values.push(is_active !== undefined ? Boolean(is_active) : existingResult.rows[0].is_active);
+      values.push(Boolean(is_active));
     }
 
     // Always update updated_at
     updates.push(`updated_at = NOW()`);
-
-    // Add id at the end
-    values.push(id);
 
     if (updates.length === 1) { // Only updated_at
       return res.status(400).json({
@@ -325,6 +323,9 @@ router.put('/:id', async (req, res) => {
         error: 'Nenhum campo para atualizar'
       });
     }
+
+    // Add id at the end
+    values.push(id);
 
     const query = `
       UPDATE sponsors
@@ -351,8 +352,8 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// DELETE /api/sponsors/:id - Delete sponsor
-router.delete('/:id', async (req, res) => {
+// DELETE /api/sponsors/:id - Delete sponsor (admin only)
+router.delete('/:id', requireAdmin, async (req, res) => {
   try {
     const id = parseInt(req.params.id);
 
@@ -394,8 +395,34 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
-// Upload sponsor logo (admin only)
-router.post('/upload-logo/:id', uploadLimiter, upload.single('logo'), async (req, res) => {
+// Upload sponsor logo without ID (returns filename for later use) (admin only)
+router.post('/upload-logo', requireAdmin, uploadLimiter, upload.single('logo'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        error: 'Nenhum ficheiro foi enviado'
+      });
+    }
+
+    console.log('🖼️ Sponsor logo uploaded (temp):', req.file.filename);
+
+    res.json({
+      success: true,
+      filename: req.file.filename,
+      message: 'Logo carregado com sucesso'
+    });
+  } catch (error) {
+    console.error('❌ Error uploading logo:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Erro ao carregar logo'
+    });
+  }
+});
+
+// Upload sponsor logo for existing sponsor (admin only)
+router.post('/upload-logo/:id', requireAdmin, uploadLimiter, upload.single('logo'), async (req, res) => {
   try {
     const id = parseInt(req.params.id);
 
@@ -431,8 +458,11 @@ router.post('/upload-logo/:id', uploadLimiter, upload.single('logo'), async (req
 
     // Delete old logo file if it exists
     if (existingResult.rows[0].logo_filename) {
-      const oldFilePath = path.join(__dirname, '../uploads/sponsors', existingResult.rows[0].logo_filename);
-      await fs.unlink(oldFilePath).catch(console.error);
+      const uploadDir = path.resolve(__dirname, '../uploads/sponsors');
+      const oldFilePath = path.resolve(path.join(uploadDir, existingResult.rows[0].logo_filename));
+      if (oldFilePath.startsWith(uploadDir)) {
+        await fs.unlink(oldFilePath).catch(console.error);
+      }
     }
 
     // Update sponsor with new logo filename
@@ -466,7 +496,17 @@ router.post('/upload-logo/:id', uploadLimiter, upload.single('logo'), async (req
 router.get('/logo/:filename', async (req, res) => {
   try {
     const filename = req.params.filename;
-    const filePath = path.join(__dirname, '../uploads/sponsors', filename);
+    
+    // Validate file path to prevent path traversal attacks
+    const uploadDir = path.resolve(__dirname, '../uploads/sponsors');
+    const filePath = path.resolve(path.join(uploadDir, filename));
+    
+    if (!filePath.startsWith(uploadDir)) {
+      return res.status(400).json({
+        error: 'Invalid file path',
+        message: 'Caminho de ficheiro inválido'
+      });
+    }
 
     // Check if file exists
     try {

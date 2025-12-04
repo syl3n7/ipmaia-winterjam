@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Background from '../components/Background';
 import Sponsor from '../components/Sponsor';
-import { Clock, ArrowRight, Calendar, Target, Trophy, Users, Info, Lightbulb } from 'lucide-react';
+import { Clock, ArrowRight, Calendar, Target, Trophy, Users, Info, Lightbulb, FileText, X } from 'lucide-react';
 import { useFrontPageSettings } from '../hooks/useFrontPageSettings';
 import { useLatestArchive } from '../hooks/useLatestArchive';
 
@@ -31,6 +31,7 @@ export default function Home() {
   const [fetchError, setFetchError] = useState(false);
   const [currentGameJam, setCurrentGameJam] = useState(null);
   const [sponsors, setSponsors] = useState([]);
+  const [showRulesNotification, setShowRulesNotification] = useState(false);
   const { frontPageSettings } = useFrontPageSettings();
   const latestArchiveUrl = useLatestArchive();
 
@@ -44,6 +45,48 @@ export default function Home() {
     } catch (error) {
       return null;
     }
+  };
+
+  // Check if rules notification should be shown
+  useEffect(() => {
+    const checkRulesNotification = async () => {
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+        const response = await fetch(`${apiUrl}/rules/last-updated`);
+        const data = await response.json();
+        
+        const rulesReadTimestamp = localStorage.getItem('rulesReadComplete');
+        const lastUpdated = data.lastUpdated;
+        
+        console.log('🔔 Notification check:', {
+          rulesReadTimestamp,
+          lastUpdated,
+          shouldShow: !rulesReadTimestamp || (lastUpdated && new Date(lastUpdated) > new Date(rulesReadTimestamp))
+        });
+        
+        // Show notification if:
+        // 1. User has never read the rules, OR
+        // 2. Rules were updated after the user last read them
+        if (!rulesReadTimestamp || (lastUpdated && new Date(lastUpdated) > new Date(rulesReadTimestamp))) {
+          setShowRulesNotification(true);
+        } else {
+          setShowRulesNotification(false);
+        }
+      } catch (error) {
+        console.error('Error checking rules update:', error);
+        // If API fails, check if user has read rules at all
+        const rulesReadComplete = localStorage.getItem('rulesReadComplete');
+        if (!rulesReadComplete) {
+          setShowRulesNotification(true);
+        }
+      }
+    };
+    
+    checkRulesNotification();
+  }, []);
+
+  const handleDismissRulesNotification = () => {
+    setShowRulesNotification(false);
   };
 
   useEffect(() => {
@@ -465,6 +508,35 @@ export default function Home() {
           </div>
         </div>
       </div>
+
+      {/* Floating Rules Update Notification */}
+      {showRulesNotification && (
+        <div className="fixed bottom-6 right-6 z-50 animate-fade-in">
+          <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl shadow-2xl p-4 pr-12 max-w-sm relative hover:shadow-orange-500/50 transition-all duration-300 hover:scale-105">
+            <button
+              onClick={handleDismissRulesNotification}
+              className="absolute top-2 right-2 text-white/80 hover:text-white transition-colors"
+              aria-label="Close notification temporarily"
+              title="Fechar temporariamente"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            
+            <Link href="/rules" className="flex items-start gap-3">
+              <div className="bg-white/20 rounded-lg p-2 flex-shrink-0">
+                <FileText className="w-6 h-6" />
+              </div>
+              <div>
+                <h4 className="font-bold text-sm mb-1">Regras Atualizadas!</h4>
+                <p className="text-xs text-white/90 mb-2">
+                  O livro de regras foi atualizado. Leia até ao fim para dispensar esta notificação.
+                </p>
+                <span className="text-xs font-semibold underline">Ver Regras →</span>
+              </div>
+            </Link>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

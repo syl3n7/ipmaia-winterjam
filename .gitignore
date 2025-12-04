@@ -131,3 +131,6 @@ backups/
 
 # Production files (keep examples)
 docker-compose.override.yml
+
+# Systemd service files (contain server-specific paths)
+*.service

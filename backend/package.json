@@ -27,7 +27,8 @@
     "passport": "^0.7.0",
     "passport-openidconnect": "^0.1.2",
     "lusca": "^1.7.0",
-    "brace-expansion": "^2.0.2"
+    "brace-expansion": "^2.0.2",
+    "node-fetch": "^2.7.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.2",

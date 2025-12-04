@@ -5,6 +5,7 @@ const fs = require('fs').promises;
 const rateLimit = require('express-rate-limit');
 const { pool } = require('../config/database');
 const { requireAdmin } = require('./auth');
+const { logAudit } = require('../utils/auditLog');
 const router = express.Router();
 
 // Rate limiter for image uploads
@@ -212,13 +213,25 @@ router.post('/admin/upload-background', requireAdmin, uploadLimiter, upload.sing
 
     // Delete old background file if it exists
     if (oldBgResult.rows.length > 0 && oldBgResult.rows[0].setting_value) {
-      const oldFilePath = path.join(__dirname, '../uploads/images', oldBgResult.rows[0].setting_value);
-      await fs.unlink(oldFilePath).catch(console.error);
+      const uploadDir = path.resolve(__dirname, '../uploads/images');
+      const oldFilePath = path.resolve(path.join(uploadDir, oldBgResult.rows[0].setting_value));
+      if (oldFilePath.startsWith(uploadDir)) {
+        await fs.unlink(oldFilePath).catch(console.error);
+      }
     }
 
     // Store full URL for cross-domain access
-    const apiUrl = process.env.API_URL || 'https://api.ipmaia-winterjam.pt/api';
-    const imageUrl = `${apiUrl}/frontpage/background`;
+    // Priority: 1. NEXT_PUBLIC_API_URL from ENV, 2. Request host, 3. Default
+    let imageUrl;
+    if (process.env.NEXT_PUBLIC_API_URL) {
+      // Remove any trailing slashes and append the endpoint
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL.replace(/\/+$/, '');
+      imageUrl = `${baseUrl}/frontpage/background`;
+    } else {
+      const protocol = req.protocol || 'https';
+      const host = req.get('host') || 'ipmaia-winterjam.pt';
+      imageUrl = `${protocol}://${host}/api/frontpage/background`;
+    }
 
     // Update database with new filename and URL
     await pool.query(`
@@ -232,6 +245,18 @@ router.post('/admin/upload-background', requireAdmin, uploadLimiter, upload.sing
       VALUES ('hero_background_image', $1, 'url', 'Background Image URL', 'hero', 98)
       ON CONFLICT (setting_key) DO UPDATE SET setting_value = $1, updated_at = CURRENT_TIMESTAMP
     `, [imageUrl]);
+
+    // Log the upload
+    await logAudit({
+      userId: req.session.userId,
+      username: req.session.username || req.session.email,
+      action: 'UPDATE',
+      tableName: 'front_page_settings',
+      description: `Uploaded new background image: ${req.file.filename}`,
+      newValues: { filename: req.file.filename, url: imageUrl },
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent')
+    });
 
     res.json({
       message: 'Background image uploaded successfully',
@@ -279,7 +304,17 @@ router.get('/background', async (req, res) => {
     }
     
     const filename = result.rows[0].setting_value;
-    const filePath = path.join(__dirname, '../uploads/images', filename);
+    
+    // Validate file path to prevent path traversal attacks
+    const uploadDir = path.resolve(__dirname, '../uploads/images');
+    const filePath = path.resolve(path.join(uploadDir, filename));
+    
+    if (!filePath.startsWith(uploadDir)) {
+      return res.status(400).json({ 
+        error: 'Invalid file path',
+        message: 'Caminho de ficheiro inválido'
+      });
+    }
     
     // Check if file exists
     try {

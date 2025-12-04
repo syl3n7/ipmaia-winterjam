@@ -31,13 +31,36 @@ mkdir -p backend/uploads/sponsors
 # Make scripts executable
 chmod +x backend/scripts/*.js 2>/dev/null || true
 
-# Stop existing containers (if any)
-echo -e "${YELLOW}🛑 Stopping existing containers...${NC}"
-docker compose -f docker-compose.prod.yml down --volumes --remove-orphans 2>/dev/null || true
+# Enable maintenance mode (nginx must stay up to show maintenance page)
+echo -e "${YELLOW}🚧 Enabling maintenance mode...${NC}"
 
-# Remove old images (optional - uncomment to clean up)
-# echo -e "${YELLOW}🧹 Cleaning up old images...${NC}"
-# docker system prune -f || true
+# Create maintenance flag directory and file on host
+mkdir -p /tmp/maintenance_flag
+touch /tmp/maintenance_flag/maintenance.on
+echo "Maintenance mode enabled at $(date)" > /tmp/maintenance_flag/maintenance.on
+
+# Ensure nginx is running to show maintenance page
+docker compose -f docker-compose.prod.yml up -d nginx
+sleep 3
+
+# Verify maintenance mode is active
+if [ -f /tmp/maintenance_flag/maintenance.on ]; then
+    echo -e "${GREEN}✅ Maintenance mode activated${NC}"
+else
+    echo -e "${YELLOW}⚠️  Warning: Could not verify maintenance mode${NC}"
+fi
+
+# Stop application services (keep nginx and db up)
+echo -e "${YELLOW}🛑 Stopping application services...${NC}"
+docker compose -f docker-compose.prod.yml stop backend frontend 2>/dev/null || true
+docker compose -f docker-compose.prod.yml rm -f backend frontend 2>/dev/null || true
+
+# Pull latest images from registry
+echo -e "${BLUE}📥 Pulling latest images from registry...${NC}"
+docker compose -f docker-compose.prod.yml pull frontend backend || {
+    echo -e "${YELLOW}⚠️  Could not pull images. Make sure you're authenticated to GitHub Container Registry.${NC}"
+    echo -e "${BLUE}📝 Run: echo \$GITHUB_PAT | docker login ghcr.io -u USERNAME --password-stdin${NC}"
+}
 
 # Check if SSL certificates exist
 if [ ! -f ssl/fullchain.pem ] || [ ! -f ssl/privkey.pem ]; then
@@ -55,9 +78,9 @@ if [ ! -f ssl/fullchain.pem ] || [ ! -f ssl/privkey.pem ]; then
     echo -e "${YELLOW}⚠️  Continuing without SSL - only HTTP will be available${NC}"
 fi
 
-# Build and start services
-echo -e "${BLUE}🏗️  Building and starting services...${NC}"
-docker compose -f docker-compose.prod.yml up -d --build
+# Start services with pulled images
+echo -e "${BLUE}🚀 Starting services...${NC}"
+docker compose -f docker-compose.prod.yml up -d
 
 # Wait for services to be healthy
 echo -e "${BLUE}⏳ Waiting for services to be ready...${NC}"
@@ -132,6 +155,17 @@ echo "   🔄 Restart: docker compose -f docker-compose.prod.yml restart [servic
 echo "   🛑 Stop all: docker compose -f docker-compose.prod.yml down"
 echo "   🗄️  Database shell: docker compose -f docker-compose.prod.yml exec db psql -U postgres winterjam"
 echo ""
+
+# Disable maintenance mode
+echo -e "${BLUE}🎉 Disabling maintenance mode...${NC}"
+rm -f /tmp/maintenance_flag/maintenance.on 2>/dev/null || true
+sleep 2
+
+if [ ! -f /tmp/maintenance_flag/maintenance.on ]; then
+    echo -e "${GREEN}✅ Maintenance mode disabled${NC}"
+else
+    echo -e "${YELLOW}⚠️  Warning: Could not disable maintenance mode${NC}"
+fi
 
 # Health checks
 echo -e "${BLUE}🏥 Performing health checks...${NC}"

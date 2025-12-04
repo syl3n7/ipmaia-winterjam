@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const { pool } = require('../config/database');
 const { Issuer, Strategy } = require('openid-client');
 const passport = require('passport');
+const { logAudit } = require('../utils/auditLog');
 
 const router = express.Router();
 
@@ -105,8 +106,13 @@ const initOIDC = async () => {
             [userinfo.preferred_username || userinfo.email, userinfo.email, '', role, true]
           );
           user = result.rows[0];
-          console.log(`✅ Created new OIDC user: ${user.email} with role: ${role} (groups: ${groups.join(', ')})`);
+          console.log('✅ Created new OIDC user: %s with role: %s (groups: %s)', user.email, role, groups.join(', '));
         } else {
+          // Check if user is deactivated locally
+          if (!user.is_active) {
+            console.log('🚫 Login blocked: User %s is deactivated locally', user.email);
+            return done(null, false, { message: 'Your account has been deactivated. Please contact an administrator.' });
+          }
           // Update existing user's role if their groups/email have changed
           const groups = userinfo.groups || userinfo.memberOf || [];
           let newRole = 'user';
@@ -129,7 +135,7 @@ const initOIDC = async () => {
               [newRole, user.id]
             );
             user.role = newRole;
-            console.log(`🔄 Updated existing user ${user.email} role to: ${newRole} (groups: ${groups.join(', ')})`);
+            console.log('🔄 Updated existing user %s role to: %s (groups: %s)', user.email, newRole, groups.join(', '));
           }
         }
 
@@ -178,6 +184,7 @@ router.get('/me', (req, res) => {
     return res.json({
       id: 1,
       username: 'dev-admin',
+      email: 'dev@admin.local',
       role: 'super_admin'
     });
   }
@@ -189,6 +196,7 @@ router.get('/me', (req, res) => {
   res.json({
     id: req.session.userId,
     username: req.session.username,
+    email: req.session.email,
     role: req.session.role
   });
 });
@@ -342,7 +350,7 @@ router.get('/oidc/callback', async (req, res) => {
         role = 'admin';
       }
       
-      console.log(`🎯 Determined role for new user: ${role} (email: ${userinfo.email}, groups: ${JSON.stringify(groups)})`);
+      console.log('🎯 Determined role for new user: %s (email: %s, groups: %s)', role, userinfo.email, JSON.stringify(groups));
       
       // Create new user
       result = await pool.query(
@@ -350,7 +358,7 @@ router.get('/oidc/callback', async (req, res) => {
         [userinfo.preferred_username || userinfo.email, userinfo.email, '', role, true]
       );
       user = result.rows[0];
-      console.log(`✅ Created new OIDC user: ${user.email} with role: ${role} (groups: ${groups.join(', ')})`);
+      console.log('✅ Created new OIDC user: %s with role: %s (groups: %s)', user.email, role, groups.join(', '));
     } else {
       // Update existing user's role if their groups/email have changed
       const groups = userinfo.groups || 
@@ -376,7 +384,7 @@ router.get('/oidc/callback', async (req, res) => {
         newRole = 'admin';
       }
       
-      console.log(`🎯 Determined role for existing user: ${newRole} (email: ${userinfo.email}, groups: ${JSON.stringify(groups)})`);
+      console.log('🎯 Determined role for existing user: %s (email: %s, groups: %s)', newRole, userinfo.email, JSON.stringify(groups));
       
       if (user.role !== newRole) {
         await pool.query(
@@ -384,7 +392,7 @@ router.get('/oidc/callback', async (req, res) => {
           [newRole, user.id]
         );
         user.role = newRole;
-        console.log(`🔄 Updated existing user ${user.email} role from ${user.role} to: ${newRole} (groups: ${groups.join(', ')})`);
+        console.log('🔄 Updated existing user %s role from %s to: %s (groups: %s)', user.email, user.role, newRole, groups.join(', '));
       }
     }
 
@@ -410,6 +418,16 @@ router.get('/oidc/callback', async (req, res) => {
     req.session.username = user.username;
     req.session.role = user.role;
     req.session.email = user.email;
+
+    // Log the login with enhanced client info
+    await logAudit({
+      userId: user.id,
+      username: user.username,
+      action: 'LOGIN',
+      description: `User logged in via OIDC (role: ${user.role})`,
+      ipAddress: req.clientInfo?.ip || req.ip,
+      userAgent: req.clientInfo?.userAgent || req.get('user-agent')
+    });
 
     // Redirect to admin dashboard
     res.redirect('/admin');
