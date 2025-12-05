@@ -23,7 +23,7 @@ export default function RafflePage() {
   const [importMessage, setImportMessage] = useState('');
   const [importError, setImportError] = useState('');
   const [pendingImportFile, setPendingImportFile] = useState(null);
-  const [rotation, setRotation] = useState(0);
+  const [showManualEntry, setShowManualEntry] = useState(false);
 
   useEffect(() => {
     // Fetch available game jams on component mount
@@ -65,6 +65,29 @@ export default function RafflePage() {
 
     // Set pending file for import
     setPendingImportFile(file);
+    event.target.value = '';
+  };
+
+  const handleWheelFileUpload = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.name.endsWith('.wheel')) {
+      alert('❌ Please upload a .wheel file');
+      event.target.value = '';
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('❌ File is too large. Maximum size is 5MB');
+      event.target.value = '';
+      return;
+    }
+
+    // Parse the wheel file immediately
+    parseWheelFile(file);
     event.target.value = '';
   };
 
@@ -346,6 +369,68 @@ export default function RafflePage() {
     reader.readAsText(file, 'UTF-8');
   };
 
+  const parseWheelFile = (file) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const text = e.target.result;
+        
+        // Check file size to prevent DoS
+        const MAX_WHEEL_SIZE = 5 * 1024 * 1024; // 5MB
+        if (text.length > MAX_WHEEL_SIZE) {
+          alert(`❌ .wheel file too large: ${text.length} characters (max ${MAX_WHEEL_SIZE})`);
+          return;
+        }
+        
+        // Parse JSON
+        const wheelData = JSON.parse(text);
+        
+        // Validate structure
+        if (!wheelData.entries || !Array.isArray(wheelData.entries)) {
+          alert('❌ Invalid .wheel file: missing entries array');
+          return;
+        }
+        
+        // Filter enabled entries
+        const enabledEntries = wheelData.entries.filter(entry => entry.enabled !== false);
+        
+        if (enabledEntries.length === 0) {
+          alert('❌ No enabled entries found in .wheel file');
+          return;
+        }
+        
+        // Convert to team format
+        const teamsFromWheel = enabledEntries.map((entry, idx) => ({
+          id: `wheel-${Date.now()}-${idx}`,
+          name: entry.text,
+          members: [], // Themes don't have members
+          gameId: null,
+          color: entry.color || null,
+          fromWheel: true,
+          weight: entry.weight || 1
+        }));
+        
+        // Add to existing teams
+        setTeams(prevTeams => [...prevTeams, ...teamsFromWheel]);
+        setWinners([]);
+        setRotation(0);
+        
+        console.log(`✅ Successfully loaded ${teamsFromWheel.length} themes from .wheel file`);
+        alert(`✅ Successfully loaded ${teamsFromWheel.length} themes from ${file.name}!`);
+        
+      } catch (error) {
+        console.error('Error parsing .wheel file:', error);
+        alert('❌ Error parsing .wheel file. Please check the file format.');
+      }
+    };
+
+    reader.onerror = () => {
+      alert('❌ Error reading .wheel file');
+    };
+
+    reader.readAsText(file, 'UTF-8');
+  };
+
   const parseCSVLine = (line) => {
     const MAX_LINE_LENGTH = 10000;
     if (line.length > MAX_LINE_LENGTH) {
@@ -428,6 +513,10 @@ export default function RafflePage() {
     setWinners([]);
   };
 
+  const removeWinner = (winnerId) => {
+    setWinners(prev => prev.filter(w => w.id !== winnerId));
+  };
+
 
 
   const addManualTeam = () => {
@@ -495,157 +584,39 @@ export default function RafflePage() {
     <AdminProtectedRoute>
       <div className="min-h-screen bg-gray-900 text-white p-8">
         <div className="max-w-7xl mx-auto">
-          <h1 className="text-4xl font-bold mb-8 text-center">🎡 Team Raffle Wheel</h1>
-          
-          {/* Main Manual Team Management */}
-          <div className="bg-gray-800 rounded-lg p-6 mb-8">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold">✏️ Manage Teams</h2>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => {
-                    setImportMode(false);
-                    setJamRaffleMode(true);
-                  }}
-                  className="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg transition text-sm"
-                >
-                  🎯 Load from Jam
-                </button>
-                <button
-                  onClick={() => {
-                    setJamSelectorMode('import');
-                    setShowJamSelector(true);
-                  }}
-                  className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg transition text-sm"
-                >
-                  📥 Import CSV
-                </button>
-              </div>
-            </div>
-
-            {/* Manual Entry */}
-            <div className="space-y-4">
-              <div className="bg-gray-700 p-4 rounded-lg">
-                <h3 className="text-lg font-semibold mb-4">Add Team Manually</h3>
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">
-                      Team Name *
-                    </label>
-                    <input
-                      type="text"
-                      value={newTeamName}
-                      onChange={(e) => setNewTeamName(e.target.value)}
-                      placeholder="Enter team name"
-                      className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded text-white focus:outline-none focus:border-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">
-                      Team Members (optional, comma-separated)
-                    </label>
-                    <input
-                      type="text"
-                      value={newTeamMembers}
-                      onChange={(e) => setNewTeamMembers(e.target.value)}
-                      placeholder="John, Jane, Bob"
-                      className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded text-white focus:outline-none focus:border-blue-500"
-                    />
-                  </div>
-                  <button
-                    onClick={addManualTeam}
-                    className="w-full bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg transition"
-                  >
-                    ➕ Add Team
-                  </button>
-                </div>
-              </div>
-
-              {/* Team Management */}
-              {teams.length > 0 && (
-                <div className="bg-gray-700 p-4 rounded-lg">
-                  <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-lg font-semibold">Current Teams ({teams.length})</h3>
-                    <div className="space-x-2">
-                      <button
-                        onClick={selectAllTeams}
-                        className="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded text-sm transition"
-                      >
-                        Select All
-                      </button>
-                      <button
-                        onClick={deselectAllTeams}
-                        className="bg-gray-600 hover:bg-gray-700 px-3 py-1 rounded text-sm transition"
-                      >
-                        Deselect All
-                      </button>
-                      {selectedTeams.length > 0 && (
-                        <button
-                          onClick={removeSelectedTeams}
-                          className="bg-red-600 hover:bg-red-700 px-3 py-1 rounded text-sm transition"
-                        >
-                          Remove Selected ({selectedTeams.length})
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="max-h-64 overflow-y-auto space-y-2">
-                    {teams.map((team) => (
-                      <div key={team.id} className="flex items-center justify-between bg-gray-600 p-3 rounded">
-                        <div className="flex items-center space-x-3">
-                          <input
-                            type="checkbox"
-                            checked={selectedTeams.includes(team.id)}
-                            onChange={() => toggleTeamSelection(team.id)}
-                            className="text-blue-600 bg-gray-600 border-gray-500 rounded focus:ring-blue-500"
-                          />
-                          <div>
-                            <div className="font-medium text-white flex items-center gap-2">
-                              {team.name}
-                              {team.manual && <span className="text-xs bg-green-600 px-1 rounded">Manual</span>}
-                              {team.fromJam && <span className="text-xs bg-purple-600 px-1 rounded">Jam</span>}
-                              {team.fromImport && <span className="text-xs bg-blue-600 px-1 rounded">Import</span>}
-                            </div>
-                            {team.members && team.members.length > 0 && (
-                              <div className="text-sm text-gray-300">
-                                {team.members.join(', ')}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                        {(team.manual || team.fromJam || team.fromImport) && (
-                          <button
-                            onClick={() => removeManualTeam(team.id)}
-                            className="bg-red-600 hover:bg-red-700 px-2 py-1 rounded text-sm transition"
-                            title="Remove this team"
-                          >
-                            ✕
-                          </button>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
+          <h1 className="text-4xl font-bold mb-8 text-center">🎡 Team Raffle System</h1>
           {/* Jam Raffle Mode */}
           {jamRaffleMode ? (
             <div className="bg-gray-800 rounded-lg p-6 mb-8">
               <h2 className="text-2xl font-bold mb-6 text-center">🎯 Load Teams from Game Jam</h2>
-              
-              {/* Load from Jam Button */}
-              <div className="mb-6 text-center">
-                <button
-                  onClick={() => {
-                    setJamSelectorMode('load');
-                    setShowJamSelector(true);
-                  }}
-                  className="bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-lg transition"
+
+              {/* Jam Selection Dropdown */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Select Game Jam
+                </label>
+                <select
+                  value={selectedGameJam}
+                  onChange={(e) => setSelectedGameJam(e.target.value)}
+                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded text-white focus:outline-none focus:border-blue-500"
                 >
-                  🎯 Select Game Jam to Load Teams
+                  <option value="">Choose a Game Jam...</option>
+                  {gameJams.map((jam) => (
+                    <option key={jam.id} value={String(jam.id)}>
+                      {jam.name || jam.title}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Load Teams Button */}
+              <div className="text-center">
+                <button
+                  onClick={loadTeamsFromJam}
+                  disabled={importing || !selectedGameJam}
+                  className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed px-6 py-3 rounded-lg transition"
+                >
+                  {importing ? '🔄 Loading...' : '🎯 Load Teams'}
                 </button>
               </div>
 
@@ -668,111 +639,291 @@ export default function RafflePage() {
                 ← Back
               </button>
             </div>
-          ) : teams.length > 0 ? (
-            <>
-              {/* Raffle Mode Controls */}
-              <div className="bg-gray-800 rounded-lg p-6 mb-8">
-                <div className="flex flex-wrap gap-4 items-center justify-center">
-                  <div>
-                    <label className="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg cursor-pointer inline-block transition">
-                      📁 Upload CSV (Local)
-                      <input
-                        type="file"
-                        accept=".csv"
-                        onChange={handleFileUpload}
-                        className="hidden"
-                      />
-                    </label>
-                  </div>
-                  
+          ) : (
+            /* Setup Screen */
+            <div className="max-w-4xl mx-auto">
+              <div className="bg-gray-800 rounded-lg p-8 text-center">
+                <h2 className="text-3xl font-bold mb-4">🎯 Set Up Your Raffle</h2>
+                <p className="text-gray-400 mb-8">Choose how you'd like to add teams or manage existing ones</p>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                   <button
-                    onClick={spinWheel}
-                    disabled={spinning || teams.length === 0}
-                    className="bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed px-6 py-3 rounded-lg transition"
+                    onClick={() => setShowManualEntry(true)}
+                    className="bg-blue-600 hover:bg-blue-700 p-6 rounded-lg transition"
                   >
-                    {spinning ? '🔄 Spinning...' : '🎲 Spin the Wheel!'}
-                  </button>
-
-
-
-                  <button
-                    onClick={resetAll}
-                    className="bg-gray-600 hover:bg-gray-700 px-6 py-3 rounded-lg transition"
-                  >
-                    🔄 Reset All
-                  </button>
-
-                  <button
-                    onClick={() => setImportMode(true)}
-                    className="bg-green-700 hover:bg-green-800 px-6 py-3 rounded-lg transition text-sm"
-                  >
-                    📥 Import & Save
+                    <div className="text-3xl mb-3">✏️</div>
+                    <div className="font-semibold text-lg mb-2">Add Manually</div>
+                    <div className="text-sm text-blue-200">Enter team names one by one</div>
                   </button>
 
                   <button
                     onClick={() => {
-                      setJamRaffleMode(true);
-                      setImportMode(false);
+                      setJamSelectorMode('import');
+                      setShowJamSelector(true);
                     }}
-                    className="bg-purple-700 hover:bg-purple-800 px-6 py-3 rounded-lg transition text-sm"
+                    className="bg-green-600 hover:bg-green-700 p-6 rounded-lg transition"
                   >
-                    🎯 Load from Jam
+                    <div className="text-3xl mb-3">📁</div>
+                    <div className="font-semibold text-lg mb-2">Import CSV</div>
+                    <div className="text-sm text-green-200">Upload a spreadsheet file</div>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      // Trigger wheel file input
+                      document.getElementById('wheel-file-input').click();
+                    }}
+                    className="bg-orange-600 hover:bg-orange-700 p-6 rounded-lg transition"
+                  >
+                    <div className="text-3xl mb-3">🎡</div>
+                    <div className="font-semibold text-lg mb-2">Import .wheel</div>
+                    <div className="text-sm text-orange-200">Upload a .wheel JSON file</div>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setImportMode(false);
+                      setJamRaffleMode(true);
+                    }}
+                    className="bg-purple-600 hover:bg-purple-700 p-6 rounded-lg transition"
+                  >
+                    <div className="text-3xl mb-3">🎮</div>
+                    <div className="font-semibold text-lg mb-2">Load from Jam</div>
+                    <div className="text-sm text-purple-200">Use existing jam teams</div>
                   </button>
                 </div>
 
-                <div className="text-center mt-4 text-gray-400">
-                  {teams.length} team{teams.length !== 1 ? 's' : ''} remaining
-                </div>
-              </div>
-
-              {/* Winners Display */}
-              {winners.length > 0 && (
-                <div className="bg-gradient-to-r from-yellow-500 to-orange-500 rounded-lg p-6 mb-8">
-                  <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-2xl font-bold">🏆 Winners ({winners.length}) 🏆</h2>
-                    <button
-                      onClick={clearWinners}
-                      className="bg-red-600 hover:bg-red-700 px-3 py-1 rounded text-sm transition"
-                    >
-                      Clear All
-                    </button>
+                {/* Manual Entry Form */}
+                {showManualEntry && (
+                  <div className="bg-gray-700 p-6 rounded-lg max-w-md mx-auto mb-8">
+                    <h3 className="text-xl font-semibold mb-4">Add Team Manually</h3>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                          Team Name *
+                        </label>
+                        <input
+                          type="text"
+                          value={newTeamName}
+                          onChange={(e) => setNewTeamName(e.target.value)}
+                          placeholder="Enter team name"
+                          className="w-full px-4 py-2 bg-gray-600 border border-gray-500 rounded text-white focus:outline-none focus:border-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                          Team Members (optional)
+                        </label>
+                        <input
+                          type="text"
+                          value={newTeamMembers}
+                          onChange={(e) => setNewTeamMembers(e.target.value)}
+                          placeholder="John, Jane, Bob"
+                          className="w-full px-4 py-2 bg-gray-600 border border-gray-500 rounded text-white focus:outline-none focus:border-blue-500"
+                        />
+                      </div>
+                      <button
+                        onClick={addManualTeam}
+                        className="w-full bg-green-600 hover:bg-green-700 px-4 py-3 rounded-lg transition font-semibold"
+                      >
+                        ➕ Add Team
+                      </button>
+                    </div>
                   </div>
-                  <div className="space-y-2 max-h-48 overflow-y-auto">
-                    {winners.map((winner, index) => (
-                      <div key={winner.id} className="bg-white bg-opacity-20 rounded p-3 flex justify-between items-center">
-                        <div>
-                          <span className="font-bold text-lg">#{index + 1}: {winner.name}</span>
-                          {winner.members && winner.members.length > 0 && (
-                            <span className="text-sm ml-2 text-gray-800">
-                              ({winner.members.join(', ')})
-                            </span>
+                )}
+
+                {/* Current Teams */}
+                {teams.length > 0 && (
+                  <div className="bg-gray-700 p-4 rounded-lg mb-8">
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="text-lg font-semibold">Current Teams ({teams.length})</h3>
+                      <div className="space-x-2">
+                        <button
+                          onClick={selectAllTeams}
+                          className="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded text-sm transition"
+                        >
+                          Select All
+                        </button>
+                        <button
+                          onClick={deselectAllTeams}
+                          className="bg-gray-600 hover:bg-gray-700 px-3 py-1 rounded text-sm transition"
+                        >
+                          Deselect All
+                        </button>
+                        {selectedTeams.length > 0 && (
+                          <button
+                            onClick={removeSelectedTeams}
+                            className="bg-red-600 hover:bg-red-700 px-3 py-1 rounded text-sm transition"
+                          >
+                            Remove Selected ({selectedTeams.length})
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="max-h-64 overflow-y-auto space-y-2">
+                      {teams.map((team) => (
+                        <div key={team.id} className="flex items-center justify-between bg-gray-600 p-3 rounded">
+                          <div className="flex items-center space-x-3">
+                            <input
+                              type="checkbox"
+                              checked={selectedTeams.includes(team.id)}
+                              onChange={() => toggleTeamSelection(team.id)}
+                              className="text-blue-600 bg-gray-600 border-gray-500 rounded focus:ring-blue-500"
+                            />
+                            <div>
+                              <div className="font-medium text-white flex items-center gap-2">
+                                {team.name}
+                                {team.manual && <span className="text-xs bg-green-600 px-1 rounded">Manual</span>}
+                                {team.fromJam && <span className="text-xs bg-purple-600 px-1 rounded">Jam</span>}
+                                {team.fromImport && <span className="text-xs bg-blue-600 px-1 rounded">Import</span>}
+                                {team.fromWheel && <span className="text-xs bg-orange-600 px-1 rounded">Wheel</span>}
+                              </div>
+                              {team.members && team.members.length > 0 && (
+                                <div className="text-sm text-gray-300">
+                                  {team.members.join(', ')}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          {(team.manual || team.fromJam || team.fromImport || team.fromWheel) && (
+                            <button
+                              onClick={() => removeManualTeam(team.id)}
+                              className="bg-red-600 hover:bg-red-700 px-2 py-1 rounded text-sm transition"
+                              title="Remove this team"
+                            >
+                              ✕
+                            </button>
                           )}
                         </div>
-                        <span className="text-sm text-gray-700">{winner.timestamp}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Raffle Mode Controls */}
+                {teams.length > 0 && (
+                  <div className="bg-gray-800 rounded-lg p-6 mb-8">
+                    <div className="flex flex-wrap gap-4 items-center justify-center">
+                      <div>
+                        <label className="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg cursor-pointer inline-block transition">
+                          📁 Upload CSV (Local)
+                          <input
+                            type="file"
+                            accept=".csv"
+                            onChange={handleFileUpload}
+                            className="hidden"
+                          />
+                        </label>
                       </div>
-                    ))}
+                      
+                      <button
+                        onClick={spinWheel}
+                        disabled={spinning || teams.length === 0}
+                        className="bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed px-6 py-3 rounded-lg transition"
+                      >
+                        {spinning ? '🔄 Spinning...' : '🎲 Spin the Wheel!'}
+                      </button>
+
+
+
+                      <button
+                        onClick={resetAll}
+                        className="bg-gray-600 hover:bg-gray-700 px-6 py-3 rounded-lg transition"
+                      >
+                        🔄 Reset All
+                      </button>
+
+                      <button
+                        onClick={() => setImportMode(true)}
+                        className="bg-green-700 hover:bg-green-800 px-6 py-3 rounded-lg transition text-sm"
+                      >
+                        📥 Import & Save
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setJamRaffleMode(true);
+                          setImportMode(false);
+                        }}
+                        className="bg-purple-700 hover:bg-purple-800 px-6 py-3 rounded-lg transition text-sm"
+                      >
+                        🎯 Load from Jam
+                      </button>
+                    </div>
+
+                    <div className="text-center mt-4 text-gray-400">
+                      {teams.length} team{teams.length !== 1 ? 's' : ''} remaining
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* Wheel Container */}
-              {teams.length > 0 && (
-                <div className="flex justify-center mb-8">
-                  <div className="relative">
-                    <SpinWheel
-                      items={teamItems}
-                      spinning={spinning}
-                      pointerColor={pointerColor}
-                      onSpinComplete={handleSpinComplete}
-                      size={600}
-                    />
+                {/* Hidden file inputs */}
+                <input
+                  id="wheel-file-input"
+                  type="file"
+                  accept=".wheel"
+                  onChange={handleWheelFileUpload}
+                  className="hidden"
+                />
+
+                {/* Winners Display */}
+                {winners.length > 0 && (
+                  <div className="bg-gradient-to-r from-yellow-500 to-orange-500 rounded-lg p-6 mb-8">
+                    <div className="flex justify-between items-center mb-4">
+                      <h2 className="text-2xl font-bold">🏆 Winners ({winners.length}) 🏆</h2>
+                      <button
+                        onClick={clearWinners}
+                        className="bg-red-600 hover:bg-red-700 px-3 py-1 rounded text-sm transition"
+                      >
+                        Clear All
+                      </button>
+                    </div>
+                    <div className="space-y-2 max-h-48 overflow-y-auto">
+                      {winners.map((winner, index) => (
+                        <div key={winner.id} className="bg-white bg-opacity-20 rounded p-3 flex justify-between items-center">
+                          <div className="flex-1">
+                            <span className="font-bold text-lg">#{index + 1}: {winner.name}</span>
+                            {winner.members && winner.members.length > 0 && (
+                              <span className="text-sm ml-2 text-gray-800">
+                                ({winner.members.join(', ')})
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-gray-700">{winner.timestamp}</span>
+                            <button
+                              onClick={() => removeWinner(winner.id)}
+                              className="text-red-600 hover:text-red-800"
+                              title="Remove winner"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
+                {/* Wheel Container */}
+                {teams.length > 0 && (
+                  <div className="flex justify-center mb-8">
+                    <div className="relative">
+                      <SpinWheel
+                        items={teamItems}
+                        spinning={spinning}
+                        pointerColor={pointerColor}
+                        onSpinComplete={handleSpinComplete}
+                        size={700}
+                      />
+                    </div>
+                  </div>
+                )}
 
-            </>
-          ) : null}
+              </div>
+            </div>
+          )}
 
           {/* Jam Selector Popup */}
           {showJamSelector && (
