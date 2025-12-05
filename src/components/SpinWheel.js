@@ -42,10 +42,22 @@ export function generateWheelColors(count) {
  * @param {number} size - Diameter of wheel in pixels (default 520)
  * @param {boolean} debug - Show debug markers
  */
+/**
+ * Minimal Spin Wheel Component using spin-wheel library
+ * Only adds pointer color updating during spin
+ *
+ * @param {Array} items - Array of {text, color} objects to display on wheel
+ * @param {boolean} spinning - Whether wheel is currently spinning
+ * @param {string} pointerColor - Color of the pointer arrow
+ * @param {function} onSliceChange - Callback when pointer enters a new slice
+ * @param {function} onSpinComplete - Callback when spinning stops (winner determined)
+ * @param {function} onSpinEnd - Callback when spin animation ends
+ * @param {number} size - Diameter of wheel in pixels (default 520)
+ * @param {boolean} debug - Show debug markers
+ */
 export function SpinWheel({ items, spinning, pointerColor = '#ef4444', onSliceChange, onSpinComplete, onSpinEnd, size = 520, debug = false }) {
   const containerRef = useRef(null);
   const wheelRef = useRef(null);
-  const winnerTimeoutRef = useRef(null);
 
   // Convert our items format to spin-wheel format
   const wheelItems = items.map(item => ({
@@ -74,23 +86,16 @@ export function SpinWheel({ items, spinning, pointerColor = '#ef4444', onSliceCh
       itemLabelStrokeColor: '#000000',
       itemLabelStrokeWidth: 2,
       onCurrentIndexChange: (event) => {
-        // Update pointer color when slice changes
+        // Update pointer color when slice changes during spin
         const currentItem = items[event.currentIndex];
         if (currentItem && onSliceChange) {
           onSliceChange(currentItem);
         }
       },
       onRest: (event) => {
-        // Determine winner after wheel stops
+        // Wheel stopped - pass winner immediately (no custom delay)
         const winningItem = items[event.currentIndex];
-        if (winnerTimeoutRef.current) {
-          clearTimeout(winnerTimeoutRef.current);
-        }
-
-        winnerTimeoutRef.current = setTimeout(() => {
-          onSpinComplete?.(winningItem);
-        }, 2000);
-
+        onSpinComplete?.(winningItem);
         onSpinEnd?.();
       },
       onSpin: (event) => {
@@ -105,9 +110,6 @@ export function SpinWheel({ items, spinning, pointerColor = '#ef4444', onSliceCh
         wheelRef.current.remove();
         wheelRef.current = null;
       }
-      if (winnerTimeoutRef.current) {
-        clearTimeout(winnerTimeoutRef.current);
-      }
     };
   }, [items, debug]);
 
@@ -116,14 +118,14 @@ export function SpinWheel({ items, spinning, pointerColor = '#ef4444', onSliceCh
     if (!wheelRef.current) return;
 
     if (spinning) {
-      // Generate random winning item and spin to it
+      // Let spin-wheel library handle random winner selection and animation
       const winningIndex = Math.floor(Math.random() * items.length);
       const duration = 4000; // 4 seconds for normal spinning
       const numberOfRevolutions = Math.floor(Math.random() * 3) + 3; // 3-5 revolutions
 
       wheelRef.current.spinToItem(winningIndex, duration, true, numberOfRevolutions, 1);
     }
-  }, [spinning, items, debug]);
+  }, [spinning, items]);
 
   // Update wheel items when items prop changes
   useEffect(() => {
@@ -170,51 +172,4 @@ export function SpinWheel({ items, spinning, pointerColor = '#ef4444', onSliceCh
       )}
     </div>
   );
-}
-
-/**
- * Calculate which item the pointer lands on after rotation
- * 
- * @param {number} finalRotation - Final rotation value in degrees
- * @param {number} itemCount - Total number of items on wheel
- * @returns {number} Index of the selected item
- */
-export function calculateWinnerIndex(finalRotation, itemCount) {
-  const segmentAngle = 360 / itemCount;
-  const normalizedRotation = ((finalRotation % 360) + 360) % 360;
-  
-  // Pointer is at -90° (top) in slice coordinate system
-  // After rotation R, slice at index I has center at: (I * segmentAngle + segmentAngle/2 - R)
-  // We want to find I where this equals -90° (mod 360)
-  const angleAtPointer = ((-90 + normalizedRotation - segmentAngle / 2) + 360) % 360;
-  const sliceIndex = Math.floor(angleAtPointer / segmentAngle) % itemCount;
-  
-  return sliceIndex;
-}
-
-/**
- * Calculate target rotation to land a specific item under the pointer
- * 
- * @param {number} itemIndex - Index of item to select
- * @param {number} itemCount - Total number of items
- * @param {number} currentRotation - Current rotation value
- * @param {number} minSpins - Minimum full rotations (default 5)
- * @param {number} maxSpins - Maximum full rotations (default 8)
- * @returns {number} Final rotation value
- */
-export function calculateTargetRotation(itemIndex, itemCount, currentRotation, minSpins = 5, maxSpins = 8) {
-  const segmentAngle = 360 / itemCount;
-  
-  // Small jitter within the slice
-  const jitter = (Math.random() - 0.5) * (segmentAngle * 0.3);
-  
-  // To land slice I under pointer at -90°: rotation = I × segmentAngle + segmentAngle/2 + 90
-  const targetRotation = itemIndex * segmentAngle + (segmentAngle / 2) + 90 + jitter;
-  
-  // Add full spins
-  const extraSpins = Math.floor(Math.random() * (maxSpins - minSpins + 1)) + minSpins;
-  const currentMod = ((currentRotation % 360) + 360) % 360;
-  const deltaDegrees = ((targetRotation - currentMod) + 360) % 360;
-  
-  return currentRotation + (extraSpins * 360) + deltaDegrees;
 }

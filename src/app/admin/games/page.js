@@ -8,6 +8,12 @@ export default function AdminGames() {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(null);
   const [showForm, setShowForm] = useState(false);
+  const [selectedGameJam, setSelectedGameJam] = useState('');
+  const [importing, setImporting] = useState(false);
+  const [importMessage, setImportMessage] = useState('');
+  const [importError, setImportError] = useState('');
+  const [selectedGames, setSelectedGames] = useState([]);
+  const [selectAll, setSelectAll] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -174,6 +180,77 @@ export default function AdminGames() {
     }
   };
 
+  const handleGameSelection = (gameId) => {
+    setSelectedGames(prev => {
+      const newSelected = prev.includes(gameId)
+        ? prev.filter(id => id !== gameId)
+        : [...prev, gameId];
+      setSelectAll(newSelected.length === filteredGames.length && filteredGames.length > 0);
+      return newSelected;
+    });
+  };
+
+  const handleSelectAll = () => {
+    if (selectAll) {
+      setSelectedGames([]);
+      setSelectAll(false);
+    } else {
+      setSelectedGames(filteredGames.map(game => game.id));
+      setSelectAll(true);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedGames.length === 0) return;
+    if (!confirm(`Are you sure you want to delete ${selectedGames.length} game(s)?`)) return;
+
+    try {
+      const deletePromises = selectedGames.map(id =>
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/games/${id}`, {
+          method: 'DELETE',
+          credentials: 'include',
+        })
+      );
+
+      const results = await Promise.all(deletePromises);
+      const successCount = results.filter(r => r.ok).length;
+
+      await fetchData();
+      setSelectedGames([]);
+      setSelectAll(false);
+      alert(`${successCount} game(s) deleted successfully!`);
+    } catch (error) {
+      console.error('Failed to delete games:', error);
+      alert('Failed to delete some games');
+    }
+  };
+
+  const handleBulkFeature = async (featured) => {
+    if (selectedGames.length === 0) return;
+
+    try {
+      const updatePromises = selectedGames.map(id =>
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/games/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ is_featured: featured }),
+        })
+      );
+
+      const results = await Promise.all(updatePromises);
+      const successCount = results.filter(r => r.ok).length;
+
+      await fetchData();
+      setSelectedGames([]);
+      setSelectAll(false);
+      alert(`${successCount} game(s) ${featured ? 'featured' : 'unfeatured'} successfully!`);
+    } catch (error) {
+      console.error('Failed to update games:', error);
+      alert('Failed to update some games');
+    }
+  };
+
   const handleCreateNew = () => {
     resetForm();
     setShowForm(true);
@@ -215,12 +292,99 @@ export default function AdminGames() {
     });
   };
 
+  const filteredGames = selectedGameJam
+    ? games.filter(game => String(game.game_jam_id) === String(selectedGameJam))
+    : games;
+
   const getGameJamTitle = (jamId) => {
-    const jam = gameJams.find((j) => j.id === jamId);
-    return jam ? jam.title : 'Unknown';
+    const jam = gameJams.find(j => j.id === jamId);
+    return jam ? jam.name || jam.title : 'Unknown Jam';
   };
 
-  if (loading) {
+  // Clear selections when filtered games change
+  useEffect(() => {
+    const validSelections = selectedGames.filter(id =>
+      filteredGames.some(game => game.id === id)
+    );
+    if (validSelections.length !== selectedGames.length) {
+      setSelectedGames(validSelections);
+      setSelectAll(validSelections.length === filteredGames.length && filteredGames.length > 0);
+    }
+  }, [filteredGames, selectedGames]);
+
+  const handleFileUpload = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.name.endsWith('.csv')) {
+      alert('❌ Please upload a CSV file');
+      event.target.value = '';
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('❌ File is too large. Maximum size is 5MB');
+      event.target.value = '';
+      return;
+    }
+
+    // Check if jam is selected
+    if (!selectedGameJam) {
+      alert('❌ Please select a Game Jam first');
+      event.target.value = '';
+      return;
+    }
+
+    importCSVToBackend(file);
+    event.target.value = '';
+  };
+
+  const importCSVToBackend = async (file) => {
+    setImporting(true);
+    setImportError('');
+    setImportMessage('');
+
+    const formData = new FormData();
+    formData.append('csv', file);
+    formData.append('gameJamId', selectedGameJam);
+
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/games/import-teams`, {
+        method: 'POST',
+        body: formData
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setImportError(data.error || 'Import failed');
+        if (data.details) {
+          console.error('Import details:', data.details);
+        }
+      } else {
+        setImportMessage(`✅ Successfully imported ${data.summary.successfully_imported} teams!`);
+        
+        if (data.summary.failed > 0) {
+          setImportMessage(prev => prev + `\n⚠️ ${data.summary.failed} teams failed to import`);
+        }
+        
+        // Refresh the games list
+        await fetchData();
+
+        // Log any warnings
+        if (data.summary.warnings > 0) {
+          console.warn('Import warnings:', data.results.warnings);
+        }
+      }
+    } catch (error) {
+      console.error('Error importing CSV:', error);
+      setImportError('Failed to connect to server. Please try again.');
+    } finally {
+      setImporting(false);
+    }
+  };  if (loading) {
     return <div className="text-white">Loading...</div>;
   }
 
@@ -237,6 +401,69 @@ export default function AdminGames() {
           </button>
         )}
       </div>
+
+      {/* Jam Selector and Import */}
+      {!showForm && (
+        <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
+          <div className="flex flex-wrap gap-4 items-center">
+            <div className="flex-1 min-w-48">
+              <label className="block text-sm font-medium text-gray-300 mb-1">
+                Filter by Game Jam
+              </label>
+              <select
+                value={selectedGameJam}
+                onChange={(e) => setSelectedGameJam(e.target.value)}
+                className="w-full px-3 py-1.5 bg-gray-700 border border-gray-600 rounded text-white text-sm focus:outline-none focus:border-blue-500"
+              >
+                <option value="">All Game Jams</option>
+                {gameJams.map((jam) => (
+                  <option key={jam.id} value={String(jam.id)}>
+                    {jam.name || jam.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed px-3 py-1.5 rounded-lg cursor-pointer inline-block transition text-white font-semibold text-sm">
+                📁 Import CSV
+                <input
+                  type="file"
+                  accept=".csv"
+                  onChange={handleFileUpload}
+                  disabled={importing || !selectedGameJam}
+                  className="hidden"
+                />
+              </label>
+            </div>
+          </div>
+
+          {/* Import Status */}
+          {importing && (
+            <div className="mt-4 text-blue-400">
+              🔄 Importing teams from CSV...
+            </div>
+          )}
+
+          {importError && (
+            <div className="mt-4 bg-red-900 border border-red-500 rounded-lg p-4 text-red-200">
+              <p className="font-bold">❌ Import Error</p>
+              <p className="text-sm mt-1">{importError}</p>
+            </div>
+          )}
+
+          {importMessage && (
+            <div className="mt-4 bg-green-900 border border-green-500 rounded-lg p-4 text-green-200 whitespace-pre-wrap">
+              <p className="font-bold">✅ Import Success</p>
+              <p className="text-sm mt-1">{importMessage}</p>
+            </div>
+          )}
+
+          <div className="mt-3 text-gray-400 text-sm">
+            💡 Select a Game Jam above to filter games. CSV imports will use the selected jam.
+          </div>
+        </div>
+      )}
 
       {/* Form */}
       {showForm && (
@@ -275,7 +502,7 @@ export default function AdminGames() {
                 >
                   <option value="">Select a Game Jam</option>
                   {gameJams.map((jam) => (
-                    <option key={jam.id} value={jam.id}>
+                    <option key={jam.id} value={String(jam.id)}>
                       {jam.name || jam.title}
                     </option>
                   ))}
@@ -590,10 +817,49 @@ export default function AdminGames() {
 
       {/* List */}
       <div className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
+        {/* Bulk Actions */}
+        {selectedGames.length > 0 && (
+          <div className="bg-gray-700 px-4 py-3 border-b border-gray-600">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-300">
+                {selectedGames.length} game(s) selected
+              </span>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleBulkFeature(true)}
+                  className="px-3 py-1 bg-yellow-600 hover:bg-yellow-700 text-white text-sm rounded transition"
+                >
+                  ⭐ Feature Selected
+                </button>
+                <button
+                  onClick={() => handleBulkFeature(false)}
+                  className="px-3 py-1 bg-gray-600 hover:bg-gray-700 text-white text-sm rounded transition"
+                >
+                  ☆ Unfeature Selected
+                </button>
+                <button
+                  onClick={handleBulkDelete}
+                  className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-sm rounded transition"
+                >
+                  🗑️ Delete Selected
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-700">
               <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase">
+                  <input
+                    type="checkbox"
+                    checked={selectAll}
+                    onChange={handleSelectAll}
+                    className="rounded border-gray-600 text-blue-600 bg-gray-700 focus:ring-blue-500"
+                  />
+                </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase">
                   Title
                 </th>
@@ -615,8 +881,16 @@ export default function AdminGames() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-700">
-              {games.map((game) => (
+              {filteredGames.map((game) => (
                 <tr key={game.id} className="hover:bg-gray-700">
+                  <td className="px-6 py-4 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={selectedGames.includes(game.id)}
+                      onChange={() => handleGameSelection(game.id)}
+                      className="rounded border-gray-600 text-blue-600 bg-gray-700 focus:ring-blue-500"
+                    />
+                  </td>
                   <td className="px-6 py-4 text-sm text-white font-medium">
                     {game.title}
                   </td>
@@ -670,9 +944,9 @@ export default function AdminGames() {
                   </td>
                 </tr>
               ))}
-              {games.length === 0 && (
+              {filteredGames.length === 0 && (
                 <tr>
-                  <td colSpan="6" className="px-6 py-8 text-center text-gray-400">
+                  <td colSpan="7" className="px-6 py-8 text-center text-gray-400">
                     No games found. Add one to get started!
                   </td>
                 </tr>
