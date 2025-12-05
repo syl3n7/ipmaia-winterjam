@@ -9,6 +9,25 @@ const multer = require('multer');
 const { parseCSV, sanitizeTeamName, sanitizeMemberNames } = require('../utils/csvParser');
 const router = express.Router();
 
+// generate color palette (server-side equivalent of generateWheelColors)
+function generateWheelColors(count) {
+  const basePalette = [
+    '#EF4444', '#F97316', '#F59E0B', '#EAB308', '#84CC16', '#22C55E', '#10B981', '#14B8A6',
+    '#06B6D4', '#0EA5E9', '#3B82F6', '#6366F1', '#8B5CF6', '#A855F7', '#D946EF', '#EC4899',
+    '#F472B6', '#FB7185', '#9CA3AF', '#FACC15', '#4ADE80', '#34D399', '#2DD4BF', '#38BDF8',
+    '#60A5FA', '#818CF8', '#A78BFA', '#C084FC', '#F472B6', '#FDA4AF', '#FBCFE8', '#E0F2FE'
+  ];
+  if (count <= basePalette.length) return basePalette.slice(0, count);
+  const colors = [...basePalette];
+  const golden = 137.508;
+  const needed = count - basePalette.length;
+  for (let i = 0; i < needed; i++) {
+    const hue = ((i * golden) % 360).toFixed(2);
+    colors.push(`hsl(${hue}, 70%, 55%)`);
+  }
+  return colors;
+}
+
 // Configure multer for file uploads
 const upload = multer({ 
   storage: multer.memoryStorage(),
@@ -81,6 +100,89 @@ router.put('/gamejams/:id', async (req, res) => {
   } catch (error) {
     console.error('Error updating game jam:', error);
     res.status(500).json({ error: 'Failed to update game jam' });
+  }
+});
+
+// Theme wheel (per game jam)
+router.get('/gamejams/:id/theme-wheel', async (req, res) => {
+  try {
+    const gameJam = await GameJam.findById(req.params.id);
+    if (!gameJam) {
+      return res.status(404).json({ error: 'Game jam not found' });
+    }
+
+    // custom_fields may come as object or string, normalize to object
+    let customFields = gameJam.custom_fields || {};
+    if (typeof customFields === 'string') {
+      try {
+        customFields = JSON.parse(customFields);
+      } catch (parseErr) {
+        console.warn('⚠️ Failed to parse custom_fields JSON, using empty object');
+        customFields = {};
+      }
+    }
+
+    res.json({
+      id: gameJam.id,
+      name: gameJam.name,
+      theme: gameJam.theme,
+      wheelConfig: customFields.theme_wheel || null,
+      lastWinner: customFields.theme_wheel_last_winner || null,
+    });
+  } catch (error) {
+    console.error('Error fetching theme wheel:', error);
+    res.status(500).json({ error: 'Failed to fetch theme wheel data' });
+  }
+});
+
+router.put('/gamejams/:id/theme-wheel', async (req, res) => {
+  try {
+    const { theme, wheelConfig, winner } = req.body;
+
+    const gameJam = await GameJam.findById(req.params.id);
+    if (!gameJam) {
+      return res.status(404).json({ error: 'Game jam not found' });
+    }
+
+    // Normalize existing custom fields
+    let customFields = gameJam.custom_fields || {};
+    if (typeof customFields === 'string') {
+      try {
+        customFields = JSON.parse(customFields);
+      } catch (parseErr) {
+        console.warn('⚠️ Failed to parse custom_fields JSON, resetting to empty object');
+        customFields = {};
+      }
+    }
+
+    // Merge new wheel data
+    if (wheelConfig !== undefined) {
+      customFields.theme_wheel = wheelConfig;
+    }
+    if (winner !== undefined) {
+      customFields.theme_wheel_last_winner = winner;
+    }
+
+    const payload = { custom_fields: customFields };
+    if (theme !== undefined) {
+      payload.theme = theme;
+    }
+
+    const updated = await GameJam.update(req.params.id, payload);
+
+    res.json({
+      message: 'Theme wheel updated',
+      gameJam: {
+        id: updated.id,
+        name: updated.name,
+        theme: updated.theme,
+      },
+      wheelConfig: customFields.theme_wheel || null,
+      lastWinner: customFields.theme_wheel_last_winner || null,
+    });
+  } catch (error) {
+    console.error('Error updating theme wheel:', error);
+    res.status(500).json({ error: 'Failed to update theme wheel' });
   }
 });
 
@@ -207,8 +309,9 @@ router.post('/games/import-teams', upload.single('csv'), async (req, res) => {
       failed: [],
       warnings: errors
     };
-
-    for (const team of teams) {
+    const colors = generateWheelColors(teams.length);
+    for (let i = 0; i < teams.length; i++) {
+      const team = teams[i];
       try {
         // Sanitize data
         const teamName = sanitizeTeamName(team.teamName);
@@ -265,12 +368,15 @@ router.post('/games/import-teams', upload.single('csv'), async (req, res) => {
           }
         };
 
+        // Persist color in custom fields
+        gameData.custom_fields.raffle_color = colors[i];
         const game = await Game.create(gameData);
         results.imported.push({
           id: game.id,
           teamName: teamName,
           members: members,
-          gameId: game.id
+          gameId: game.id,
+          color: colors[i]
         });
 
         console.log(`✅ Created game for team: ${teamName}`);

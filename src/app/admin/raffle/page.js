@@ -1,5 +1,6 @@
 'use client';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
+import { SpinWheel, generateWheelColors, calculateTargetRotation, calculateWinnerIndex } from '@/components/SpinWheel';
 import AdminProtectedRoute from '@/components/AdminProtectedRoute';
 
 export default function RafflePage() {
@@ -9,6 +10,7 @@ export default function RafflePage() {
   const [selectedTeam, setSelectedTeam] = useState(null);
   const [removedTeams, setRemovedTeams] = useState([]);
   const wheelRef = useRef(null);
+  const [pointerColor, setPointerColor] = useState('#ef4444');
   
   // Import mode
   const [importMode, setImportMode] = useState(false);
@@ -107,7 +109,8 @@ export default function RafflePage() {
             id: idx,
             name: team.teamName,
             members: team.members,
-            gameId: team.gameId
+            gameId: team.gameId,
+            color: team.color || team.raffle_color || null
           }));
           setTeams(teamsForRaffle);
           setRemovedTeams([]);
@@ -271,7 +274,8 @@ export default function RafflePage() {
           return;
         }
 
-        setTeams(parsedTeams);
+        const palette = generateWheelColors(parsedTeams.length);
+        setTeams(parsedTeams.map((t, idx) => ({ ...t, color: palette[idx] })));
         setRemovedTeams([]);
         setSelectedTeam(null);
         setRotation(0);
@@ -332,24 +336,18 @@ export default function RafflePage() {
     setSpinning(true);
     setSelectedTeam(null);
 
-    // Random spins between 5-8 full rotations plus random final position
-    const extraSpins = Math.floor(Math.random() * 4) + 5;
-    const randomDegree = Math.random() * 360;
-    const totalRotation = rotation + (extraSpins * 360) + randomDegree;
+    // Pick a team index at random
+    const chosenIndex = Math.floor(Math.random() * teams.length);
+    const finalRotation = calculateTargetRotation(chosenIndex, teams.length, rotation);
+    setRotation(finalRotation);
 
-    setRotation(totalRotation);
-
-    // Calculate which team was selected
     setTimeout(() => {
-      const normalizedRotation = totalRotation % 360;
-      const segmentAngle = 360 / teams.length;
-      // Adjust for pointer at top (12 o'clock)
-      const adjustedRotation = (360 - normalizedRotation + 90) % 360;
-      const selectedIndex = Math.floor(adjustedRotation / segmentAngle) % teams.length;
-      
-      setSelectedTeam(teams[selectedIndex]);
+      const selectedIndex = calculateWinnerIndex(finalRotation, teams.length);
+      const selected = teams[selectedIndex];
+      setSelectedTeam(selected);
+      setPointerColor(selected.color || generateWheelColors(teams.length)[selectedIndex]);
       setSpinning(false);
-    }, 4000);
+    }, 6000);
   };
 
   const removeSelectedTeam = () => {
@@ -378,6 +376,16 @@ export default function RafflePage() {
     const hue = (index * 360) / total;
     return `hsl(${hue}, 70%, 60%)`;
   };
+
+  const teamItems = useMemo(() => {
+    if (!teams || teams.length === 0) return [];
+    const palette = generateWheelColors(teams.length);
+    return teams.map((team, idx) => ({
+      ...team,
+      text: team.name,
+      color: team.color || palette[idx],
+    }));
+  }, [teams]);
 
   return (
     <AdminProtectedRoute>
@@ -478,7 +486,7 @@ export default function RafflePage() {
                   <li>Teams are created as games in the selected Game Jam</li>
                   <li>All registration details are stored (emails, members, dietary info, etc.)</li>
                   <li>You can then edit game titles, add descriptions, and fill in actual game information</li>
-                  <li>Game names are initially set to "[Team Name] - [Pending Game Name]"</li>
+                  <li>Game names are initially set to &quot;[Team Name] - [Pending Game Name]&quot;</li>
                   <li>Teams are validated for required fields and correct format</li>
                 </ul>
               </div>
@@ -562,91 +570,13 @@ export default function RafflePage() {
               {teams.length > 0 && (
                 <div className="flex justify-center mb-8">
                   <div className="relative">
-                    {/* Pointer */}
-                    <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-4 z-10">
-                      <div className="w-0 h-0 border-l-[20px] border-l-transparent border-r-[20px] border-r-transparent border-t-[40px] border-t-red-600 drop-shadow-lg"></div>
-                    </div>
-
-                    {/* Wheel */}
-                    <div 
-                      ref={wheelRef}
-                      className="relative w-[600px] h-[600px] rounded-full overflow-hidden shadow-2xl border-8 border-gray-700"
-                      style={{
-                        transform: `rotate(${rotation}deg)`,
-                        transition: spinning ? 'transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99)' : 'none'
-                      }}
-                    >
-                      {teams.map((team, index) => {
-                        const segmentAngle = 360 / teams.length;
-                        const startAngle = index * segmentAngle;
-                        
-                        // Calculate the end points for the slice using SVG path
-                        const radius = 300; // Half of 600px
-                        const centerX = 300;
-                        const centerY = 300;
-                        
-                        // Convert to radians
-                        const startRad = (startAngle - 90) * Math.PI / 180;
-                        const endRad = (startAngle + segmentAngle - 90) * Math.PI / 180;
-                        
-                        // Calculate arc points
-                        const x1 = centerX + radius * Math.cos(startRad);
-                        const y1 = centerY + radius * Math.sin(startRad);
-                        const x2 = centerX + radius * Math.cos(endRad);
-                        const y2 = centerY + radius * Math.sin(endRad);
-                        
-                        const largeArcFlag = segmentAngle > 180 ? 1 : 0;
-                        
-                        const pathData = [
-                          `M ${centerX} ${centerY}`,
-                          `L ${x1} ${y1}`,
-                          `A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2}`,
-                          'Z'
-                        ].join(' ');
-                        
-                        // Text positioning
-                        const textAngle = startAngle + segmentAngle / 2;
-                        const textRadius = radius * 0.65;
-                        const textRad = (textAngle - 90) * Math.PI / 180;
-                        const textX = centerX + textRadius * Math.cos(textRad);
-                        const textY = centerY + textRadius * Math.sin(textRad);
-                        
-                        return (
-                          <svg
-                            key={team.id}
-                            className="absolute top-0 left-0 w-full h-full"
-                            viewBox="0 0 600 600"
-                          >
-                            <path
-                              d={pathData}
-                              fill={getWheelColors(index, teams.length)}
-                              stroke="#1f2937"
-                              strokeWidth="2"
-                            />
-                            <text
-                              x={textX}
-                              y={textY}
-                              fill="white"
-                              fontSize="14"
-                              fontWeight="bold"
-                              textAnchor="middle"
-                              dominantBaseline="middle"
-                              transform={`rotate(${textAngle}, ${textX}, ${textY})`}
-                              style={{
-                                textShadow: '1px 1px 2px rgba(0,0,0,0.8)'
-                              }}
-                            >
-                              {team.name.length > 18 ? team.name.substring(0, 15) + '...' : team.name}
-                            </text>
-                          </svg>
-                        );
-                      })}
-                      
-                      {/* Center Circle */}
-                      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 bg-gray-800 rounded-full border-4 border-white shadow-lg flex items-center justify-center">
-                        <span className="text-2xl">🎯</span>
-                      </div>
-                    </div>
+                    <SpinWheel
+                      items={teamItems}
+                      rotation={rotation}
+                      spinning={spinning}
+                      pointerColor={pointerColor}
+                      size={600}
+                    />
                   </div>
                 </div>
               )}
