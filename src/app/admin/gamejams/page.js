@@ -1,12 +1,15 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { useAdminAuth } from '@/contexts/AdminAuthContext';
 
 export default function AdminGameJams() {
   const [gameJams, setGameJams] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(null);
+  const [showForm, setShowForm] = useState(false);
   const [activeTab, setActiveTab] = useState('basic'); // basic, dates, content, visibility
+  const { handleApiResponse } = useAdminAuth();
   const [formData, setFormData] = useState({
     // Basic info
     name: '',
@@ -152,12 +155,12 @@ export default function AdminGameJams() {
         `${process.env.NEXT_PUBLIC_API_URL}/admin/gamejams`,
         { credentials: 'include' }
       );
-      if (response.ok) {
-        const data = await response.json();
-        setGameJams(data);
-      }
+      await handleApiResponse(response, 'fetch game jams');
+      const data = await response.json();
+      setGameJams(data);
     } catch (error) {
       console.error('Failed to fetch game jams:', error);
+      alert(`Failed to load game jams: ${error.message}`);
     } finally {
       setLoading(false);
     }
@@ -177,11 +180,10 @@ export default function AdminGameJams() {
         body: JSON.stringify(formData),
       });
 
-      if (response.ok) {
-        await fetchGameJams();
-        resetForm();
-        alert(editing ? 'Game Jam updated!' : 'Game Jam created!');
-      }
+      await handleApiResponse(response, editing ? 'update game jam' : 'create game jam');
+      await fetchGameJams();
+      resetForm();
+      alert(editing ? 'Game Jam updated!' : 'Game Jam created!');
     } catch (error) {
       console.error('Failed to save game jam:', error);
       alert('Failed to save game jam');
@@ -190,6 +192,7 @@ export default function AdminGameJams() {
 
   const handleEdit = (gameJam) => {
     setEditing(gameJam.id);
+    setShowForm(true);
     setFormData({
       name: gameJam.name || '',
       theme: gameJam.theme || '',
@@ -236,18 +239,23 @@ export default function AdminGameJams() {
         }
       );
 
-      if (response.ok) {
-        await fetchGameJams();
-        alert('Game Jam deleted!');
-      }
+      await handleApiResponse(response, 'delete game jam');
+      await fetchGameJams();
+      alert('Game Jam deleted!');
     } catch (error) {
       console.error('Failed to delete game jam:', error);
       alert('Failed to delete game jam');
     }
   };
 
+  const handleCreateNew = () => {
+    resetForm();
+    setShowForm(true);
+  };
+
   const resetForm = () => {
     setEditing(null);
+    setShowForm(false);
     setActiveTab('basic');
     setFormData({
       name: '',
@@ -290,13 +298,22 @@ export default function AdminGameJams() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-3xl font-bold text-white">🎮 Game Jams Management</h2>
+        {!showForm && (
+          <button
+            onClick={handleCreateNew}
+            className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded transition-colors font-semibold"
+          >
+            ➕ Create New Game Jam
+          </button>
+        )}
       </div>
 
       {/* Form */}
-      <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
-        <h3 className="text-xl font-semibold text-white mb-4">
-          {editing ? 'Edit Game Jam' : 'Create New Game Jam'}
-        </h3>
+      {showForm && (
+        <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+          <h3 className="text-xl font-semibold text-white mb-4">
+            {editing ? 'Edit Game Jam' : 'Create New Game Jam'}
+          </h3>
         
         {/* Tabs */}
         <div className="flex space-x-1 mb-6 border-b border-gray-700">
@@ -672,6 +689,7 @@ export default function AdminGameJams() {
           </div>
         </form>
       </div>
+      )}
 
       {/* List */}
       <div className="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">

@@ -276,7 +276,11 @@ export default function Home() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Target size={18} />
-                    <span>Tema revelado no início</span>
+                    <span>
+                      {currentGameJam?.show_theme && currentGameJam?.theme
+                        ? `Tema: ${currentGameJam.theme}`
+                        : 'Tema revelado no início'}
+                    </span>
                   </div>
                 </div>
               </div>
