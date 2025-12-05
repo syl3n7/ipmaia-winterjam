@@ -19,6 +19,8 @@ export default function FormsList() {
     }
   ]);
 
+  const isProduction = process.env.NODE_ENV === 'production';
+
   const handleDelete = (id) => {
     if (window.confirm('Are you sure you want to delete this form?')) {
       setForms(forms.filter(form => form.id !== id));
@@ -33,13 +35,24 @@ export default function FormsList() {
           <h1 className="text-3xl font-bold text-white">Forms Manager</h1>
           <p className="text-gray-400 mt-1">Create and manage custom forms with email notifications</p>
         </div>
-        <Link
-          href="/admin/forms/builder"
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
-        >
-          <Plus className="h-5 w-5" />
-          New Form
-        </Link>
+        {isProduction ? (
+          <button
+            disabled
+            className="flex items-center gap-2 bg-gray-600 text-gray-400 px-4 py-2 rounded-lg cursor-not-allowed"
+            title="Form creation is disabled in production environment"
+          >
+            <Plus className="h-5 w-5" />
+            New Form (Disabled in Production)
+          </button>
+        ) : (
+          <Link
+            href="/admin/forms/builder"
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+          >
+            <Plus className="h-5 w-5" />
+            New Form
+          </Link>
+        )}
       </div>
 
       {/* Forms Grid */}
@@ -47,13 +60,24 @@ export default function FormsList() {
         {forms.length === 0 ? (
           <div className="bg-gray-800 rounded-lg p-8 text-center border border-gray-700">
             <p className="text-gray-400 mb-4">No forms yet. Create one to get started!</p>
-            <Link
-              href="/admin/forms/builder"
-              className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
-            >
-              <Plus className="h-4 w-4" />
-              Create First Form
-            </Link>
+            {isProduction ? (
+              <button
+                disabled
+                className="inline-flex items-center gap-2 bg-gray-600 text-gray-400 px-4 py-2 rounded-lg cursor-not-allowed"
+                title="Form creation is disabled in production environment"
+              >
+                <Plus className="h-4 w-4" />
+                Create First Form (Disabled in Production)
+              </button>
+            ) : (
+              <Link
+                href="/admin/forms/builder"
+                className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+              >
+                <Plus className="h-4 w-4" />
+                Create First Form
+              </Link>
+            )}
           </div>
         ) : (
           forms.map(form => (

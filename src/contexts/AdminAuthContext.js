@@ -22,6 +22,9 @@ export function AdminAuthProvider({ children }) {
       if (response.ok) {
         const userData = await response.json();
         setUser(userData);
+      } else if (response.status === 401) {
+        // User is not authenticated
+        setUser(null);
       } else {
         // In development mode, the backend returns a dev user even without auth
         // If we get a 401 in development, try again (backend might be bypassing auth)
@@ -70,7 +73,38 @@ export function AdminAuthProvider({ children }) {
       window.location.href = '/';
     } catch (err) {
       console.error('Logout failed:', err);
+      // Even if logout fails, clear local state and redirect
+      setUser(null);
+      window.location.href = '/';
     }
+  };
+
+  const handleApiResponse = async (response, operation = 'operation') => {
+    if (response.status === 401) {
+      // User session expired or invalid
+      console.warn('🔐 Session expired or invalid, logging out...');
+      setUser(null);
+      // Redirect to login or show error
+      if (typeof window !== 'undefined') {
+        alert('Your session has expired. Please log in again.');
+        window.location.href = '/';
+      }
+      throw new Error('Authentication required');
+    }
+
+    if (response.status === 403) {
+      // User doesn't have permission
+      console.warn('🚫 Insufficient permissions for:', operation);
+      throw new Error('You do not have permission to perform this action');
+    }
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => 'Unknown error');
+      console.error(`❌ API Error (${response.status}):`, errorText);
+      throw new Error(`Request failed: ${response.status} ${response.statusText}`);
+    }
+
+    return response;
   };
 
   const isAdmin = user && (user.role === 'admin' || user.role === 'super_admin');
@@ -87,6 +121,7 @@ export function AdminAuthProvider({ children }) {
         login,
         logout,
         checkAuth,
+        handleApiResponse,
       }}
     >
       {children}

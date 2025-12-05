@@ -21,7 +21,8 @@
   "next-sitemap": "^4.2.3",
   "qr-code-styling": "^1.9.2",
   "react": "18.2.0",
-  "react-dom": "18.2.0"
+  "react-dom": "18.2.0",
+  "spin-wheel": "^5.0.2"
  },
  "devDependencies": {
   "eslint": "^8",

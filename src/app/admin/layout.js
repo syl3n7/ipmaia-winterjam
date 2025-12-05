@@ -12,20 +12,28 @@ function AdminLayoutContent({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const navItems = [
+    // Content Management
     { href: '/admin', label: '📊 Dashboard', section: 'dashboard' },
     { href: '/admin/gamejams', label: '🎮 Game Jams', section: 'gamejams' },
     { href: '/admin/games', label: '🎯 Games', section: 'games' },
     { href: '/admin/sponsors', label: '🎪 Sponsors', section: 'sponsors' },
+    { href: '/admin/forms', label: '📝 Forms', section: 'forms' },
+    
+    // Configuration
     { href: '/admin/frontpage', label: '🏠 Front Page', section: 'frontpage' },
     { href: '/admin/rules', label: '📋 Rules', section: 'rules' },
     { href: '/admin/themes', label: '🎨 Jam Themes', section: 'themes' },
+    
+    // Features
     { href: '/admin/raffle', label: '🎡 Raffle Wheel', section: 'raffle' },
+    
+    // System & Administration
     { href: '/admin/system', label: '⚙️ System', section: 'system' },
   ];
 
   // Add Users link only for super admins
   if (isSuperAdmin) {
-    navItems.splice(7, 0, { href: '/admin/users', label: '👥 Users', section: 'users' });
+    navItems.push({ href: '/admin/users', label: '👥 Users', section: 'users' });
   }
 
   return (
@@ -49,26 +57,116 @@ function AdminLayoutContent({ children }) {
 
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto p-4 space-y-2">
-          {navItems.map((item) => {
-            const isActive = pathname === item.href;
-            return (
+          {/* Content Management */}
+          <div className="mb-4">
+            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-2">
+              Content Management
+            </h3>
+            {navItems.slice(0, 5).map((item) => {
+              const isActive = pathname === item.href;
+              return (
+                <Link
+                  key={item.section}
+                  href={item.href}
+                  onClick={() => setSidebarOpen(false)}
+                  className={`block px-4 py-3 rounded-lg transition-colors mb-1 ${
+                    isActive
+                      ? 'bg-blue-600 text-white'
+                      : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
+          </div>
+
+          {/* Configuration */}
+          <div className="mb-4">
+            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-2">
+              Configuration
+            </h3>
+            {navItems.slice(5, 8).map((item) => {
+              const isActive = pathname === item.href;
+              return (
+                <Link
+                  key={item.section}
+                  href={item.href}
+                  onClick={() => setSidebarOpen(false)}
+                  className={`block px-4 py-3 rounded-lg transition-colors mb-1 ${
+                    isActive
+                      ? 'bg-blue-600 text-white'
+                      : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
+          </div>
+
+          {/* Features */}
+          <div className="mb-4">
+            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-2">
+              Features
+            </h3>
+            {navItems.slice(8, 9).map((item) => {
+              const isActive = pathname === item.href;
+              return (
+                <Link
+                  key={item.section}
+                  href={item.href}
+                  onClick={() => setSidebarOpen(false)}
+                  className={`block px-4 py-3 rounded-lg transition-colors mb-1 ${
+                    isActive
+                      ? 'bg-blue-600 text-white'
+                      : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
+          </div>
+
+          {/* System & Administration */}
+          <div className="mb-4">
+            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-2">
+              System & Administration
+            </h3>
+            {navItems.slice(9, 10).map((item) => {
+              const isActive = pathname === item.href;
+              return (
+                <Link
+                  key={item.section}
+                  href={item.href}
+                  onClick={() => setSidebarOpen(false)}
+                  className={`block px-4 py-3 rounded-lg transition-colors mb-1 ${
+                    isActive
+                      ? 'bg-blue-600 text-white'
+                      : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
+            {/* Users (Super Admin Only) */}
+            {isSuperAdmin && navItems.length > 10 && (
               <Link
-                key={item.section}
-                href={item.href}
+                href="/admin/users"
                 onClick={() => setSidebarOpen(false)}
-                className={`block px-4 py-3 rounded-lg transition-colors ${
-                  isActive
+                className={`block px-4 py-3 rounded-lg transition-colors mb-1 ${
+                  pathname === '/admin/users'
                     ? 'bg-blue-600 text-white'
                     : 'text-gray-300 hover:bg-gray-700 hover:text-white'
                 }`}
               >
-                {item.label}
+                👥 Users
               </Link>
-            );
-          })}
-        </nav>
-
-        {/* Sidebar Footer */}
+            )}
+          </div>
+        </nav>        {/* Sidebar Footer */}
         <div className="p-4 border-t border-gray-700">
           <button
             onClick={logout}

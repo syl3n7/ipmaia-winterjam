@@ -8,9 +8,12 @@ export default function AdminDashboard() {
   const { user } = useAdminAuth();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [maintenanceMode, setMaintenanceMode] = useState(false);
+  const { handleApiResponse } = useAdminAuth();
 
   useEffect(() => {
     fetchStats();
+    checkMaintenanceMode();
   }, []);
 
   const fetchStats = async () => {
@@ -22,25 +25,129 @@ export default function AdminDashboard() {
         }
       );
 
-      if (response.ok) {
-        const data = await response.json();
-        setStats(data);
-      }
+      await handleApiResponse(response, 'fetch dashboard stats');
+      const data = await response.json();
+      setStats(data);
     } catch (error) {
       console.error('Failed to fetch stats:', error);
+      // Don't show alert for stats fetch errors, just log them
     } finally {
       setLoading(false);
     }
   };
 
-  const quickLinks = [
-    { href: '/admin/gamejams', icon: '🎮', label: 'Manage Game Jams', color: 'bg-blue-600' },
-    { href: '/admin/games', icon: '🎯', label: 'Manage Games', color: 'bg-green-600' },
-    { href: '/admin/sponsors', icon: '🎪', label: 'Manage Sponsors', color: 'bg-purple-600' },
-    { href: '/admin/frontpage', icon: '🏠', label: 'Edit Front Page', color: 'bg-yellow-600' },
-    { href: '/admin/rules', icon: '📋', label: 'Manage Rules', color: 'bg-red-600' },
-    { href: '/admin/forms', icon: '📝', label: 'Forms Manager', color: 'bg-indigo-600' },
-    { href: '/admin/system', icon: '⚙️', label: 'System Settings', color: 'bg-gray-600' },
+  const checkMaintenanceMode = async () => {
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/admin/maintenance/status`,
+        { credentials: 'include' }
+      );
+      await handleApiResponse(response, 'check maintenance status');
+      const data = await response.json();
+      setMaintenanceMode(data.enabled);
+    } catch (error) {
+      console.error('Failed to check maintenance mode:', error);
+      // Don't show alert for maintenance check errors
+    }
+  };
+
+  const toggleMaintenanceMode = async () => {
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/admin/maintenance/toggle`,
+        {
+          method: 'POST',
+          credentials: 'include',
+        }
+      );
+
+      await handleApiResponse(response, 'toggle maintenance mode');
+      const data = await response.json();
+      setMaintenanceMode(data.enabled);
+      alert(data.enabled ? 'Maintenance mode enabled' : 'Maintenance mode disabled');
+    } catch (error) {
+      console.error('Failed to toggle maintenance mode:', error);
+      alert(`Failed to toggle maintenance mode: ${error.message}`);
+    }
+  };
+
+  const clearCache = async () => {
+    if (!confirm('Are you sure you want to clear the application cache?')) return;
+
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/admin/cache/clear`,
+        {
+          method: 'POST',
+          credentials: 'include',
+        }
+      );
+
+      await handleApiResponse(response, 'clear cache');
+      alert('Cache cleared successfully!');
+    } catch (error) {
+      console.error('Failed to clear cache:', error);
+      alert(`Failed to clear cache: ${error.message}`);
+    }
+  };
+
+  const quickActions = [
+    {
+      icon: '🎮',
+      label: 'Create Game Jam',
+      color: 'bg-blue-600',
+      action: () => window.location.href = '/admin/gamejams',
+      description: 'Add a new game jam event'
+    },
+    {
+      icon: '🎯',
+      label: 'Add Game Entry',
+      color: 'bg-green-600',
+      action: () => window.location.href = '/admin/games',
+      description: 'Submit a new game to the archive'
+    },
+    {
+      icon: '🎪',
+      label: 'Add Sponsor',
+      color: 'bg-purple-600',
+      action: () => window.location.href = '/admin/sponsors',
+      description: 'Add a new sponsor partnership'
+    },
+    {
+      icon: maintenanceMode ? '🔧' : '⚡',
+      label: maintenanceMode ? 'Disable Maintenance' : 'Enable Maintenance',
+      color: maintenanceMode ? 'bg-red-600' : 'bg-orange-600',
+      action: toggleMaintenanceMode,
+      description: maintenanceMode ? 'Take site out of maintenance mode' : 'Put site in maintenance mode'
+    },
+    {
+      icon: '🧹',
+      label: 'Clear Cache',
+      color: 'bg-indigo-600',
+      action: clearCache,
+      description: 'Clear application cache for fresh data'
+    },
+    {
+      icon: '📊',
+      label: 'View Analytics',
+      color: 'bg-teal-600',
+      action: () => window.location.href = '/admin/system',
+      description: 'Check system analytics and logs'
+    },
+    {
+      icon: '📝',
+      label: 'Create Form',
+      color: 'bg-pink-600',
+      action: () => window.location.href = '/admin/forms',
+      description: 'Build a new custom form'
+    },
+    {
+      icon: '🎡',
+      label: 'Manage Raffle',
+      color: 'bg-cyan-600',
+      action: () => window.location.href = '/admin/raffle',
+      description: 'Configure raffle wheel settings'
+    },
   ];
 
   return (
@@ -55,19 +162,21 @@ export default function AdminDashboard() {
         </p>
       </div>
 
-      {/* Quick Links Grid */}
+      {/* Quick Actions Grid */}
       <div>
-        <h3 className="text-xl font-semibold text-white mb-4">Quick Actions</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {quickLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={`${link.color} hover:opacity-90 rounded-lg p-6 transition-opacity shadow-lg`}
+        <h3 className="text-xl font-semibold text-white mb-4">⚡ Quick Actions</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {quickActions.map((action, index) => (
+            <button
+              key={index}
+              onClick={action.action}
+              className={`${action.color} hover:opacity-90 rounded-lg p-6 transition-all shadow-lg hover:shadow-xl hover:scale-105 text-left group`}
+              title={action.description}
             >
-              <div className="text-4xl mb-2">{link.icon}</div>
-              <div className="text-white font-semibold">{link.label}</div>
-            </Link>
+              <div className="text-4xl mb-2 group-hover:scale-110 transition-transform">{action.icon}</div>
+              <div className="text-white font-semibold text-lg">{action.label}</div>
+              <div className="text-white/80 text-sm mt-1">{action.description}</div>
+            </button>
           ))}
         </div>
       </div>

@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from 'react';
-import { SpinWheel, generateWheelColors, calculateWinnerIndex, calculateTargetRotation } from '@/components/SpinWheel';
+import { SpinWheel, generateWheelColors } from '@/components/SpinWheel';
+import { gameJamApi } from '@/utils/api';
 
 const defaultWheelConfig = {
   title: '',
@@ -9,39 +10,13 @@ const defaultWheelConfig = {
 };
 
 export default function AdminThemeWheel() {
-  const [gameJams, setGameJams] = useState([]);
-  const [selectedJamId, setSelectedJamId] = useState('');
-  const [currentTheme, setCurrentTheme] = useState('');
   const [wheelConfig, setWheelConfig] = useState(defaultWheelConfig);
   const [spinning, setSpinning] = useState(false);
-  const [rotation, setRotation] = useState(0);
   const [winner, setWinner] = useState(null);
   const [pointerColor, setPointerColor] = useState('#ef4444');
   const [status, setStatus] = useState('');
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchJams = async () => {
-      try {
-        const res = await fetch('/api/admin/gamejams', { credentials: 'include' });
-        if (res.ok) {
-          const data = await res.json();
-          setGameJams(data);
-          if (data.length > 0) {
-            setSelectedJamId(data[0].id.toString());
-          }
-        }
-      } catch (err) {
-        console.error('Failed to fetch game jams', err);
-        setError('Failed to load game jams');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchJams();
-  }, []);
+  const [loading, setLoading] = useState(false);
 
   function normalizeConfig(config) {
     const entries = Array.isArray(config?.entries) ? config.entries : [];
@@ -119,29 +94,28 @@ export default function AdminThemeWheel() {
 
   const spin = () => {
     if (spinning || slices.length === 0) return;
+
     setSpinning(true);
     setStatus('');
     setError('');
     setWinner(null);
-    
-    // Always use random selection
-    const chosenIndex = Math.floor(Math.random() * slices.length);
-    
-    const finalRotation = calculateTargetRotation(chosenIndex, slices.length, rotation);
-    setRotation(finalRotation);
   };
 
   const persistWinner = async (chosen) => {
-    if (!selectedJamId) return;
     try {
-      const res = await fetch(`/api/admin/gamejams/${selectedJamId}/theme-wheel`, {
+      // Get the active game jam automatically
+      const activeJam = await gameJamApi.getCurrent();
+      if (!activeJam) {
+        setError('No active game jam found. Please ensure there is an active jam.');
+        return;
+      }
+
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/gamejams/${activeJam.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
           theme: chosen.text,
-          wheelConfig,
-          winner: { text: chosen.text, color: chosen.color, weight: chosen.weight },
         }),
       });
 
@@ -149,57 +123,11 @@ export default function AdminThemeWheel() {
         throw new Error('Failed to save theme');
       }
       const data = await res.json();
-      setCurrentTheme(data.gameJam.theme || chosen.text);
-      setStatus(`Saved "${chosen.text}" as the theme for this jam.`);
+      setCurrentTheme(data.theme || chosen.text);
+      setStatus(`Saved "${chosen.text}" as the theme for the active jam (${activeJam.name}).`);
     } catch (err) {
       console.error('Failed to save winner', err);
       setError('Failed to save theme to backend.');
-    }
-  };
-
-  const saveWheelConfig = async () => {
-    if (!selectedJamId || !wheelConfig) return;
-    setStatus('Saving wheel...');
-    try {
-      const res = await fetch(`/api/admin/gamejams/${selectedJamId}/theme-wheel`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ wheelConfig }),
-      });
-      if (!res.ok) throw new Error('Failed to save wheel');
-      const data = await res.json();
-      setStatus('Wheel saved successfully');
-      setCurrentTheme(data.gameJam.theme || '');
-    } catch (err) {
-      console.error('Failed to save wheel:', err);
-      setError('Failed to save wheel to backend');
-    }
-  };
-
-  const loadSavedWheel = async () => {
-    if (!selectedJamId) return;
-    setStatus('Loading saved wheel...');
-    try {
-      const res = await fetch(`/api/admin/gamejams/${selectedJamId}/theme-wheel`, { credentials: 'include' });
-      if (!res.ok) throw new Error('Failed to load wheel');
-      const data = await res.json();
-      if (data.wheelConfig && data.wheelConfig.entries && data.wheelConfig.entries.length > 0) {
-        const normalized = normalizeConfig(data.wheelConfig);
-        // Preserve colors from backend if provided, else assign palette
-        const entryTexts = normalized.entries.map((ent) => ent.text);
-        const palette = generateWheelColors(entryTexts.length);
-        const colored = normalized.entries.map((entry, idx) => ({ ...entry, color: (data.wheelConfig.entries[idx] && data.wheelConfig.entries[idx].color) || palette[idx % palette.length] }));
-        setWheelConfig({ ...normalized, entries: colored });
-        setWinner(data.lastWinner || null);
-        setCurrentTheme(data.theme || '');
-        setStatus('Loaded saved wheel');
-      } else {
-        setStatus('No saved wheel found for this jam');
-      }
-    } catch (err) {
-      console.error('Failed to load saved wheel:', err);
-      setError('Failed to load saved wheel');
     }
   };
 
@@ -213,6 +141,7 @@ export default function AdminThemeWheel() {
       return;
     }
 
+    // Process file normally
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
@@ -255,16 +184,6 @@ export default function AdminThemeWheel() {
     URL.revokeObjectURL(url);
   };
 
-  const handleSaveThemeOnly = () => {
-    if (!winner && currentTheme) {
-      setStatus('Theme already saved. Spin to select a new one.');
-      return;
-    }
-    if (winner) {
-      persistWinner(winner);
-    }
-  };
-
   if (loading) {
     return <div className="text-white">Loading...</div>;
   }
@@ -275,20 +194,6 @@ export default function AdminThemeWheel() {
         <div>
           <h2 className="text-3xl font-bold">🎨 Jam Theme Wheel</h2>
           <p className="text-gray-400">Select a jam, import a wheel file, then spin to set its theme.</p>
-        </div>
-        <div className="flex gap-3 items-center">
-          <label className="text-sm text-gray-300">Select Game Jam</label>
-          <select
-            value={selectedJamId}
-            onChange={(e) => setSelectedJamId(e.target.value)}
-            className="bg-gray-800 border border-gray-700 rounded px-3 py-2"
-          >
-            {gameJams.map((jam) => (
-              <option key={jam.id} value={jam.id}>
-                {jam.name} {jam.theme ? `• Current theme: ${jam.theme}` : ''}
-              </option>
-            ))}
-          </select>
         </div>
       </div>
 
@@ -306,42 +211,17 @@ export default function AdminThemeWheel() {
               ⬇️ Export JSON (pretty)
             </button>
             <button
-              onClick={() => loadSavedWheel()}
-              disabled={!selectedJamId}
-              className="bg-yellow-600 hover:bg-yellow-700 disabled:bg-gray-700 px-4 py-2 rounded"
-            >
-              ⬆️ Load Saved Wheel
-            </button>
-            <button
-              onClick={() => saveWheelConfig()}
-              disabled={!selectedJamId || !wheelConfig || !wheelConfig.entries || wheelConfig.entries.length === 0}
-              className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 px-4 py-2 rounded"
-            >
-              💾 Save Wheel to Jam
-            </button>
-            <button
               onClick={spin}
               disabled={spinning || slices.length === 0}
               className="bg-green-600 hover:bg-green-700 disabled:bg-gray-700 px-4 py-2 rounded"
             >
               {spinning ? '🔄 Spinning...' : '🎰 Spin for Theme'}
             </button>
-            <button
-              onClick={handleSaveThemeOnly}
-              className="bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded"
-              disabled={!winner}
-            >
-              💾 Save current theme
-            </button>
           </div>
 
           <div className="text-gray-300 space-y-1">
-            <p>
-              <span className="font-semibold">Current theme:</span>{' '}
-              {currentTheme ? currentTheme : 'No theme saved yet (upload & spin to set).'}
-            </p>
             {winner && (
-              <p className="text-green-300">Last spin (not yet saved?): {winner.text}</p>
+              <p className="text-green-300">Last spin result: {winner.text} (automatically saved to active jam)</p>
             )}
             {slices.length === 0 && (
               <p className="text-yellow-300">No wheel loaded. Import a .wheel/.json file to start.</p>
@@ -352,7 +232,6 @@ export default function AdminThemeWheel() {
           <div className="flex justify-center mt-6">
             <SpinWheel
               items={normalizedEntriesForDisplay}
-              rotation={rotation}
               spinning={spinning}
               pointerColor={pointerColor}
               onSliceChange={handleSliceChange}
