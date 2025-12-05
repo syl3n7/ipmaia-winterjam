@@ -3,6 +3,9 @@
  * Expected columns from WinterJam 2025 registration form
  */
 
+// Maximum allowed line length to prevent loop bound injection
+const MAX_LINE_LENGTH = 10000;
+
 // Define expected CSV structure
 const EXPECTED_COLUMNS = {
   timestamp: ['carimbo de data/hora', 'timestamp'],
@@ -42,7 +45,13 @@ function parseCSV(csvText) {
 
   // Parse header line
   const headerLine = lines[0];
-  const headers = parseCSVLine(headerLine);
+  let headers;
+  try {
+    headers = parseCSVLine(headerLine);
+  } catch (error) {
+    errors.push(`Error parsing header line: ${error.message}`);
+    return { teams, errors };
+  }
   
   if (headers.length === 0) {
     errors.push('Could not parse CSV header');
@@ -63,7 +72,14 @@ function parseCSV(csvText) {
     const line = lines[i];
     if (!line.trim()) continue;
 
-    const fields = parseCSVLine(line);
+    let fields;
+    try {
+      fields = parseCSVLine(line);
+    } catch (error) {
+      errors.push(`Error parsing line ${i + 1}: ${error.message}`);
+      continue;
+    }
+
     if (fields.length === 0) continue;
 
     try {
@@ -101,6 +117,10 @@ function parseCSV(csvText) {
  * @returns {Array} Parsed fields
  */
 function parseCSVLine(line) {
+  if (line.length > MAX_LINE_LENGTH) {
+    throw new Error(`CSV line too long: ${line.length} characters (max ${MAX_LINE_LENGTH})`);
+  }
+
   const fields = [];
   let current = '';
   let insideQuotes = false;

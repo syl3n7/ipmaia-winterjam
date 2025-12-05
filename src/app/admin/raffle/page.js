@@ -186,6 +186,13 @@ export default function RafflePage() {
       try {
         const text = e.target.result;
         
+        // Check file size to prevent DoS
+        const MAX_CSV_SIZE = 5 * 1024 * 1024; // 5MB
+        if (text.length > MAX_CSV_SIZE) {
+          alert(`❌ CSV file too large: ${text.length} characters (max ${MAX_CSV_SIZE})`);
+          return;
+        }
+        
         // Don't split by newlines yet - we need to parse properly respecting quotes
         // Parse the entire CSV properly
         const parsedTeams = [];
@@ -234,7 +241,14 @@ export default function RafflePage() {
           if (!line.trim()) continue;
           
           // Parse CSV line
-          const fields = parseCSVLine(line);
+          let fields;
+          try {
+            fields = parseCSVLine(line);
+          } catch (error) {
+            console.error(`Error parsing line ${i + 1}: ${error.message}`);
+            continue;
+          }
+
           if (fields.length < 2) continue;
           
           let teamName = fields[1].trim();
@@ -344,6 +358,11 @@ export default function RafflePage() {
   };
 
   const parseCSVLine = (line) => {
+    const MAX_LINE_LENGTH = 10000;
+    if (line.length > MAX_LINE_LENGTH) {
+      throw new Error(`CSV line too long: ${line.length} characters (max ${MAX_LINE_LENGTH})`);
+    }
+
     const fields = [];
     let current = '';
     let insideQuotes = false;
