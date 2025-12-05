@@ -137,16 +137,18 @@ export default function AdminDashboard() {
     {
       icon: '📝',
       label: 'Create Form',
-      color: 'bg-pink-600',
+      color: 'bg-gray-600',
       action: () => window.location.href = '/admin/forms',
-      description: 'Build a new custom form'
+      description: 'Build a new custom form',
+      disabled: true
     },
     {
       icon: '🎡',
       label: 'Manage Raffle',
-      color: 'bg-cyan-600',
+      color: 'bg-gray-600',
       action: () => window.location.href = '/admin/raffle',
-      description: 'Configure raffle wheel settings'
+      description: 'Configure raffle wheel settings',
+      disabled: true
     },
   ];
 
@@ -169,11 +171,12 @@ export default function AdminDashboard() {
           {quickActions.map((action, index) => (
             <button
               key={index}
-              onClick={action.action}
-              className={`${action.color} hover:opacity-90 rounded-lg p-6 transition-all shadow-lg hover:shadow-xl hover:scale-105 text-left group`}
+              onClick={action.disabled ? undefined : action.action}
+              disabled={action.disabled}
+              className={`${action.color} ${action.disabled ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-90 hover:shadow-xl hover:scale-105'} rounded-lg p-6 transition-all shadow-lg text-left group`}
               title={action.description}
             >
-              <div className="text-4xl mb-2 group-hover:scale-110 transition-transform">{action.icon}</div>
+              <div className={`text-4xl mb-2 ${action.disabled ? '' : 'group-hover:scale-110'} transition-transform`}>{action.icon}</div>
               <div className="text-white font-semibold text-lg">{action.label}</div>
               <div className="text-white/80 text-sm mt-1">{action.description}</div>
             </button>

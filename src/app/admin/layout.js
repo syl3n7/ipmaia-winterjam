@@ -17,7 +17,7 @@ function AdminLayoutContent({ children }) {
     { href: '/admin/gamejams', label: '🎮 Game Jams', section: 'gamejams' },
     { href: '/admin/games', label: '🎯 Games', section: 'games' },
     { href: '/admin/sponsors', label: '🎪 Sponsors', section: 'sponsors' },
-    { href: '/admin/forms', label: '📝 Forms', section: 'forms' },
+    { href: '/admin/forms', label: '📝 Forms', section: 'forms', disabled: true },
     
     // Configuration
     { href: '/admin/frontpage', label: '🏠 Front Page', section: 'frontpage' },
@@ -25,7 +25,7 @@ function AdminLayoutContent({ children }) {
     { href: '/admin/themes', label: '🎨 Jam Themes', section: 'themes' },
     
     // Features
-    { href: '/admin/raffle', label: '🎡 Raffle Wheel', section: 'raffle' },
+    { href: '/admin/raffle', label: '🎡 Raffle Wheel', section: 'raffle', disabled: true },
     
     // System & Administration
     { href: '/admin/system', label: '⚙️ System', section: 'system' },
@@ -68,10 +68,12 @@ function AdminLayoutContent({ children }) {
                 <Link
                   key={item.section}
                   href={item.href}
-                  onClick={() => setSidebarOpen(false)}
+                  onClick={(e) => { if (item.disabled) e.preventDefault(); setSidebarOpen(false); }}
                   className={`block px-4 py-3 rounded-lg transition-colors mb-1 ${
-                    isActive
+                    isActive && !item.disabled
                       ? 'bg-blue-600 text-white'
+                      : item.disabled
+                      ? 'text-gray-500 cursor-not-allowed opacity-50'
                       : 'text-gray-300 hover:bg-gray-700 hover:text-white'
                   }`}
                 >
@@ -92,10 +94,12 @@ function AdminLayoutContent({ children }) {
                 <Link
                   key={item.section}
                   href={item.href}
-                  onClick={() => setSidebarOpen(false)}
+                  onClick={(e) => { if (item.disabled) e.preventDefault(); setSidebarOpen(false); }}
                   className={`block px-4 py-3 rounded-lg transition-colors mb-1 ${
-                    isActive
+                    isActive && !item.disabled
                       ? 'bg-blue-600 text-white'
+                      : item.disabled
+                      ? 'text-gray-500 cursor-not-allowed opacity-50'
                       : 'text-gray-300 hover:bg-gray-700 hover:text-white'
                   }`}
                 >
@@ -116,10 +120,12 @@ function AdminLayoutContent({ children }) {
                 <Link
                   key={item.section}
                   href={item.href}
-                  onClick={() => setSidebarOpen(false)}
+                  onClick={(e) => { if (item.disabled) e.preventDefault(); setSidebarOpen(false); }}
                   className={`block px-4 py-3 rounded-lg transition-colors mb-1 ${
-                    isActive
+                    isActive && !item.disabled
                       ? 'bg-blue-600 text-white'
+                      : item.disabled
+                      ? 'text-gray-500 cursor-not-allowed opacity-50'
                       : 'text-gray-300 hover:bg-gray-700 hover:text-white'
                   }`}
                 >
@@ -140,10 +146,12 @@ function AdminLayoutContent({ children }) {
                 <Link
                   key={item.section}
                   href={item.href}
-                  onClick={() => setSidebarOpen(false)}
+                  onClick={(e) => { if (item.disabled) e.preventDefault(); setSidebarOpen(false); }}
                   className={`block px-4 py-3 rounded-lg transition-colors mb-1 ${
-                    isActive
+                    isActive && !item.disabled
                       ? 'bg-blue-600 text-white'
+                      : item.disabled
+                      ? 'text-gray-500 cursor-not-allowed opacity-50'
                       : 'text-gray-300 hover:bg-gray-700 hover:text-white'
                   }`}
                 >
