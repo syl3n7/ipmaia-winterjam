@@ -145,6 +145,21 @@ app.use(cookieParser());
 app.use(morgan('combined'));
 
 // Session configuration
+const getCookieDomain = () => {
+  const frontendUrl = process.env.FRONTEND_URL;
+  if (!frontendUrl || process.env.NODE_ENV !== 'production') return undefined;
+  
+  try {
+    const url = new URL(frontendUrl);
+    // For ipmaia-winterjam.pt, return .ipmaia-winterjam.pt
+    // This allows cookies to work across subdomains
+    return url.hostname.startsWith('www.') ? url.hostname : `.${url.hostname}`;
+  } catch (error) {
+    console.warn('⚠️ Failed to parse FRONTEND_URL for cookie domain:', error.message);
+    return undefined;
+  }
+};
+
 app.use(session({
   store: new pgSession({
     pool: pool,
@@ -157,7 +172,7 @@ app.use(session({
     secure: process.env.NODE_ENV === 'production',
     httpOnly: true,
     maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-    domain: process.env.NODE_ENV === 'production' ? '.ipmaia-winterjam.pt' : undefined
+    domain: process.env.SESSION_COOKIE_DOMAIN || getCookieDomain()
   }
 }));
 
