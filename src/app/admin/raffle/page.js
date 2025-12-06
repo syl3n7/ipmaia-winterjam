@@ -132,8 +132,7 @@ export default function RafflePage() {
           }));
           setTeams(prevTeams => [...prevTeams, ...teamsForRaffle]);
           setWinners([]);
-          setRotation(0);
-          setImportMode(false);
+          
         }
 
         // Log any warnings
@@ -181,7 +180,6 @@ export default function RafflePage() {
       // Add jam teams to existing teams (don't replace)
       setTeams(prevTeams => [...prevTeams, ...teamsForRaffle]);
       setWinners([]);
-      setRotation(0);
       setImportMessage(`✅ Successfully added ${teamsForRaffle.length} teams from ${gameJams.find(j => j.id.toString() === selectedGameJam)?.name || 'selected jam'}`);
       setJamRaffleMode(false);
       setShowJamSelector(false);
@@ -352,7 +350,6 @@ export default function RafflePage() {
         const palette = generateWheelColors(parsedTeams.length);
         setTeams(parsedTeams.map((t, idx) => ({ ...t, color: palette[idx] })));
         setWinners([]);
-        setRotation(0);
         
         console.log(`✅ Successfully loaded ${parsedTeams.length} teams (local mode)`);
         
@@ -413,7 +410,6 @@ export default function RafflePage() {
         // Add to existing teams
         setTeams(prevTeams => [...prevTeams, ...teamsFromWheel]);
         setWinners([]);
-        setRotation(0);
         
         console.log(`✅ Successfully loaded ${teamsFromWheel.length} themes from .wheel file`);
         alert(`✅ Successfully loaded ${teamsFromWheel.length} themes from ${file.name}!`);
@@ -513,8 +509,24 @@ export default function RafflePage() {
     setWinners([]);
   };
 
-  const removeWinner = (winnerId) => {
-    setWinners(prev => prev.filter(w => w.id !== winnerId));
+  const addBackWinner = (winnerId) => {
+    const winner = winners.find(w => w.id === winnerId);
+    if (winner) {
+      // Remove from winners
+      setWinners(prev => prev.filter(w => w.id !== winnerId));
+      // Add back to teams
+      setTeams(prev => [...prev, {
+        id: winner.id,
+        name: winner.name,
+        members: winner.members || [],
+        color: winner.color,
+        gameId: winner.gameId,
+        jamId: winner.jamId,
+        fromJam: winner.fromJam,
+        fromImport: winner.fromImport,
+        manual: winner.manual
+      }]);
+    }
   };
 
 
@@ -682,7 +694,6 @@ export default function RafflePage() {
 
                   <button
                     onClick={() => {
-                      setImportMode(false);
                       setJamRaffleMode(true);
                     }}
                     className="bg-purple-600 hover:bg-purple-700 p-6 rounded-lg transition"
@@ -805,18 +816,32 @@ export default function RafflePage() {
                 {teams.length > 0 && (
                   <div className="bg-gray-800 rounded-lg p-6 mb-8">
                     <div className="flex flex-wrap gap-4 items-center justify-center">
-                      <div>
-                        <label className="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg cursor-pointer inline-block transition">
-                          📁 Upload CSV (Local)
-                          <input
-                            type="file"
-                            accept=".csv"
-                            onChange={handleFileUpload}
-                            className="hidden"
-                          />
-                        </label>
-                      </div>
-                      
+                      <button
+                        onClick={() => {
+                          if (winners.length > 0) {
+                            const lastWinner = winners[winners.length - 1];
+                            removeWinner(lastWinner.id);
+                          }
+                        }}
+                        disabled={winners.length === 0}
+                        className="bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed px-6 py-3 rounded-lg transition"
+                      >
+                        ❌ Remove Winner
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          if (winners.length > 0) {
+                            const lastWinner = winners[winners.length - 1];
+                            addBackWinner(lastWinner.id);
+                          }
+                        }}
+                        disabled={winners.length === 0}
+                        className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed px-6 py-3 rounded-lg transition"
+                      >
+                        ↩️ Add Back Winner
+                      </button>
+
                       <button
                         onClick={spinWheel}
                         disabled={spinning || teams.length === 0}
@@ -825,35 +850,16 @@ export default function RafflePage() {
                         {spinning ? '🔄 Spinning...' : '🎲 Spin the Wheel!'}
                       </button>
 
-
-
                       <button
                         onClick={resetAll}
                         className="bg-gray-600 hover:bg-gray-700 px-6 py-3 rounded-lg transition"
                       >
                         🔄 Reset All
                       </button>
-
-                      <button
-                        onClick={() => setImportMode(true)}
-                        className="bg-green-700 hover:bg-green-800 px-6 py-3 rounded-lg transition text-sm"
-                      >
-                        📥 Import & Save
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          setJamRaffleMode(true);
-                          setImportMode(false);
-                        }}
-                        className="bg-purple-700 hover:bg-purple-800 px-6 py-3 rounded-lg transition text-sm"
-                      >
-                        🎯 Load from Jam
-                      </button>
                     </div>
 
                     <div className="text-center mt-4 text-gray-400">
-                      {teams.length} team{teams.length !== 1 ? 's' : ''} remaining
+                      {teams.length} team{teams.length !== 1 ? 's' : ''} remaining • {winners.length} winner{winners.length !== 1 ? 's' : ''}
                     </div>
                   </div>
                 )}
@@ -908,15 +914,47 @@ export default function RafflePage() {
 
                 {/* Wheel Container */}
                 {teams.length > 0 && (
-                  <div className="flex justify-center mb-8">
-                    <div className="relative">
-                      <SpinWheel
-                        items={teamItems}
-                        spinning={spinning}
-                        pointerColor={pointerColor}
-                        onSpinComplete={handleSpinComplete}
-                        size={700}
-                      />
+                  <div className="flex gap-8 mb-8">
+                    {/* Participant List - Left Side */}
+                    <div className="flex-2">
+                      <div className="bg-gray-700 rounded-lg p-6">
+                        <h3 className="text-xl font-semibold mb-6 text-center">🎯 Current Participants ({teams.length})</h3>
+                        <div className="max-h-96 overflow-y-auto space-y-3">
+                          {teams.map((team, index) => (
+                            <div key={team.id} className="bg-gray-600 rounded-lg p-4 flex items-center justify-between hover:bg-gray-500 transition-colors">
+                              <div className="flex items-center gap-4">
+                                <span className="text-lg font-bold text-gray-300 min-w-[2rem]">#{index + 1}</span>
+                                <div className="flex-1">
+                                  <div className="font-semibold text-white text-lg">{team.name}</div>
+                                  {team.members && team.members.length > 0 && (
+                                    <div className="text-sm text-gray-300 mt-1">
+                                      👥 {team.members.join(', ')}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                              <div 
+                                className="w-6 h-6 rounded-full border-2 border-white shadow-lg"
+                                style={{ backgroundColor: team.color }}
+                                title={`Color: ${team.color}`}
+                              ></div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Wheel - Right Side */}
+                    <div className="flex-1 flex justify-center">
+                      <div className="relative">
+                        <SpinWheel
+                          items={teamItems}
+                          spinning={spinning}
+                          pointerColor={pointerColor}
+                          onSpinComplete={handleSpinComplete}
+                          size={500}
+                        />
+                      </div>
                     </div>
                   </div>
                 )}
