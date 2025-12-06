@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { AdminAuthProvider, useAdminAuth } from '@/contexts/AdminAuthContext';
+import { useAdminAuth } from '@/contexts/AdminAuthContext';
 import AdminProtectedRoute from '@/components/AdminProtectedRoute';
 
 function AdminLayoutContent({ children }) {
@@ -275,10 +275,8 @@ function AdminLayoutContent({ children }) {
 
 export default function AdminLayout({ children }) {
   return (
-    <AdminAuthProvider>
-      <AdminProtectedRoute>
-        <AdminLayoutContent>{children}</AdminLayoutContent>
-      </AdminProtectedRoute>
-    </AdminAuthProvider>
+    <AdminProtectedRoute>
+      <AdminLayoutContent>{children}</AdminLayoutContent>
+    </AdminProtectedRoute>
   );
 }

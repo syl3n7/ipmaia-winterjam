@@ -5,6 +5,7 @@ import Footer from "../components/footer";
 import MainNavbar from "../components/navbar";
 import Script from "next/script";
 import { BackgroundProvider } from "../contexts/BackgroundContext";
+import { AdminAuthProvider } from "../contexts/AdminAuthContext";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -52,13 +53,15 @@ export default function RootLayout({ children }) {
             gtag('config', 'G-FG2M7N9TK1');
           `}
         </Script>
-        <BackgroundProvider>
-          <MainNavbar />
-          <main className="flex-1 flex flex-col overflow-auto">
-            {children}
-          </main>
-          <Footer />
-        </BackgroundProvider>
+        <AdminAuthProvider>
+          <BackgroundProvider>
+            <MainNavbar />
+            <main className="flex-1 flex flex-col overflow-auto">
+              {children}
+            </main>
+            <Footer />
+          </BackgroundProvider>
+        </AdminAuthProvider>
       </body>
     </html>
   );
