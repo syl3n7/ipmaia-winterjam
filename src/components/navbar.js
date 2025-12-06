@@ -10,6 +10,12 @@ import { useLatestArchive } from "../hooks/useLatestArchive";
 
 const MainNavbar = () => {
   const pathname = usePathname();
+  
+  // Don't render navbar on admin pages
+  if (pathname.startsWith('/admin')) {
+    return null;
+  }
+  
   const isGamesPage = pathname === "/games" || pathname.includes("/archive");
   const [isArchiveOpen, setIsArchiveOpen] = useState(false);
   const [archiveItems, setArchiveItems] = useState([]);
