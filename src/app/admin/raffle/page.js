@@ -529,6 +529,10 @@ export default function RafflePage() {
     }
   };
 
+  const removeWinner = (winnerId) => {
+    setWinners(prev => prev.filter(w => w.id !== winnerId));
+  };
+
 
 
   const addManualTeam = () => {
@@ -820,15 +824,15 @@ export default function RafflePage() {
                     <div className="flex flex-wrap gap-4 items-center justify-center">
                       <button
                         onClick={() => {
-                          if (winners.length > 0) {
-                            const lastWinner = winners[winners.length - 1];
-                            removeWinner(lastWinner.id);
+                          if (teams.length > 0) {
+                            const lastTeam = teams[teams.length - 1];
+                            setTeams(prev => prev.filter(t => t.id !== lastTeam.id));
                           }
                         }}
-                        disabled={winners.length === 0}
+                        disabled={teams.length === 0}
                         className="bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed px-6 py-3 rounded-lg transition"
                       >
-                        ❌ Remove Winner
+                        ❌ Remove Team
                       </button>
 
                       <button
@@ -841,7 +845,7 @@ export default function RafflePage() {
                         disabled={winners.length === 0}
                         className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed px-6 py-3 rounded-lg transition"
                       >
-                        ↩️ Add Back Winner
+                        ↩️ Add Back Team
                       </button>
 
                       <button
