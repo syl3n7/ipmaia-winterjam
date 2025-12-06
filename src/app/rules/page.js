@@ -255,7 +255,8 @@ export default function Page() {
                 <h3 className="text-xl font-semibold text-gray-900 mb-3">Regras da Competição</h3>
                 <ol className="list-decimal list-inside space-y-2 ml-4 text-gray-700">
                   <li><strong>Duração:</strong> O jogo deve ser criado do zero em 45 horas.</li>
-                  <li><strong>Código Fonte:</strong> O código fonte ou os ficheiros do projeto devem ser incluídos com o jogo.</li>
+                  <li><strong>Ficheiros:</strong> É obrigatório entregar uma Build ou executável do jogo, criado pela equipa durante a GameJam.</li>
+                  <li><strong>Código Fonte:</strong> A entrega do código fonte do projeto é opcional.</li>
                 </ol>
               </div>
 
@@ -265,7 +266,7 @@ export default function Page() {
                 <ol className="list-decimal list-inside space-y-2 ml-4 text-gray-700">
                   <li>Partilhar o código fonte contribui para a aprendizagem da comunidade.</li>
                   <li>Para ferramentas sem &apos;código&apos; (como GameMaker), o ficheiro do projeto e o &apos;código fonte&apos;.</li>
-                  <li>Certifique-se de que todas as bibliotecas ou ferramentas de terceiros usadas estejam acessíveis publicamente.</li>
+                  <li>Certifique-se de que todas as dependências estão incluídas.</li>
                 </ol>
               </div>
             </div>
@@ -336,18 +337,53 @@ export default function Page() {
           </section>
 
           {/* Section 6: Critérios de Avaliação */}
-          <section className="bg-white rounded-2xl p-8 border-2 border-gray-200 shadow-md">
+          <section className="bg-orange-50 rounded-2xl p-8 border-2 border-orange-200 shadow-md">
             <h2 className="text-3xl font-bold text-gray-900 mb-6 flex items-center gap-3">
               <span className="text-gray-500">6.</span> Critérios de Avaliação
             </h2>
             <div className="space-y-4 text-gray-800">
-              <ol className="list-decimal list-inside space-y-2 text-gray-700 ml-4">
-                <li><strong>Relação/Cumprimento do Tema</strong> (0–20 pontos)</li>
-                <li><strong>Criatividade/ÚSP</strong> (0–20 pontos)</li>
-                <li><strong>Qualidade (diversão)</strong> (0–20 pontos)</li>
-                <li><strong>Cumprimento/Quebra das Regras</strong> (0–20 pontos)</li>
-                <li><strong>Apresentação Visual/Estética e Quantidade de Ativos Usados</strong> (0–20 pontos)</li>
-              </ol>
+              <p className="text-gray-700 mb-4">
+                Os jogos serão avaliados pelos seguintes critérios, cada um valendo até 20 pontos:
+              </p>
+              <div className="bg-gray-100 rounded-lg p-1 border-2 border-gray-300 shadow-sm">
+                <div className="grid grid-cols-2 gap-1 h-auto">
+                  <div className="bg-blue-50 flex flex-col items-center justify-center text-center p-2 min-h-[120px]">
+                    <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center mb-1">
+                      <span className="text-blue-600 font-bold text-sm">🎯</span>
+                    </div>
+                    <strong className="text-gray-900 text-xs leading-tight">Relação/Cumprimento do Tema</strong>
+                    <span className="text-gray-600 text-xs">(0–20 pontos)</span>
+                  </div>
+                  <div className="bg-green-50 flex flex-col items-center justify-center text-center p-2 min-h-[120px]">
+                    <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center mb-1">
+                      <span className="text-green-600 font-bold text-sm">💡</span>
+                    </div>
+                    <strong className="text-gray-900 text-xs leading-tight">Criatividade/ÚSP</strong>
+                    <span className="text-gray-600 text-xs">(0–20 pontos)</span>
+                  </div>
+                  <div className="bg-purple-50 flex flex-col items-center justify-center text-center p-2 min-h-[120px]">
+                    <div className="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center mb-1">
+                      <span className="text-purple-600 font-bold text-sm">🎮</span>
+                    </div>
+                    <strong className="text-gray-900 text-xs leading-tight">Qualidade (diversão)</strong>
+                    <span className="text-gray-600 text-xs">(0–20 pontos)</span>
+                  </div>
+                  <div className="bg-red-50 flex flex-col items-center justify-center text-center p-2 min-h-[120px]">
+                    <div className="w-6 h-6 bg-red-100 rounded-full flex items-center justify-center mb-1">
+                      <span className="text-red-600 font-bold text-sm">📋</span>
+                    </div>
+                    <strong className="text-gray-900 text-xs leading-tight">Cumprimento/Quebra das Regras</strong>
+                    <span className="text-gray-600 text-xs">(0–20 pontos)</span>
+                  </div>
+                  <div className="bg-yellow-50 col-span-2 flex flex-col items-center justify-center text-center p-2 min-h-[120px]">
+                    <div className="w-6 h-6 bg-yellow-100 rounded-full flex items-center justify-center mb-1">
+                      <span className="text-yellow-600 font-bold text-sm">🎨</span>
+                    </div>
+                    <strong className="text-gray-900 text-xs leading-tight">Apresentação Visual/Estética e Quantidade de Ativos Usados</strong>
+                    <span className="text-gray-600 text-xs">(0–20 pontos)</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </section>
 
