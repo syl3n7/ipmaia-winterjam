@@ -217,6 +217,12 @@ router.get('/oidc/login', (req, res, next) => {
     return res.status(500).json({ error: 'OIDC not configured' });
   }
   
+  // Store return URL in session if provided
+  if (req.query.returnUrl) {
+    req.session.returnUrl = req.query.returnUrl;
+    console.log('📍 Stored return URL:', req.query.returnUrl);
+  }
+  
   // Generate a random state parameter and store it in session
   const state = require('crypto').randomBytes(16).toString('hex');
   req.session.oidcState = state;
@@ -429,8 +435,11 @@ router.get('/oidc/callback', async (req, res) => {
       userAgent: req.clientInfo?.userAgent || req.get('user-agent')
     });
 
-    // Redirect to admin dashboard
-    res.redirect('/admin');
+    // Redirect to stored return URL or admin dashboard
+    const returnUrl = req.session.returnUrl || '/admin';
+    delete req.session.returnUrl; // Clean up the stored URL
+    console.log('🔄 Redirecting to:', returnUrl);
+    res.redirect(returnUrl);
   } catch (error) {
     console.error('❌ OIDC callback error:', error);
     console.error('❌ Error details:', {

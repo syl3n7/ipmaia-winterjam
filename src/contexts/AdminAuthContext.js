@@ -60,7 +60,8 @@ export function AdminAuthProvider({ children }) {
   };
 
   const login = () => {
-    window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/auth/oidc/login`;
+    // Redirect to custom login page instead of directly to OIDC
+    window.location.href = '/login';
   };
 
   const logout = async () => {
