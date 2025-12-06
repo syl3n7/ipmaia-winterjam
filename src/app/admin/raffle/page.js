@@ -599,57 +599,59 @@ export default function RafflePage() {
           <h1 className="text-4xl font-bold mb-8 text-center">🎡 Team Raffle System</h1>
           {/* Jam Raffle Mode */}
           {jamRaffleMode ? (
-            <div className="bg-gray-800 rounded-lg p-6 mb-8">
-              <h2 className="text-2xl font-bold mb-6 text-center">🎯 Load Teams from Game Jam</h2>
+            <div className="w-full px-8">
+              <div className="bg-gray-800 rounded-lg p-6 mb-8 max-w-4xl mx-auto">
+                <h2 className="text-2xl font-bold mb-6 text-center">🎯 Load Teams from Game Jam</h2>
 
-              {/* Jam Selection Dropdown */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Select Game Jam
-                </label>
-                <select
-                  value={selectedGameJam}
-                  onChange={(e) => setSelectedGameJam(e.target.value)}
-                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded text-white focus:outline-none focus:border-blue-500"
-                >
-                  <option value="">Choose a Game Jam...</option>
-                  {gameJams.map((jam) => (
-                    <option key={jam.id} value={String(jam.id)}>
-                      {jam.name || jam.title}
-                    </option>
-                  ))}
-                </select>
-              </div>
+                {/* Jam Selection Dropdown */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Select Game Jam
+                  </label>
+                  <select
+                    value={selectedGameJam}
+                    onChange={(e) => setSelectedGameJam(e.target.value)}
+                    className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded text-white focus:outline-none focus:border-blue-500"
+                  >
+                    <option value="">Choose a Game Jam...</option>
+                    {gameJams.map((jam) => (
+                      <option key={jam.id} value={String(jam.id)}>
+                        {jam.name || jam.title}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-              {/* Load Teams Button */}
-              <div className="text-center">
+                {/* Load Teams Button */}
+                <div className="text-center">
+                  <button
+                    onClick={loadTeamsFromJam}
+                    disabled={importing || !selectedGameJam}
+                    className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed px-6 py-3 rounded-lg transition"
+                  >
+                    {importing ? '🔄 Loading...' : '🎯 Load Teams'}
+                  </button>
+                </div>
+
+                {/* Info Box */}
+                <div className="bg-purple-900 border border-purple-500 rounded-lg p-4 text-purple-200 text-sm">
+                  <p className="font-bold mb-2">💡 What happens when you load teams:</p>
+                  <ul className="list-disc list-inside space-y-1">
+                    <li>Teams are loaded temporarily for raffle</li>
+                    <li>You can spin the wheel to randomly select winners</li>
+                    <li>Winners are recorded locally for your reference</li>
+                    <li>Use the Themes page (/admin/themes) to set jam themes</li>
+                    <li>Data is not modified in the database</li>
+                  </ul>
+                </div>
+
                 <button
-                  onClick={loadTeamsFromJam}
-                  disabled={importing || !selectedGameJam}
-                  className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed px-6 py-3 rounded-lg transition"
+                  onClick={() => setJamRaffleMode(false)}
+                  className="mt-6 bg-gray-600 hover:bg-gray-700 px-6 py-3 rounded-lg transition"
                 >
-                  {importing ? '🔄 Loading...' : '🎯 Load Teams'}
+                  ← Back
                 </button>
               </div>
-
-              {/* Info Box */}
-              <div className="bg-purple-900 border border-purple-500 rounded-lg p-4 text-purple-200 text-sm">
-                <p className="font-bold mb-2">💡 What happens when you load teams:</p>
-                <ul className="list-disc list-inside space-y-1">
-                  <li>Teams are loaded temporarily for raffle</li>
-                  <li>You can spin the wheel to randomly select winners</li>
-                  <li>Winners are recorded locally for your reference</li>
-                  <li>Use the Themes page (/admin/themes) to set jam themes</li>
-                  <li>Data is not modified in the database</li>
-                </ul>
-              </div>
-
-              <button
-                onClick={() => setJamRaffleMode(false)}
-                className="mt-6 bg-gray-600 hover:bg-gray-700 px-6 py-3 rounded-lg transition"
-              >
-                ← Back
-              </button>
             </div>
           ) : (
             /* Setup Screen */
