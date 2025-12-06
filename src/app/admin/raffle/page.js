@@ -595,7 +595,7 @@ export default function RafflePage() {
   return (
     <AdminProtectedRoute>
       <div className="min-h-screen bg-gray-900 text-white p-8">
-        <div className="max-w-7xl mx-auto">
+        <div className="w-full max-w-none">
           <h1 className="text-4xl font-bold mb-8 text-center">🎡 Team Raffle System</h1>
           {/* Jam Raffle Mode */}
           {jamRaffleMode ? (
@@ -914,7 +914,7 @@ export default function RafflePage() {
 
                 {/* Wheel Container */}
                 {teams.length > 0 && (
-                  <div className="flex gap-8 mb-8">
+                  <div className="flex gap-8 mb-8 px-8">
                     {/* Participant List - Left Side */}
                     <div className="flex-2">
                       <div className="bg-gray-700 rounded-lg p-6">
