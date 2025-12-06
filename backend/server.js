@@ -151,9 +151,9 @@ const getCookieDomain = () => {
   
   try {
     const url = new URL(frontendUrl);
-    // For ipmaia-winterjam.pt, return .ipmaia-winterjam.pt
+    // For ipmaia-winterjam.pt, return ipmaia-winterjam.pt (without leading dot)
     // This allows cookies to work across subdomains
-    return url.hostname.startsWith('www.') ? url.hostname : `.${url.hostname}`;
+    return url.hostname;
   } catch (error) {
     console.warn('⚠️ Failed to parse FRONTEND_URL for cookie domain:', error.message);
     return undefined;
