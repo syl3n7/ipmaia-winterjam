@@ -353,7 +353,8 @@ export default function AdminGames() {
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/games/import-teams`, {
         method: 'POST',
-        body: formData
+        body: formData,
+        credentials: 'include'
       });
 
       const data = await response.json();
