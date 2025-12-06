@@ -23,27 +23,6 @@ const MainNavbar = () => {
   const [registrationClosed, setRegistrationClosed] = useState(false);
   const [noActiveJam, setNoActiveJam] = useState(false);
 
-  const navbarClassName = isGamesPage
-    ? "bg-black/30 backdrop-blur-md border-b border-white/10 sticky top-0 z-50 shadow-lg"
-    : "bg-black/30 backdrop-blur-md border-b border-white/10 sticky top-0 z-50 shadow-lg";
-
-  const linkClassName = isGamesPage
-    ? "text-orange-200/90 hover:text-orange-100 hover:bg-orange-900/30"
-    : "text-gray-200 hover:text-white hover:bg-white/10";
-
-  const brandTextClassName = isGamesPage
-    ? "text-orange-100"
-    : "text-white";
-
-  const toggleClassName = isGamesPage
-    ? "text-orange-100 hover:bg-orange-900/30"
-    : "text-white hover:bg-white/10";
-
-  const dropdownClassName = isGamesPage
-    ? "bg-black/40 backdrop-blur-md border-orange-900/50 shadow-xl"
-    : "bg-black/40 backdrop-blur-md border-white/20 shadow-xl";
-
-
   // Fetch game jams from backend API
   useEffect(() => {
     const fetchGameJams = async () => {
@@ -92,26 +71,53 @@ const MainNavbar = () => {
           const now = new Date();
           const startDate = new Date(currentJam.start_date);
           const endDate = new Date(currentJam.end_date);
-          const regStart = currentJam.registration_start_date ? new Date(currentJam.registration_start_date) : null;
-          const regEnd = currentJam.registration_end_date ? new Date(currentJam.registration_end_date) : null;
-          
+          const registrationDeadline = new Date(currentJam.registration_deadline);
+
           setHasEventStarted(now >= startDate);
           setHasEventEnded(now > endDate);
-          setRegistrationOpen(regStart && now >= regStart);
-          setRegistrationClosed(regEnd && now > regEnd);
+          setRegistrationOpen(now <= registrationDeadline);
+          setRegistrationClosed(now > registrationDeadline);
           setNoActiveJam(false);
         } else {
-          // No active game jam found
           setNoActiveJam(true);
+          setHasEventStarted(false);
+          setHasEventEnded(false);
+          setRegistrationOpen(false);
+          setRegistrationClosed(false);
         }
       } catch (error) {
-        // Keep defaults
+        console.error('Error checking event status:', error);
         setNoActiveJam(true);
       }
     };
 
     checkEventStatus();
   }, []);
+
+  // Don't render navbar on admin pages
+  if (pathname.startsWith('/admin')) {
+    return null;
+  }
+
+  const navbarClassName = isGamesPage
+    ? "bg-black/30 backdrop-blur-md border-b border-white/10 sticky top-0 z-50 shadow-lg"
+    : "bg-black/30 backdrop-blur-md border-b border-white/10 sticky top-0 z-50 shadow-lg";
+
+  const linkClassName = isGamesPage
+    ? "text-orange-200/90 hover:text-orange-100 hover:bg-orange-900/30"
+    : "text-gray-200 hover:text-white hover:bg-white/10";
+
+  const brandTextClassName = isGamesPage
+    ? "text-orange-100"
+    : "text-white";
+
+  const toggleClassName = isGamesPage
+    ? "text-orange-100 hover:bg-orange-900/30"
+    : "text-white hover:bg-white/10";
+
+  const dropdownClassName = isGamesPage
+    ? "bg-black/40 backdrop-blur-md border-orange-900/50 shadow-xl"
+    : "bg-black/40 backdrop-blur-md border-white/20 shadow-xl";
 
   return (
     <Navbar fluid className={navbarClassName}>

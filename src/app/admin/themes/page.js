@@ -17,6 +17,35 @@ export default function AdminThemeWheel() {
   const [status, setStatus] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [themesEnabled, setThemesEnabled] = useState(false);
+  const [checkingEnabled, setCheckingEnabled] = useState(true);
+
+  useEffect(() => {
+    const checkThemesEnabled = async () => {
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/frontpage/admin/settings`,
+          { credentials: 'include' }
+        );
+
+        if (response.ok) {
+          const settingsBySection = await response.json();
+          const allSettings = Object.values(settingsBySection).flat();
+          const themesSetting = allSettings.find(s => s.setting_key === 'enable_jam_themes');
+          setThemesEnabled(themesSetting ? themesSetting.setting_value === 'true' : false);
+        } else {
+          setThemesEnabled(false);
+        }
+      } catch (error) {
+        console.error('Failed to check themes status:', error);
+        setThemesEnabled(false);
+      } finally {
+        setCheckingEnabled(false);
+      }
+    };
+
+    checkThemesEnabled();
+  }, []);
 
   function normalizeConfig(config) {
     const entries = Array.isArray(config?.entries) ? config.entries : [];
@@ -184,8 +213,30 @@ export default function AdminThemeWheel() {
     URL.revokeObjectURL(url);
   };
 
-  if (loading) {
+  if (checkingEnabled) {
     return <div className="text-white">Loading...</div>;
+  }
+
+  if (!themesEnabled) {
+    return (
+      <div className="space-y-6 text-white">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h2 className="text-3xl font-bold">🎨 Jam Theme Wheel</h2>
+            <p className="text-gray-400">Select a jam, import a wheel file, then spin to set its theme.</p>
+          </div>
+        </div>
+        <div className="bg-gray-800 border border-gray-700 rounded p-6">
+          <div className="text-center py-12">
+            <div className="text-6xl mb-4">🎨</div>
+            <h3 className="text-xl font-semibold text-gray-300 mb-2">Jam Themes Feature Disabled</h3>
+            <p className="text-gray-400">
+              The jam themes feature is currently disabled. Enable it from the Front Page settings.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (

@@ -1,19 +1,19 @@
  'use client';
 import { useState, useRef, useEffect, useMemo } from 'react';
-import { SpinWheel, generateWheelColors, calculateTargetRotation, calculateWinnerIndex } from '@/components/SpinWheel';
+import { SpinWheel, generateWheelColors } from '@/components/SpinWheel';
 import AdminProtectedRoute from '@/components/AdminProtectedRoute';
 
 export default function RafflePage() {
   const [teams, setTeams] = useState([]);
   const [spinning, setSpinning] = useState(false);
-  const [rotation, setRotation] = useState(0);
-  const [selectedTeam, setSelectedTeam] = useState(null);
-  const [removedTeams, setRemovedTeams] = useState([]);
+  const [selectedTeams, setSelectedTeams] = useState([]);
+  const [newTeamName, setNewTeamName] = useState('');
+  const [newTeamMembers, setNewTeamMembers] = useState('');
+  const [winners, setWinners] = useState([]);
   const wheelRef = useRef(null);
   const [pointerColor, setPointerColor] = useState('#ef4444');
   
   // Import mode
-  const [importMode, setImportMode] = useState(false);
   const [jamRaffleMode, setJamRaffleMode] = useState(false);
   const [showJamSelector, setShowJamSelector] = useState(false);
   const [jamSelectorMode, setJamSelectorMode] = useState('spin'); // 'spin' for saving result
@@ -23,8 +23,35 @@ export default function RafflePage() {
   const [importMessage, setImportMessage] = useState('');
   const [importError, setImportError] = useState('');
   const [pendingImportFile, setPendingImportFile] = useState(null);
+  const [showManualEntry, setShowManualEntry] = useState(false);
+  const [raffleEnabled, setRaffleEnabled] = useState(false);
+  const [checkingEnabled, setCheckingEnabled] = useState(true);
 
   useEffect(() => {
+    // Check if raffle is enabled
+    const checkRaffleEnabled = async () => {
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/frontpage/admin/settings`,
+          { credentials: 'include' }
+        );
+
+        if (response.ok) {
+          const settingsBySection = await response.json();
+          const allSettings = Object.values(settingsBySection).flat();
+          const raffleSetting = allSettings.find(s => s.setting_key === 'enable_raffle_wheel');
+          setRaffleEnabled(raffleSetting ? raffleSetting.setting_value === 'true' : false);
+        } else {
+          setRaffleEnabled(false);
+        }
+      } catch (error) {
+        console.error('Failed to check raffle status:', error);
+        setRaffleEnabled(false);
+      } finally {
+        setCheckingEnabled(false);
+      }
+    };
+
     // Fetch available game jams on component mount
     const fetchGameJams = async () => {
       try {
@@ -41,6 +68,7 @@ export default function RafflePage() {
       }
     };
     
+    checkRaffleEnabled();
     fetchGameJams();
   }, []);
 
@@ -62,21 +90,31 @@ export default function RafflePage() {
       return;
     }
 
-    // Use different logic based on mode
-    if (importMode) {
-      // Import mode - show jam selector popup if not selected
-      if (!selectedGameJam) {
-        setPendingImportFile(file);
-        setJamSelectorMode('import');
-        setShowJamSelector(true);
-        event.target.value = '';
-        return;
-      }
-      importCSVToBackend(file);
-    } else {
-      // Local mode - parse locally without Game Jam
-      parseCSVLocally(file);
+    // Set pending file for import
+    setPendingImportFile(file);
+    event.target.value = '';
+  };
+
+  const handleWheelFileUpload = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.name.endsWith('.wheel')) {
+      alert('❌ Please upload a .wheel file');
+      event.target.value = '';
+      return;
     }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('❌ File is too large. Maximum size is 5MB');
+      event.target.value = '';
+      return;
+    }
+
+    // Parse the wheel file immediately
+    parseWheelFile(file);
     event.target.value = '';
   };
 
@@ -109,20 +147,19 @@ export default function RafflePage() {
           setImportMessage(prev => prev + `\n⚠️ ${data.summary.failed} teams failed to import`);
         }
         
-        // Load teams for raffle
+        // Add imported teams to existing teams
         if (data.results.imported.length > 0) {
           const teamsForRaffle = data.results.imported.map((team, idx) => ({
-            id: idx,
+            id: `imported-${Date.now()}-${idx}`,
             name: team.teamName,
             members: team.members,
             gameId: team.gameId,
-            color: team.color || team.raffle_color || null
+            color: team.color || team.raffle_color || null,
+            fromImport: true
           }));
-          setTeams(teamsForRaffle);
-          setRemovedTeams([]);
-          setSelectedTeam(null);
-          setRotation(0);
-          setImportMode(false);
+          setTeams(prevTeams => [...prevTeams, ...teamsForRaffle]);
+          setWinners([]);
+          
         }
 
         // Log any warnings
@@ -158,18 +195,19 @@ export default function RafflePage() {
       
       // Convert games to team format for raffle
       const teamsForRaffle = games.map((game, idx) => ({
-        id: game.id,
+        id: `jam-${selectedGameJam}-${game.id}`,
         name: game.team_name,
         members: game.team_members || [],
         gameId: game.id,
-        color: game.raffle_color || null
+        jamId: selectedGameJam,
+        color: game.raffle_color || null,
+        fromJam: true
       }));
 
-      setTeams(teamsForRaffle);
-      setRemovedTeams([]);
-      setSelectedTeam(null);
-      setRotation(0);
-      setImportMessage(`✅ Successfully loaded ${teamsForRaffle.length} teams from ${gameJams.find(j => j.id.toString() === selectedGameJam)?.name || 'selected jam'}`);
+      // Add jam teams to existing teams (don't replace)
+      setTeams(prevTeams => [...prevTeams, ...teamsForRaffle]);
+      setWinners([]);
+      setImportMessage(`✅ Successfully added ${teamsForRaffle.length} teams from ${gameJams.find(j => j.id.toString() === selectedGameJam)?.name || 'selected jam'}`);
       setJamRaffleMode(false);
       setShowJamSelector(false);
     } catch (error) {
@@ -338,9 +376,7 @@ export default function RafflePage() {
 
         const palette = generateWheelColors(parsedTeams.length);
         setTeams(parsedTeams.map((t, idx) => ({ ...t, color: palette[idx] })));
-        setRemovedTeams([]);
-        setSelectedTeam(null);
-        setRotation(0);
+        setWinners([]);
         
         console.log(`✅ Successfully loaded ${parsedTeams.length} teams (local mode)`);
         
@@ -352,6 +388,67 @@ export default function RafflePage() {
 
     reader.onerror = () => {
       alert('❌ Error reading file');
+    };
+
+    reader.readAsText(file, 'UTF-8');
+  };
+
+  const parseWheelFile = (file) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const text = e.target.result;
+        
+        // Check file size to prevent DoS
+        const MAX_WHEEL_SIZE = 5 * 1024 * 1024; // 5MB
+        if (text.length > MAX_WHEEL_SIZE) {
+          alert(`❌ .wheel file too large: ${text.length} characters (max ${MAX_WHEEL_SIZE})`);
+          return;
+        }
+        
+        // Parse JSON
+        const wheelData = JSON.parse(text);
+        
+        // Validate structure
+        if (!wheelData.entries || !Array.isArray(wheelData.entries)) {
+          alert('❌ Invalid .wheel file: missing entries array');
+          return;
+        }
+        
+        // Filter enabled entries
+        const enabledEntries = wheelData.entries.filter(entry => entry.enabled !== false);
+        
+        if (enabledEntries.length === 0) {
+          alert('❌ No enabled entries found in .wheel file');
+          return;
+        }
+        
+        // Convert to team format
+        const teamsFromWheel = enabledEntries.map((entry, idx) => ({
+          id: `wheel-${Date.now()}-${idx}`,
+          name: entry.text,
+          members: [], // Themes don't have members
+          gameId: null,
+          color: entry.color || null,
+          fromWheel: true,
+          weight: entry.weight || 1
+        }));
+        
+        // Add to existing teams
+        setTeams(prevTeams => [...prevTeams, ...teamsFromWheel]);
+        setWinners([]);
+        
+        console.log(`✅ Successfully loaded ${teamsFromWheel.length} themes from .wheel file`);
+        alert(`✅ Successfully loaded ${teamsFromWheel.length} themes from ${file.name}!`);
+        
+      } catch (error) {
+        console.error('Error parsing .wheel file:', error);
+        alert('❌ Error parsing .wheel file. Please check the file format.');
+      }
+    };
+
+    reader.onerror = () => {
+      alert('❌ Error reading .wheel file');
     };
 
     reader.readAsText(file, 'UTF-8');
@@ -400,105 +497,115 @@ export default function RafflePage() {
   const spinWheel = () => {
     if (spinning || teams.length === 0) return;
 
-    // For jam raffle mode, show jam selector popup first
-    if (jamRaffleMode) {
-      setJamSelectorMode('spin');
-      setShowJamSelector(true);
-      return;
-    }
-
-    // For quick raffle (local), spin directly without saving
+    // Spin directly - winners are recorded locally
     performQuickSpin();
   };
 
   const performQuickSpin = () => {
-    setSpinning(true);
-    setSelectedTeam(null);
-
-    // Pick a team index at random
-    const chosenIndex = Math.floor(Math.random() * teams.length);
-    const finalRotation = calculateTargetRotation(chosenIndex, teams.length, rotation);
-    setRotation(finalRotation);
-
-    setTimeout(() => {
-      const selectedIndex = calculateWinnerIndex(finalRotation, teams.length);
-      const selected = teams[selectedIndex];
-      setSelectedTeam(selected);
-      setPointerColor(selected.color || generateWheelColors(teams.length)[selectedIndex]);
-      setSpinning(false);
-    }, 6000);
-  };
-
-  const performSpin = async () => {
-    if (!selectedGameJam) {
-      alert('❌ Please select a Game Jam first');
+    if (teams.length === 0) {
+      alert('❌ No teams available for raffle');
       return;
     }
-
-    setImporting(true);
-    setImportError('');
     setSpinning(true);
-    setSelectedTeam(null);
-    setShowJamSelector(false);
-
-    // Pick a team index at random
-    const chosenIndex = Math.floor(Math.random() * teams.length);
-    const finalRotation = calculateTargetRotation(chosenIndex, teams.length, rotation);
-    setRotation(finalRotation);
-
-    setTimeout(async () => {
-      const selectedIndex = calculateWinnerIndex(finalRotation, teams.length);
-      const selected = teams[selectedIndex];
-      setSelectedTeam(selected);
-      setPointerColor(selected.color || generateWheelColors(teams.length)[selectedIndex]);
-      setSpinning(false);
-      setImporting(false);
-
-      // Save the winner to the selected jam's theme field
-      try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/gamejams/${selectedGameJam}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            theme: selected.name // Save team name as theme
-          })
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          setImportError(`Failed to save winner to jam: ${errorData.error || 'Unknown error'}`);
-        } else {
-          console.log(`✅ Saved winner "${selected.name}" to jam theme`);
-        }
-      } catch (error) {
-        console.error('Error saving winner to jam:', error);
-        setImportError('Failed to save winner to jam. Please try again.');
-      }
-    }, 6000);
   };
 
-  const removeSelectedTeam = () => {
-    if (!selectedTeam) return;
-    
-    setRemovedTeams([...removedTeams, selectedTeam]);
-    setTeams(teams.filter(team => team.id !== selectedTeam.id));
-    setSelectedTeam(null);
-    setRotation(0);
+  const handleSpinComplete = async (winningItem) => {
+    // Add winner to the list
+    setWinners(prev => [...prev, {
+      ...winningItem,
+      timestamp: new Date().toLocaleTimeString(),
+      id: `winner-${Date.now()}`
+    }]);
+    setPointerColor(winningItem.color);
+    setSpinning(false);
+
+    // Note: Jam raffle mode no longer saves winners as themes
+    // Use the /admin/themes page for theme selection instead
   };
+
+
 
   const resetAll = () => {
     setTeams([]);
-    setRemovedTeams([]);
-    setSelectedTeam(null);
-    setRotation(0);
+    setWinners([]);
+    setSelectedTeams([]);
     setSpinning(false);
   };
 
-  const restoreTeam = (team) => {
-    setRemovedTeams(removedTeams.filter(t => t.id !== team.id));
-    setTeams([...teams, team]);
+  const clearWinners = () => {
+    setWinners([]);
+  };
+
+  const addBackWinner = (winnerId) => {
+    const winner = winners.find(w => w.id === winnerId);
+    if (winner) {
+      // Remove from winners
+      setWinners(prev => prev.filter(w => w.id !== winnerId));
+      // Add back to teams
+      setTeams(prev => [...prev, {
+        id: winner.id,
+        name: winner.name,
+        members: winner.members || [],
+        color: winner.color,
+        gameId: winner.gameId,
+        jamId: winner.jamId,
+        fromJam: winner.fromJam,
+        fromImport: winner.fromImport,
+        manual: winner.manual
+      }]);
+    }
+  };
+
+  const removeWinner = (winnerId) => {
+    setWinners(prev => prev.filter(w => w.id !== winnerId));
+  };
+
+
+
+  const addManualTeam = () => {
+    if (!newTeamName.trim()) {
+      alert('❌ Please enter a team name');
+      return;
+    }
+
+    const newTeam = {
+      id: `manual-${Date.now()}`,
+      name: newTeamName.trim(),
+      members: newTeamMembers ? newTeamMembers.split(',').map(m => m.trim()).filter(Boolean) : [],
+      gameId: null,
+      color: null,
+      manual: true
+    };
+
+    setTeams([...teams, newTeam]);
+    setNewTeamName('');
+    setNewTeamMembers('');
+  };
+
+  const removeManualTeam = (teamId) => {
+    setTeams(teams.filter(team => team.id !== teamId));
+    setSelectedTeams(selectedTeams.filter(id => id !== teamId));
+  };
+
+  const toggleTeamSelection = (teamId) => {
+    if (selectedTeams.includes(teamId)) {
+      setSelectedTeams(selectedTeams.filter(id => id !== teamId));
+    } else {
+      setSelectedTeams([...selectedTeams, teamId]);
+    }
+  };
+
+  const selectAllTeams = () => {
+    setSelectedTeams(teams.map(team => team.id));
+  };
+
+  const deselectAllTeams = () => {
+    setSelectedTeams([]);
+  };
+
+  const removeSelectedTeams = () => {
+    setTeams(teams.filter(team => !selectedTeams.includes(team.id)));
+    setSelectedTeams([]);
   };
 
   const getWheelColors = (index, total) => {
@@ -516,350 +623,416 @@ export default function RafflePage() {
     }));
   }, [teams]);
 
+  if (checkingEnabled) {
+    return (
+      <AdminProtectedRoute>
+        <div className="min-h-screen bg-gray-900 text-white p-8">
+          <div className="text-center">Loading...</div>
+        </div>
+      </AdminProtectedRoute>
+    );
+  }
+
+  if (!raffleEnabled) {
+    return (
+      <AdminProtectedRoute>
+        <div className="min-h-screen bg-gray-900 text-white p-8">
+          <div className="w-full max-w-none">
+            <h1 className="text-4xl font-bold mb-8 text-center">🎡 Team Raffle System</h1>
+            <div className="bg-gray-800 border border-gray-700 rounded p-6">
+              <div className="text-center py-12">
+                <div className="text-6xl mb-4">🎡</div>
+                <h3 className="text-xl font-semibold text-gray-300 mb-2">Raffle Wheel Feature Disabled</h3>
+                <p className="text-gray-400">
+                  The raffle wheel feature is currently disabled. Enable it from the Front Page settings.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </AdminProtectedRoute>
+    );
+  }
+
   return (
     <AdminProtectedRoute>
       <div className="min-h-screen bg-gray-900 text-white p-8">
-        <div className="max-w-7xl mx-auto">
-          <h1 className="text-4xl font-bold mb-8 text-center">🎡 Team Raffle Wheel</h1>
-          
-          {/* Import Mode Toggle */}
-          {teams.length === 0 && (
-            <div className="bg-gray-800 rounded-lg p-6 mb-8">
-              <div className="flex flex-wrap gap-4 justify-center">
-                <button
-                  onClick={() => {
-                    setImportMode(false);
-                    setJamRaffleMode(false);
-                  }}
-                  className={`px-6 py-3 rounded-lg transition ${
-                    !importMode && !jamRaffleMode
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-700 text-gray-300'
-                  }`}
-                >
-                  🎲 Quick Raffle (Local)
-                </button>
-                <button
-                  onClick={() => {
-                    setImportMode(false);
-                    setJamRaffleMode(true);
-                  }}
-                  className={`px-6 py-3 rounded-lg transition ${
-                    jamRaffleMode
-                      ? 'bg-purple-600 text-white'
-                      : 'bg-gray-700 text-gray-300'
-                  }`}
-                >
-                  🎯 Load from Game Jam
-                </button>
-                <button
-                  onClick={() => {
-                    setImportMode(true);
-                    setJamRaffleMode(false);
-                  }}
-                  className={`px-6 py-3 rounded-lg transition ${
-                    importMode
-                      ? 'bg-green-600 text-white'
-                      : 'bg-gray-700 text-gray-300'
-                  }`}
-                >
-                  📥 Import from CSV (Save to DB)
-                </button>
-              </div>
-              
-              {/* Quick Raffle CSV Upload */}
-              {!importMode && !jamRaffleMode && (
-                <div className="text-center">
-                  <label className="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg cursor-pointer inline-block transition">
-                    📁 Upload CSV for Quick Raffle
-                    <input
-                      type="file"
-                      accept=".csv"
-                      onChange={handleFileUpload}
-                      className="hidden"
-                    />
-                  </label>
-                  <p className="text-gray-400 text-sm mt-2">
-                    Upload a CSV file to load teams for a local raffle (results are not saved)
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
-
+        <div className="w-full max-w-none">
+          <h1 className="text-4xl font-bold mb-8 text-center">🎡 Team Raffle System</h1>
           {/* Jam Raffle Mode */}
           {jamRaffleMode ? (
-            <div className="bg-gray-800 rounded-lg p-6 mb-8">
-              <h2 className="text-2xl font-bold mb-6 text-center">🎯 Load Teams from Game Jam</h2>
-              
-              {/* Load from Jam Button */}
-              <div className="mb-6 text-center">
-                <button
-                  onClick={() => {
-                    setJamSelectorMode('load');
-                    setShowJamSelector(true);
-                  }}
-                  className="bg-purple-600 hover:bg-purple-700 px-6 py-3 rounded-lg transition"
-                >
-                  🎯 Select Game Jam to Load Teams
-                </button>
-              </div>
+            <div className="w-full px-8">
+              <div className="bg-gray-800 rounded-lg p-6 mb-8 max-w-4xl mx-auto">
+                <h2 className="text-2xl font-bold mb-6 text-center">🎯 Load Teams from Game Jam</h2>
 
-              {/* Info Box */}
-              <div className="bg-purple-900 border border-purple-500 rounded-lg p-4 text-purple-200 text-sm">
-                <p className="font-bold mb-2">💡 What happens when you load teams:</p>
-                <ul className="list-disc list-inside space-y-1">
-                  <li>Teams are loaded temporarily for raffle</li>
-                  <li>You can spin the wheel to randomly select winners</li>
-                  <li>When spinning, you&apos;ll select which Game Jam to save the result to</li>
-                  <li>The winner&apos;s name will be saved as the jam&apos;s theme</li>
-                  <li>Data is not modified in the database until you spin</li>
-                </ul>
-              </div>
-
-              <button
-                onClick={() => setJamRaffleMode(false)}
-                className="mt-6 bg-gray-600 hover:bg-gray-700 px-6 py-3 rounded-lg transition"
-              >
-                ← Back
-              </button>
-            </div>
-          ) : importMode ? (
-            <div className="bg-gray-800 rounded-lg p-6 mb-8">
-              <h2 className="text-2xl font-bold mb-6 text-center">📥 Import Teams from CSV</h2>
-              
-              {/* Game Jam Selection */}
-              <div className="mb-6">
-                <button
-                  onClick={() => {
-                    setJamSelectorMode('import');
-                    setShowJamSelector(true);
-                  }}
-                  className="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg transition"
-                >
-                  🎯 Select Game Jam for Import
-                </button>
-                {selectedGameJam && (
-                  <p className="text-gray-400 text-sm mt-2">
-                    ℹ️ Selected: {gameJams.find(j => j.id.toString() === selectedGameJam)?.name || 'Unknown Jam'}
-                  </p>
-                )}
-              </div>
-
-              {/* File Upload */}
-              <div className="mb-6">
-                <label className={`bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed px-6 py-3 rounded-lg cursor-pointer inline-block transition ${importing ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                  📁 {importing ? 'Importing...' : 'Upload CSV'}
-                  <input
-                    type="file"
-                    accept=".csv"
-                    onChange={handleFileUpload}
-                    disabled={importing}
-                    className="hidden"
-                  />
-                </label>
-              </div>
-
-              {/* Messages */}
-              {importError && (
-                <div className="bg-red-900 border border-red-500 rounded-lg p-4 mb-4 text-red-200">
-                  <p className="font-bold">❌ Import Error</p>
-                  <p className="text-sm mt-1">{importError}</p>
-                </div>
-              )}
-
-              {importMessage && (
-                <div className="bg-green-900 border border-green-500 rounded-lg p-4 mb-4 text-green-200 whitespace-pre-wrap">
-                  <p className="font-bold">✅ Import Success</p>
-                  <p className="text-sm mt-1">{importMessage}</p>
-                </div>
-              )}
-
-              {/* Info Box */}
-              <div className="bg-blue-900 border border-blue-500 rounded-lg p-4 text-blue-200 text-sm">
-                <p className="font-bold mb-2">💡 What happens when you import:</p>
-                <ul className="list-disc list-inside space-y-1">
-                  <li>Upload your CSV file first</li>
-                  <li>Select which Game Jam to import teams to</li>
-                  <li>Teams are created as games in the selected Game Jam</li>
-                  <li>All registration details are stored (emails, members, dietary info, etc.)</li>
-                  <li>You can then edit game titles, add descriptions, and fill in actual game information</li>
-                  <li>Game names are initially set to &quot;[Team Name] - [Pending Game Name]&quot;</li>
-                  <li>Teams are validated for required fields and correct format</li>
-                </ul>
-              </div>
-
-              <button
-                onClick={() => setImportMode(false)}
-                className="mt-6 bg-gray-600 hover:bg-gray-700 px-6 py-3 rounded-lg transition"
-              >
-                ← Back
-              </button>
-            </div>
-          ) : teams.length > 0 ? (
-            <>
-              {/* Raffle Mode Controls */}
-              <div className="bg-gray-800 rounded-lg p-6 mb-8">
-                <div className="flex flex-wrap gap-4 items-center justify-center">
-                  <div>
-                    <label className="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-lg cursor-pointer inline-block transition">
-                      📁 Upload CSV (Local)
-                      <input
-                        type="file"
-                        accept=".csv"
-                        onChange={handleFileUpload}
-                        className="hidden"
-                      />
-                    </label>
-                  </div>
-                  
-                  <button
-                    onClick={spinWheel}
-                    disabled={spinning || teams.length === 0}
-                    className="bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed px-6 py-3 rounded-lg transition"
+                {/* Jam Selection Dropdown */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Select Game Jam
+                  </label>
+                  <select
+                    value={selectedGameJam}
+                    onChange={(e) => setSelectedGameJam(e.target.value)}
+                    className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded text-white focus:outline-none focus:border-blue-500"
                   >
-                    {spinning ? '🔄 Spinning...' : '🎲 Spin the Wheel!'}
+                    <option value="">Choose a Game Jam...</option>
+                    {gameJams.map((jam) => (
+                      <option key={jam.id} value={String(jam.id)}>
+                        {jam.name || jam.title}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Load Teams Button */}
+                <div className="text-center">
+                  <button
+                    onClick={loadTeamsFromJam}
+                    disabled={importing || !selectedGameJam}
+                    className="bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed px-6 py-3 rounded-lg transition"
+                  >
+                    {importing ? '🔄 Loading...' : '🎯 Load Teams'}
                   </button>
+                </div>
 
-                  {selectedTeam && (
-                    <button
-                      onClick={removeSelectedTeam}
-                      className="bg-red-600 hover:bg-red-700 px-6 py-3 rounded-lg transition"
-                    >
-                      ❌ Remove Winner
-                    </button>
-                  )}
+                {/* Info Box */}
+                <div className="bg-purple-900 border border-purple-500 rounded-lg p-4 text-purple-200 text-sm">
+                  <p className="font-bold mb-2">💡 What happens when you load teams:</p>
+                  <ul className="list-disc list-inside space-y-1">
+                    <li>Teams are loaded temporarily for raffle</li>
+                    <li>You can spin the wheel to randomly select winners</li>
+                    <li>Winners are recorded locally for your reference</li>
+                    <li>Use the Themes page (/admin/themes) to set jam themes</li>
+                    <li>Data is not modified in the database</li>
+                  </ul>
+                </div>
 
+                <button
+                  onClick={() => setJamRaffleMode(false)}
+                  className="mt-6 bg-gray-600 hover:bg-gray-700 px-6 py-3 rounded-lg transition"
+                >
+                  ← Back
+                </button>
+              </div>
+            </div>
+          ) : (
+            /* Setup Screen */
+            <div className="max-w-4xl mx-auto">
+              <div className="bg-gray-800 rounded-lg p-8 text-center">
+                <h2 className="text-3xl font-bold mb-4">🎯 Set Up Your Raffle</h2>
+                <p className="text-gray-400 mb-8">Choose how you&apos;d like to add teams or manage existing ones</p>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                   <button
-                    onClick={resetAll}
-                    className="bg-gray-600 hover:bg-gray-700 px-6 py-3 rounded-lg transition"
+                    onClick={() => setShowManualEntry(true)}
+                    className="bg-blue-600 hover:bg-blue-700 p-6 rounded-lg transition"
                   >
-                    🔄 Reset All
+                    <div className="text-3xl mb-3">✏️</div>
+                    <div className="font-semibold text-lg mb-2">Add Manually</div>
+                    <div className="text-sm text-blue-200">Enter team names one by one</div>
                   </button>
 
                   <button
-                    onClick={() => setImportMode(true)}
-                    className="bg-green-700 hover:bg-green-800 px-6 py-3 rounded-lg transition text-sm"
+                    onClick={() => {
+                      setJamSelectorMode('import');
+                      setShowJamSelector(true);
+                    }}
+                    className="bg-green-600 hover:bg-green-700 p-6 rounded-lg transition"
                   >
-                    📥 Import & Save
+                    <div className="text-3xl mb-3">📁</div>
+                    <div className="font-semibold text-lg mb-2">Import CSV</div>
+                    <div className="text-sm text-green-200">Upload a spreadsheet file</div>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      // Trigger wheel file input
+                      document.getElementById('wheel-file-input').click();
+                    }}
+                    className="bg-orange-600 hover:bg-orange-700 p-6 rounded-lg transition"
+                  >
+                    <div className="text-3xl mb-3">🎡</div>
+                    <div className="font-semibold text-lg mb-2">Import .wheel</div>
+                    <div className="text-sm text-orange-200">Upload a .wheel JSON file</div>
                   </button>
 
                   <button
                     onClick={() => {
                       setJamRaffleMode(true);
-                      setImportMode(false);
                     }}
-                    className="bg-purple-700 hover:bg-purple-800 px-6 py-3 rounded-lg transition text-sm"
+                    className="bg-purple-600 hover:bg-purple-700 p-6 rounded-lg transition"
                   >
-                    🎯 Load from Jam
+                    <div className="text-3xl mb-3">🎮</div>
+                    <div className="font-semibold text-lg mb-2">Load from Jam</div>
+                    <div className="text-sm text-purple-200">Use existing jam teams</div>
                   </button>
                 </div>
 
-                <div className="text-center mt-4 text-gray-400">
-                  {teams.length} team{teams.length !== 1 ? 's' : ''} remaining
-                  {removedTeams.length > 0 && ` • ${removedTeams.length} removed`}
-                </div>
-              </div>
-
-              {/* Winner Display */}
-              {selectedTeam && (
-                <div className="bg-gradient-to-r from-yellow-500 to-orange-500 rounded-lg p-8 mb-8 text-center animate-pulse">
-                  <h2 className="text-3xl font-bold mb-2">🎉 Winner! 🎉</h2>
-                  <p className="text-5xl font-bold">{selectedTeam.name}</p>
-                  {selectedTeam.members && selectedTeam.members.length > 0 && (
-                    <p className="text-lg mt-4 text-gray-800">
-                      Team: {selectedTeam.members.join(', ')}
-                    </p>
-                  )}
-                </div>
-              )}
-
-              {/* Wheel Container */}
-              {teams.length > 0 && (
-                <div className="flex justify-center mb-8">
-                  <div className="relative">
-                    <SpinWheel
-                      items={teamItems}
-                      rotation={rotation}
-                      spinning={spinning}
-                      pointerColor={pointerColor}
-                      size={600}
-                    />
+                {/* Manual Entry Form */}
+                {showManualEntry && (
+                  <div className="bg-gray-700 p-6 rounded-lg max-w-md mx-auto mb-8">
+                    <h3 className="text-xl font-semibold mb-4">Add Team Manually</h3>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                          Team Name *
+                        </label>
+                        <input
+                          type="text"
+                          value={newTeamName}
+                          onChange={(e) => setNewTeamName(e.target.value)}
+                          placeholder="Enter team name"
+                          className="w-full px-4 py-2 bg-gray-600 border border-gray-500 rounded text-white focus:outline-none focus:border-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                          Team Members (optional)
+                        </label>
+                        <input
+                          type="text"
+                          value={newTeamMembers}
+                          onChange={(e) => setNewTeamMembers(e.target.value)}
+                          placeholder="John, Jane, Bob"
+                          className="w-full px-4 py-2 bg-gray-600 border border-gray-500 rounded text-white focus:outline-none focus:border-blue-500"
+                        />
+                      </div>
+                      <button
+                        onClick={addManualTeam}
+                        className="w-full bg-green-600 hover:bg-green-700 px-4 py-3 rounded-lg transition font-semibold"
+                      >
+                        ➕ Add Team
+                      </button>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* Teams Lists */}
-              <div className="grid md:grid-cols-2 gap-6">
-                {/* Active Teams */}
-                <div className="bg-gray-800 rounded-lg p-6">
-                  <h2 className="text-2xl font-bold mb-4">📋 Active Teams</h2>
-                  {teams.length === 0 ? (
-                    <p className="text-gray-400">No teams loaded. Upload a CSV file, use Import mode, or Load from Game Jam to load teams!</p>
-                  ) : (
-                    <ul className="space-y-2 max-h-96 overflow-y-auto">
+                {/* Current Teams */}
+                {teams.length > 0 && (
+                  <div className="bg-gray-700 p-4 rounded-lg mb-8">
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="text-lg font-semibold">Current Teams ({teams.length})</h3>
+                      <div className="space-x-2">
+                        <button
+                          onClick={selectAllTeams}
+                          className="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded text-sm transition"
+                        >
+                          Select All
+                        </button>
+                        <button
+                          onClick={deselectAllTeams}
+                          className="bg-gray-600 hover:bg-gray-700 px-3 py-1 rounded text-sm transition"
+                        >
+                          Deselect All
+                        </button>
+                        {selectedTeams.length > 0 && (
+                          <button
+                            onClick={removeSelectedTeams}
+                            className="bg-red-600 hover:bg-red-700 px-3 py-1 rounded text-sm transition"
+                          >
+                            Remove Selected ({selectedTeams.length})
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="max-h-64 overflow-y-auto space-y-2">
                       {teams.map((team) => (
-                        <li
-                          key={team.id}
-                          className={`p-3 rounded ${
-                            selectedTeam?.id === team.id
-                              ? 'bg-yellow-600'
-                              : 'bg-gray-700'
-                          }`}
-                        >
-                          <div className="font-semibold">{team.name}</div>
-                          {team.members && team.members.length > 0 && (
-                            <div className="text-sm text-gray-300">
-                              {team.members.length} members: {team.members.join(', ')}
-                            </div>
-                          )}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-
-                {/* Removed Teams */}
-                <div className="bg-gray-800 rounded-lg p-6">
-                  <h2 className="text-2xl font-bold mb-4">🏆 Winners / Removed</h2>
-                  {removedTeams.length === 0 ? (
-                    <p className="text-gray-400">No teams removed yet.</p>
-                  ) : (
-                    <ul className="space-y-2 max-h-96 overflow-y-auto">
-                      {removedTeams.map((team) => (
-                        <li
-                          key={team.id}
-                          className="p-3 rounded bg-gray-700 flex justify-between items-start gap-2"
-                        >
-                          <div className="flex-1">
-                            <div className="font-semibold">{team.name}</div>
-                            {team.members && team.members.length > 0 && (
-                              <div className="text-sm text-gray-300">
-                                {team.members.join(', ')}
+                        <div key={team.id} className="flex items-center justify-between bg-gray-600 p-3 rounded">
+                          <div className="flex items-center space-x-3">
+                            <input
+                              type="checkbox"
+                              checked={selectedTeams.includes(team.id)}
+                              onChange={() => toggleTeamSelection(team.id)}
+                              className="text-blue-600 bg-gray-600 border-gray-500 rounded focus:ring-blue-500"
+                            />
+                            <div>
+                              <div className="font-medium text-white flex items-center gap-2">
+                                {team.name}
+                                {team.manual && <span className="text-xs bg-green-600 px-1 rounded">Manual</span>}
+                                {team.fromJam && <span className="text-xs bg-purple-600 px-1 rounded">Jam</span>}
+                                {team.fromImport && <span className="text-xs bg-blue-600 px-1 rounded">Import</span>}
+                                {team.fromWheel && <span className="text-xs bg-orange-600 px-1 rounded">Wheel</span>}
                               </div>
+                              {team.members && team.members.length > 0 && (
+                                <div className="text-sm text-gray-300">
+                                  {team.members.join(', ')}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          {(team.manual || team.fromJam || team.fromImport || team.fromWheel) && (
+                            <button
+                              onClick={() => removeManualTeam(team.id)}
+                              className="bg-red-600 hover:bg-red-700 px-2 py-1 rounded text-sm transition"
+                              title="Remove this team"
+                            >
+                              ✕
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Raffle Mode Controls */}
+                {teams.length > 0 && (
+                  <div className="bg-gray-800 rounded-lg p-6 mb-8">
+                    <div className="flex flex-wrap gap-4 items-center justify-center">
+                      <button
+                        onClick={() => {
+                          if (teams.length > 0) {
+                            const lastTeam = teams[teams.length - 1];
+                            setTeams(prev => prev.filter(t => t.id !== lastTeam.id));
+                          }
+                        }}
+                        disabled={teams.length === 0}
+                        className="bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed px-6 py-3 rounded-lg transition"
+                      >
+                        ❌ Remove Team
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          if (winners.length > 0) {
+                            const lastWinner = winners[winners.length - 1];
+                            addBackWinner(lastWinner.id);
+                          }
+                        }}
+                        disabled={winners.length === 0}
+                        className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed px-6 py-3 rounded-lg transition"
+                      >
+                        ↩️ Add Back Team
+                      </button>
+
+                      <button
+                        onClick={spinWheel}
+                        disabled={spinning || teams.length === 0}
+                        className="bg-green-600 hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed px-6 py-3 rounded-lg transition"
+                      >
+                        {spinning ? '🔄 Spinning...' : '🎲 Spin the Wheel!'}
+                      </button>
+
+                      <button
+                        onClick={resetAll}
+                        className="bg-gray-600 hover:bg-gray-700 px-6 py-3 rounded-lg transition"
+                      >
+                        🔄 Reset All
+                      </button>
+                    </div>
+
+                    <div className="text-center mt-4 text-gray-400">
+                      {teams.length} team{teams.length !== 1 ? 's' : ''} remaining • {winners.length} winner{winners.length !== 1 ? 's' : ''}
+                    </div>
+                  </div>
+                )}
+
+                {/* Hidden file inputs */}
+                <input
+                  id="wheel-file-input"
+                  type="file"
+                  accept=".wheel"
+                  onChange={handleWheelFileUpload}
+                  className="hidden"
+                />
+
+                {/* Winners Display */}
+                {winners.length > 0 && (
+                  <div className="bg-gradient-to-r from-yellow-500 to-orange-500 rounded-lg p-6 mb-8">
+                    <div className="flex justify-between items-center mb-4">
+                      <h2 className="text-2xl font-bold">🏆 Winners ({winners.length}) 🏆</h2>
+                      <button
+                        onClick={clearWinners}
+                        className="bg-red-600 hover:bg-red-700 px-3 py-1 rounded text-sm transition"
+                      >
+                        Clear All
+                      </button>
+                    </div>
+                    <div className="space-y-2 max-h-48 overflow-y-auto">
+                      {winners.map((winner, index) => (
+                        <div key={winner.id} className="bg-white bg-opacity-20 rounded p-3 flex justify-between items-center">
+                          <div className="flex-1">
+                            <span className="font-bold text-lg">#{index + 1}: {winner.name}</span>
+                            {winner.members && winner.members.length > 0 && (
+                              <span className="text-sm ml-2 text-gray-800">
+                                ({winner.members.join(', ')})
+                              </span>
                             )}
                           </div>
-                          <button
-                            onClick={() => restoreTeam(team)}
-                            className="bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded text-sm transition whitespace-nowrap"
-                          >
-                            Restore
-                          </button>
-                        </li>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-gray-700">{winner.timestamp}</span>
+                            <button
+                              onClick={() => removeWinner(winner.id)}
+                              className="text-red-600 hover:text-red-800"
+                              title="Remove winner"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        </div>
                       ))}
-                    </ul>
-                  )}
-                </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Wheel Container */}
+                {teams.length > 0 && (
+                  <div className="flex gap-8 mb-8 px-8">
+                    {/* Participant List - Left Side */}
+                    <div className="flex-2">
+                      <div className="bg-gray-700 rounded-lg p-6">
+                        <h3 className="text-xl font-semibold mb-6 text-center">🎯 Current Participants ({teams.length})</h3>
+                        <div className="max-h-96 overflow-y-auto space-y-3">
+                          {teams.map((team, index) => (
+                            <div key={team.id} className="bg-gray-600 rounded-lg p-4 flex items-center justify-between hover:bg-gray-500 transition-colors">
+                              <div className="flex items-center gap-4">
+                                <span className="text-lg font-bold text-gray-300 min-w-[2rem]">#{index + 1}</span>
+                                <div className="flex-1">
+                                  <div className="font-semibold text-white text-lg">{team.name}</div>
+                                  {team.members && team.members.length > 0 && (
+                                    <div className="text-sm text-gray-300 mt-1">
+                                      👥 {team.members.join(', ')}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                              <div 
+                                className="w-6 h-6 rounded-full border-2 border-white shadow-lg"
+                                style={{ backgroundColor: team.color }}
+                                title={`Color: ${team.color}`}
+                              ></div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Wheel - Right Side */}
+                    <div className="flex-1 flex justify-center">
+                      <div className="relative">
+                        <SpinWheel
+                          items={teamItems}
+                          spinning={spinning}
+                          pointerColor={pointerColor}
+                          onSpinComplete={handleSpinComplete}
+                          size={500}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
               </div>
-            </>
-          ) : null}
+            </div>
+          )}
 
           {/* Jam Selector Popup */}
           {showJamSelector && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
               <div className="bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
                 <h3 className="text-xl font-bold mb-4 text-center">
-                  🎯 {jamSelectorMode === 'import' ? 'Select Game Jam for Import' : jamSelectorMode === 'spin' ? 'Select Game Jam for Spin Result' : 'Select Game Jam'}
+                  🎯 {jamSelectorMode === 'import' ? 'Select Game Jam for Import' : 'Select Game Jam'}
                 </h3>
                 
                 {/* Game Jam Selection */}
@@ -884,16 +1057,36 @@ export default function RafflePage() {
                   <p className="text-gray-400 text-sm mt-2">
                     ℹ️ {jamSelectorMode === 'import' 
                       ? 'Teams will be imported and saved to the database as game entries' 
-                      : jamSelectorMode === 'spin'
-                      ? 'The spin result will be saved as the theme for this Game Jam'
                       : 'Teams will be loaded from the selected Game Jam'}
                   </p>
                 </div>
 
+                {/* File Upload for Import Mode */}
+                {jamSelectorMode === 'import' && (
+                  <div className="mb-6">
+                    <label className="block text-sm font-medium mb-2">Upload CSV File</label>
+                    <label className={`bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed px-4 py-2 rounded-lg cursor-pointer inline-block transition w-full text-center ${importing ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                      📁 {pendingImportFile ? pendingImportFile.name : 'Choose CSV File'}
+                      <input
+                        type="file"
+                        accept=".csv"
+                        onChange={handleFileUpload}
+                        disabled={importing}
+                        className="hidden"
+                      />
+                    </label>
+                    {pendingImportFile && (
+                      <p className="text-green-400 text-sm mt-2">
+                        ✅ {pendingImportFile.name} selected ({(pendingImportFile.size / 1024).toFixed(1)} KB)
+                      </p>
+                    )}
+                  </div>
+                )}
+
                 {/* Messages */}
                 {importError && (
                   <div className="bg-red-900 border border-red-500 rounded-lg p-4 mb-4 text-red-200">
-                    <p className="font-bold">❌ {jamSelectorMode === 'import' ? 'Import' : jamSelectorMode === 'spin' ? 'Spin' : 'Load'} Error</p>
+                    <p className="font-bold">❌ {jamSelectorMode === 'import' ? 'Import' : 'Load'} Error</p>
                     <p className="text-sm mt-1">{importError}</p>
                   </div>
                 )}
@@ -914,20 +1107,16 @@ export default function RafflePage() {
                         setPendingImportFile(null);
                       }
                       setShowJamSelector(false);
-                    } : jamSelectorMode === 'spin' ? performSpin : loadTeamsFromJam}
-                    disabled={importing || !selectedGameJam}
+                    } : loadTeamsFromJam}
+                    disabled={importing || !selectedGameJam || (jamSelectorMode === 'import' && !pendingImportFile)}
                     className={`flex-1 px-4 py-2 rounded-lg transition ${
                       jamSelectorMode === 'import'
                         ? 'bg-blue-600 hover:bg-blue-700'
-                        : jamSelectorMode === 'spin'
-                        ? 'bg-green-600 hover:bg-green-700'
                         : 'bg-purple-600 hover:bg-purple-700'
                     } disabled:bg-gray-600 disabled:cursor-not-allowed`}
                   >
                     {jamSelectorMode === 'import' 
                       ? '✅ Select Jam' 
-                      : jamSelectorMode === 'spin'
-                      ? '🎲 Spin the Wheel!'
                       : (importing ? '🔄 Loading...' : '🎯 Load Teams')}
                   </button>
                 </div>
@@ -937,7 +1126,7 @@ export default function RafflePage() {
 
           {/* Info */}
           <div className="mt-8 text-center text-gray-400 text-sm">
-            <p>💡 Load teams first, then select a Game Jam when spinning. The winner will be saved as the jam&apos;s theme!</p>
+            <p>💡 Load teams first, then spin the wheel to randomly select winners. Use the Themes page for setting jam themes.</p>
           </div>
         </div>
       </div>

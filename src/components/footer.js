@@ -1,5 +1,8 @@
+"use client";
+
 import { SocialLinks } from './SocialLinks';
 import Sponsor from './Sponsor';
+import { usePathname } from 'next/navigation';
 
 const Year = () => {
   const dateobj = new Date();
@@ -7,6 +10,13 @@ const Year = () => {
 };
 
 const Footer = () => {
+  const pathname = usePathname();
+  
+  // Don't render footer on admin pages
+  if (pathname.startsWith('/admin')) {
+    return null;
+  }
+  
   return (
     <footer className="w-full z-20 p-4 text-gray-600 flex items-center justify-between bg-white/80 backdrop-blur-sm mt-auto">
       <p>© Copyright <Year /> <a className="text-orange-500 hover:text-orange-600" href="https://ipmaia.pt">IPMAIA</a> Todos direitos reservados.</p>
