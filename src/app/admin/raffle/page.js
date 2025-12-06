@@ -24,8 +24,34 @@ export default function RafflePage() {
   const [importError, setImportError] = useState('');
   const [pendingImportFile, setPendingImportFile] = useState(null);
   const [showManualEntry, setShowManualEntry] = useState(false);
+  const [raffleEnabled, setRaffleEnabled] = useState(false);
+  const [checkingEnabled, setCheckingEnabled] = useState(true);
 
   useEffect(() => {
+    // Check if raffle is enabled
+    const checkRaffleEnabled = async () => {
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/frontpage/admin/settings`,
+          { credentials: 'include' }
+        );
+
+        if (response.ok) {
+          const settingsBySection = await response.json();
+          const allSettings = Object.values(settingsBySection).flat();
+          const raffleSetting = allSettings.find(s => s.setting_key === 'enable_raffle_wheel');
+          setRaffleEnabled(raffleSetting ? raffleSetting.setting_value === 'true' : false);
+        } else {
+          setRaffleEnabled(false);
+        }
+      } catch (error) {
+        console.error('Failed to check raffle status:', error);
+        setRaffleEnabled(false);
+      } finally {
+        setCheckingEnabled(false);
+      }
+    };
+
     // Fetch available game jams on component mount
     const fetchGameJams = async () => {
       try {
@@ -42,6 +68,7 @@ export default function RafflePage() {
       }
     };
     
+    checkRaffleEnabled();
     fetchGameJams();
   }, []);
 
@@ -596,6 +623,37 @@ export default function RafflePage() {
     }));
   }, [teams]);
 
+  if (checkingEnabled) {
+    return (
+      <AdminProtectedRoute>
+        <div className="min-h-screen bg-gray-900 text-white p-8">
+          <div className="text-center">Loading...</div>
+        </div>
+      </AdminProtectedRoute>
+    );
+  }
+
+  if (!raffleEnabled) {
+    return (
+      <AdminProtectedRoute>
+        <div className="min-h-screen bg-gray-900 text-white p-8">
+          <div className="w-full max-w-none">
+            <h1 className="text-4xl font-bold mb-8 text-center">🎡 Team Raffle System</h1>
+            <div className="bg-gray-800 border border-gray-700 rounded p-6">
+              <div className="text-center py-12">
+                <div className="text-6xl mb-4">🎡</div>
+                <h3 className="text-xl font-semibold text-gray-300 mb-2">Raffle Wheel Feature Disabled</h3>
+                <p className="text-gray-400">
+                  The raffle wheel feature is currently disabled. Enable it from the Front Page settings.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </AdminProtectedRoute>
+    );
+  }
+
   return (
     <AdminProtectedRoute>
       <div className="min-h-screen bg-gray-900 text-white p-8">
@@ -662,7 +720,7 @@ export default function RafflePage() {
             <div className="max-w-4xl mx-auto">
               <div className="bg-gray-800 rounded-lg p-8 text-center">
                 <h2 className="text-3xl font-bold mb-4">🎯 Set Up Your Raffle</h2>
-                <p className="text-gray-400 mb-8">Choose how you'd like to add teams or manage existing ones</p>
+                <p className="text-gray-400 mb-8">Choose how you&apos;d like to add teams or manage existing ones</p>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                   <button

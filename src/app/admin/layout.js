@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AdminAuthProvider, useAdminAuth } from '@/contexts/AdminAuthContext';
 import AdminProtectedRoute from '@/components/AdminProtectedRoute';
 
@@ -10,6 +10,51 @@ function AdminLayoutContent({ children }) {
   const pathname = usePathname();
   const { user, logout, isSuperAdmin } = useAdminAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [featureToggles, setFeatureToggles] = useState({
+    enable_raffle_wheel: false,
+    enable_jam_themes: false,
+    enable_forms: false,
+  });
+
+  // Load feature toggles
+  useEffect(() => {
+    const loadFeatureToggles = async () => {
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/frontpage/admin/settings`,
+          { credentials: 'include' }
+        );
+
+        if (response.ok) {
+          const settingsBySection = await response.json();
+          const allSettings = Object.values(settingsBySection).flat();
+
+          const toggles = {};
+          ['enable_raffle_wheel', 'enable_jam_themes', 'enable_forms'].forEach(key => {
+            const setting = allSettings.find(s => s.setting_key === key);
+            toggles[key] = setting ? setting.setting_value === 'true' : false;
+          });
+
+          setFeatureToggles(toggles);
+        }
+      } catch (error) {
+        console.error('Failed to load feature toggles:', error);
+      }
+    };
+
+    loadFeatureToggles();
+
+    // Listen for settings update events
+    const handleSettingsUpdate = () => {
+      loadFeatureToggles();
+    };
+
+    window.addEventListener('featureTogglesUpdated', handleSettingsUpdate);
+
+    return () => {
+      window.removeEventListener('featureTogglesUpdated', handleSettingsUpdate);
+    };
+  }, []);
 
   const navItems = [
     // Content Management
@@ -17,15 +62,15 @@ function AdminLayoutContent({ children }) {
     { href: '/admin/gamejams', label: '🎮 Game Jams', section: 'gamejams' },
     { href: '/admin/games', label: '🎯 Games', section: 'games' },
     { href: '/admin/sponsors', label: '🎪 Sponsors', section: 'sponsors' },
-    { href: '/admin/forms', label: '📝 Forms', section: 'forms', disabled: true },
+    { href: '/admin/forms', label: '📝 Forms', section: 'forms', disabled: !featureToggles.enable_forms },
     
     // Configuration
     { href: '/admin/frontpage', label: '🏠 Front Page', section: 'frontpage' },
     { href: '/admin/rules', label: '📋 Rules', section: 'rules' },
-    { href: '/admin/themes', label: '🎨 Jam Themes', section: 'themes' },
+    { href: '/admin/themes', label: '🎨 Jam Themes', section: 'themes', disabled: !featureToggles.enable_jam_themes },
     
     // Features
-    { href: '/admin/raffle', label: '🎡 Raffle Wheel', section: 'raffle', disabled: true },
+    { href: '/admin/raffle', label: '🎡 Raffle Wheel', section: 'raffle', disabled: !featureToggles.enable_raffle_wheel },
     
     // System & Administration
     { href: '/admin/system', label: '⚙️ System', section: 'system' },

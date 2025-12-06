@@ -7,9 +7,16 @@ export default function AdminFrontPage() {
   const [bannerStatus, setBannerStatus] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [imageFile, setImageFile] = useState(null);
+  const [featureToggles, setFeatureToggles] = useState({
+    enable_raffle_wheel: false,
+    enable_jam_themes: false,
+    enable_forms: false,
+  });
+  const [savingToggles, setSavingToggles] = useState(false);
 
   useEffect(() => {
     loadBannerStatus();
+    loadFeatureToggles();
   }, []);
 
   const loadBannerStatus = async () => {
@@ -44,6 +51,62 @@ export default function AdminFrontPage() {
       console.error('Failed to load banner status:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadFeatureToggles = async () => {
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/frontpage/admin/settings`,
+        { credentials: 'include' }
+      );
+
+      if (response.ok) {
+        const settingsBySection = await response.json();
+        const allSettings = Object.values(settingsBySection).flat();
+
+        const toggles = {};
+        ['enable_raffle_wheel', 'enable_jam_themes', 'enable_forms'].forEach(key => {
+          const setting = allSettings.find(s => s.setting_key === key);
+          toggles[key] = setting ? setting.setting_value === 'true' : false;
+        });
+
+        setFeatureToggles(toggles);
+      }
+    } catch (error) {
+      console.error('Failed to load feature toggles:', error);
+    }
+  };
+
+  const saveFeatureToggle = async (key, value) => {
+    setSavingToggles(true);
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/frontpage/admin/settings/${key}`,
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({ value: value.toString() }),
+        }
+      );
+
+      if (response.ok) {
+        setFeatureToggles(prev => ({ ...prev, [key]: value }));
+        // Dispatch event to notify other components (like layout) of the update
+        window.dispatchEvent(new CustomEvent('featureTogglesUpdated'));
+        alert('Feature toggle updated successfully!');
+      } else {
+        const error = await response.json();
+        alert(`Failed to update: ${error.error || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Failed to save feature toggle:', error);
+      alert('Failed to update feature toggle');
+    } finally {
+      setSavingToggles(false);
     }
   };
 
@@ -201,20 +264,73 @@ export default function AdminFrontPage() {
         </form>
       </div>
 
-      {/* Info Box */}
-      <div className="bg-blue-900 bg-opacity-30 border border-blue-700 rounded-lg p-4">
-        <div className="flex items-start gap-3">
-          <span className="text-blue-400 text-xl">💡</span>
-          <div className="text-sm text-gray-300 space-y-1">
-            <p className="font-semibold text-white">Tips:</p>
-            <ul className="list-disc list-inside space-y-1">
-              <li>Use high-quality images (1920x1080 or higher recommended)</li>
-              <li>The image will be used as the background for your homepage</li>
-              <li>Images are automatically optimized for web display</li>
-              <li>The new image will replace the current background</li>
-            </ul>
+      {/* Feature Toggles */}
+      <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
+        <h3 className="text-xl font-semibold text-white mb-4">
+          ⚙️ Feature Toggles
+        </h3>
+
+        <div className="space-y-4">
+          {/* Raffle Wheel Toggle */}
+          <div className="flex items-center justify-between p-4 bg-gray-700 rounded-lg">
+            <div>
+              <h4 className="text-white font-medium">🎡 Raffle Wheel</h4>
+              <p className="text-gray-400 text-sm">Enable or disable the raffle wheel feature</p>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={featureToggles.enable_raffle_wheel}
+                onChange={(e) => saveFeatureToggle('enable_raffle_wheel', e.target.checked)}
+                disabled={savingToggles}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+            </label>
+          </div>
+
+          {/* Jam Themes Toggle */}
+          <div className="flex items-center justify-between p-4 bg-gray-700 rounded-lg">
+            <div>
+              <h4 className="text-white font-medium">🎨 Jam Themes</h4>
+              <p className="text-gray-400 text-sm">Enable or disable the jam themes feature</p>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={featureToggles.enable_jam_themes}
+                onChange={(e) => saveFeatureToggle('enable_jam_themes', e.target.checked)}
+                disabled={savingToggles}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+            </label>
+          </div>
+
+          {/* Forms Toggle */}
+          <div className="flex items-center justify-between p-4 bg-gray-700 rounded-lg">
+            <div>
+              <h4 className="text-white font-medium">📝 Forms</h4>
+              <p className="text-gray-400 text-sm">Enable or disable the forms feature</p>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={featureToggles.enable_forms}
+                onChange={(e) => saveFeatureToggle('enable_forms', e.target.checked)}
+                disabled={savingToggles}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+            </label>
           </div>
         </div>
+
+        {savingToggles && (
+          <div className="mt-4 text-center text-blue-400">
+            ⏳ Saving changes...
+          </div>
+        )}
       </div>
     </div>
   );
