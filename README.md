@@ -1,21 +1,3 @@
-ipmaia-winterjam/
-├── src/                    # Frontend source
-│   ├── app/               # Next.js pages (App Router)
-│   ├── components/        # Reusable UI components
-│   └── utils/             # API utilities and helpers
-├── backend/               # Backend API
-│   ├── routes/           # API endpoints
-│   ├── scripts/          # Migration and utility scripts
-│   ├── admin/            # Admin panel static files
-│   └── config/           # Database and auth configuration
-├── public/               # Static assets
-├── scripts/              # Build and utility scripts
-│   ├── timed-build.sh    # Docker build timing script
-│   └── timing-aliases.sh # Helper aliases
-├── next-sitemap.config.js # Sitemap configuration
-├── docker-compose.yml    # Container orchestration
-└── README.md            # This file
-
 [![Docker Build](https://github.com/syl3n7/ipmaia-winterjam/actions/workflows/docker.yml/badge.svg)](https://github.com/syl3n7/ipmaia-winterjam/actions/workflows/docker.yml)
 
 # IPMAIA WinterJam Website 🏔️
