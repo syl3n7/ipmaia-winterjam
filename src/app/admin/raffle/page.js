@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { SpinWheel, generateWheelColors } from '@/components/SpinWheel';
 import AdminProtectedRoute from '@/components/AdminProtectedRoute';
+import { useAdminAuth } from '@/contexts/AdminAuthContext';
 
 export default function RafflePage() {
   const [teams, setTeams] = useState([]);
@@ -12,6 +13,7 @@ export default function RafflePage() {
   const [winners, setWinners] = useState([]);
   const wheelRef = useRef(null);
   const [pointerColor, setPointerColor] = useState('#ef4444');
+  const { handleApiResponse, apiFetch } = useAdminAuth();
   
   // Import mode
   const [jamRaffleMode, setJamRaffleMode] = useState(false);
@@ -53,20 +55,19 @@ export default function RafflePage() {
     };
 
     // Fetch available game jams on component mount
+
     const fetchGameJams = async () => {
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/gamejams`);
-        if (response.ok) {
-          const data = await response.json();
-          setGameJams(data);
-          if (data.length > 0) {
-            setSelectedGameJam(data[0].id.toString());
-          }
+        const response = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/gamejams`, {}, 'fetch game jams');
+        const data = await response.json();
+        setGameJams(data);
+        if (data.length > 0) {
+          setSelectedGameJam(data[0].id.toString());
         }
       } catch (error) {
         console.error('Error fetching game jams:', error);
       }
-    };
+    };  
     
     checkRaffleEnabled();
     fetchGameJams();
@@ -128,46 +129,36 @@ export default function RafflePage() {
     formData.append('gameJamId', selectedGameJam);
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/games/import-teams`, {
+      const response = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/games/import-teams`, {
         method: 'POST',
         body: formData,
-        credentials: 'include'
-      });
+      }, 'import teams');
 
       const data = await response.json();
 
-      if (!response.ok) {
-        setImportError(data.error || 'Import failed');
-        if (data.details) {
-          console.error('Import details:', data.details);
-        }
-      } else {
-        setImportMessage(`✅ Successfully imported ${data.summary.successfully_imported} teams!`);
-        
-        if (data.summary.failed > 0) {
-          setImportMessage(prev => prev + `\n⚠️ ${data.summary.failed} teams failed to import`);
-        }
-        
-        // Add imported teams to existing teams
-        if (data.results.imported.length > 0) {
-          const teamsForRaffle = data.results.imported.map((team, idx) => ({
-            id: `imported-${Date.now()}-${idx}`,
-            name: team.teamName,
-            members: team.members,
-            gameId: team.gameId,
-            color: team.color || team.raffle_color || null,
-            fromImport: true
-          }));
-          setTeams(prevTeams => [...prevTeams, ...teamsForRaffle]);
-          setWinners([]);
-          
-        }
-
+      setImportMessage(`✅ Successfully imported ${data.summary.successfully_imported} teams!`);
+      
+      if (data.summary.failed > 0) {
+        setImportMessage(prev => prev + `\n⚠️ ${data.summary.failed} teams failed to import`);
+      }
+      
+      // Add imported teams to existing teams
+      if (data.results.imported.length > 0) {
+        const teamsForRaffle = data.results.imported.map((team, idx) => ({
+          id: `imported-${Date.now()}-${idx}`,
+          name: team.teamName,
+          members: team.members,
+          gameId: team.gameId,
+          color: team.color || team.raffle_color || null,
+          fromImport: true
+        }));
+        setTeams(prevTeams => [...prevTeams, ...teamsForRaffle]);
+        setWinners([]);
+      }
         // Log any warnings
         if (data.summary.warnings > 0) {
           console.warn('Import warnings:', data.results.warnings);
         }
-      }
     } catch (error) {
       console.error('Error importing CSV:', error);
       setImportError('Failed to connect to server. Please try again.');

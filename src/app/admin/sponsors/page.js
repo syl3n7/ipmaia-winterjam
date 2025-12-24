@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { useAdminAuth } from '@/contexts/AdminAuthContext';
+import { API_BASE_URL } from '@/utils/api';
 
 export default function AdminSponsors() {
   const [sponsors, setSponsors] = useState([]);
@@ -21,26 +23,20 @@ export default function AdminSponsors() {
     fetchSponsors();
   }, []);
 
+  const { handleApiResponse, apiFetch } = useAdminAuth();
+
   const fetchSponsors = async () => {
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/sponsors/admin`,
-        { credentials: 'include' }
-      );
-      if (response.ok) {
-        const data = await response.json();
-        setSponsors(data.sponsors || []);
-      } else {
-        console.error('Failed to fetch sponsors:', response.status, response.statusText);
-        alert(`Failed to load sponsors: ${response.status} ${response.statusText}`);
-      }
+      const response = await apiFetch(`${API_BASE_URL}/sponsors/admin`, {}, 'fetch sponsors');
+      const data = await response.json();
+      setSponsors(data.sponsors || []);
     } catch (error) {
       console.error('Failed to fetch sponsors:', error);
       alert('Failed to load sponsors. Please check console for details.');
     } finally {
       setLoading(false);
     }
-  };
+  }; 
 
   const handleLogoUpload = async (sponsorId) => {
     if (!logoFile) return null;
@@ -49,19 +45,13 @@ export default function AdminSponsors() {
     formData.append('logo', logoFile);
 
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/sponsors/upload-logo`,
-        {
-          method: 'POST',
-          credentials: 'include',
-          body: formData,
-        }
-      );
+      const response = await apiFetch(`${API_BASE_URL}/sponsors/upload-logo`, {
+        method: 'POST',
+        body: formData,
+      }, 'upload sponsor logo');
 
-      if (response.ok) {
-        const data = await response.json();
-        return data.filename;
-      }
+      const data = await response.json();
+      return data.filename; 
     } catch (error) {
       console.error('Logo upload failed:', error);
     }
@@ -89,24 +79,18 @@ export default function AdminSponsors() {
       };
 
       const url = editing
-        ? `${process.env.NEXT_PUBLIC_API_URL}/sponsors/${editing}`
-        : `${process.env.NEXT_PUBLIC_API_URL}/sponsors`;
+        ? `${API_BASE_URL}/sponsors/${editing}`
+        : `${API_BASE_URL}/sponsors`;
 
-      const response = await fetch(url, {
+      const response = await apiFetch(url, {
         method: editing ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify(sponsorData),
-      });
+      }, editing ? 'update sponsor' : 'create sponsor');
 
-      if (response.ok) {
-        await fetchSponsors();
-        resetForm();
-        alert(editing ? 'Sponsor updated!' : 'Sponsor created!');
-      } else {
-        const errorData = await response.json().catch(() => ({}));
-        alert(`Failed to save sponsor: ${errorData.error || response.statusText}`);
-      }
+      await fetchSponsors();
+      resetForm();
+      alert(editing ? 'Sponsor updated!' : 'Sponsor created!');
     } catch (error) {
       console.error('Failed to save sponsor:', error);
       alert('Failed to save sponsor');
@@ -132,21 +116,12 @@ export default function AdminSponsors() {
     if (!confirm('Are you sure you want to delete this sponsor?')) return;
 
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/sponsors/${id}`,
-        {
-          method: 'DELETE',
-          credentials: 'include',
-        }
-      );
+      const response = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/sponsors/${id}`, {
+        method: 'DELETE',
+      }, 'delete sponsor');
 
-      if (response.ok) {
-        await fetchSponsors();
-        alert('Sponsor deleted!');
-      } else {
-        const errorData = await response.json().catch(() => ({}));
-        alert(`Failed to delete sponsor: ${errorData.error || response.statusText}`);
-      }
+      await fetchSponsors();
+      alert('Sponsor deleted!');
     } catch (error) {
       console.error('Failed to delete sponsor:', error);
       alert('Failed to delete sponsor');
@@ -332,7 +307,7 @@ export default function AdminSponsors() {
                   <td className="px-6 py-4">
                     {sponsor.logo_filename ? (
                       <img
-                        src={`${process.env.NEXT_PUBLIC_API_URL}/sponsors/logo/${sponsor.logo_filename}`}
+                                        src={`${API_BASE_URL}/sponsors/logo/${sponsor.logo_filename}`}
                         alt={sponsor.name}
                         className="h-12 w-12 object-contain"
                       />

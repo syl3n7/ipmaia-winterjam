@@ -8,6 +8,7 @@ export function AdminAuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [csrfToken, setCsrfToken] = useState(null);
 
   useEffect(() => {
     checkAuth();
@@ -18,42 +19,32 @@ export function AdminAuthProvider({ children }) {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`, {
         credentials: 'include',
       });
-
       if (response.ok) {
         const userData = await response.json();
         setUser(userData);
-      } else if (response.status === 401) {
-        // User is not authenticated
-        setUser(null);
-      } else {
-        // In development mode, the backend returns a dev user even without auth
-        // If we get a 401 in development, try again (backend might be bypassing auth)
-        if (process.env.NODE_ENV === 'development') {
-          // Set a dev user for local development
-          setUser({
-            id: 1,
-            username: 'dev-admin',
-            role: 'super_admin'
-          });
-          console.log('🔧 Development mode: Using dev admin user');
-        } else {
-          setUser(null);
+
+        // Try to fetch CSRF token for authenticated sessions (may be skipped in dev)
+        try {
+          const tokenRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/csrf-token`, { credentials: 'include' });
+          if (tokenRes.ok) {
+            const payload = await tokenRes.json();
+            setCsrfToken(payload.csrfToken || null);
+          } else {
+            setCsrfToken(null);
+          }
+        } catch (tokenErr) {
+          console.warn('Failed to fetch CSRF token:', tokenErr);
+          setCsrfToken(null);
         }
+      } else {
+        setUser(null);
+        setCsrfToken(null);
       }
     } catch (err) {
       console.error('Auth check failed:', err);
       setError(err.message);
-      // In development mode with network errors, still allow access
-      if (process.env.NODE_ENV === 'development') {
-        setUser({
-          id: 1,
-          username: 'dev-admin',
-          role: 'super_admin'
-        });
-        console.log('🔧 Development mode: Using dev admin user (fallback)');
-      } else {
-        setUser(null);
-      }
+      setUser(null);
+      setCsrfToken(null);
     } finally {
       setLoading(false);
     }
@@ -108,6 +99,25 @@ export function AdminAuthProvider({ children }) {
     return response;
   };
 
+  // Helper to perform API requests with CSRF header (when available) and consistent handling
+  const apiFetch = async (url, options = {}, operation = 'operation') => {
+    const method = (options.method || 'GET').toUpperCase();
+    const opts = {
+      credentials: 'include',
+      headers: { ...(options.headers || {}) },
+      ...options,
+    };
+
+    // Attach CSRF token for state-changing requests when available
+    if (method !== 'GET' && csrfToken) {
+      opts.headers['csrf-token'] = csrfToken;
+    }
+
+    const response = await fetch(url, opts);
+    await handleApiResponse(response, operation);
+    return response;
+  };
+
   const isAdmin = user && (user.role === 'admin' || user.role === 'super_admin');
   const isSuperAdmin = user && user.role === 'super_admin';
 
@@ -123,6 +133,8 @@ export function AdminAuthProvider({ children }) {
         logout,
         checkAuth,
         handleApiResponse,
+        apiFetch,
+        csrfToken,
       }}
     >
       {children}

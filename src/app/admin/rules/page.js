@@ -1,12 +1,15 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { useAdminAuth } from '@/contexts/AdminAuthContext';
 
 export default function AdminRules() {
   const [loading, setLoading] = useState(true);
   const [rulesStatus, setRulesStatus] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [pdfFile, setPdfFile] = useState(null);
+
+  const { handleApiResponse, apiFetch } = useAdminAuth();
 
   useEffect(() => {
     loadRulesStatus();
@@ -58,26 +61,17 @@ export default function AdminRules() {
       const formData = new FormData();
       formData.append('pdf', pdfFile);
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/rules/admin/upload-pdf`,
-        {
-          method: 'POST',
-          credentials: 'include',
-          body: formData,
-        }
-      );
+      await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/rules/admin/upload-pdf`, {
+        method: 'POST',
+        body: formData,
+      }, 'upload rulebook PDF');
 
-      if (response.ok) {
-        await loadRulesStatus();
-        setPdfFile(null);
-        // Reset file input
-        const fileInput = document.getElementById('rules-pdf-file');
-        if (fileInput) fileInput.value = '';
-        alert('Rulebook PDF uploaded successfully!');
-      } else {
-        const error = await response.json();
-        alert(`Upload failed: ${error.error || 'Unknown error'}`);
-      }
+      await loadRulesStatus();
+      setPdfFile(null);
+      // Reset file input
+      const fileInput = document.getElementById('rules-pdf-file');
+      if (fileInput) fileInput.value = '';
+      alert('Rulebook PDF uploaded successfully!');
     } catch (error) {
       console.error('Upload failed:', error);
       alert('Failed to upload PDF');

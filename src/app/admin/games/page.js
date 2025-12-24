@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { useAdminAuth } from '@/contexts/AdminAuthContext';
 
 export default function AdminGames() {
   const [games, setGames] = useState([]);
@@ -45,6 +46,7 @@ export default function AdminGames() {
     show_lore: true,
     show_ranking: true,
   });
+  const { handleApiResponse } = useAdminAuth();
 
   useEffect(() => {
     fetchData();
@@ -61,14 +63,15 @@ export default function AdminGames() {
         }),
       ]);
 
-      if (gamesRes.ok && jamsRes.ok) {
-        const [gamesData, jamsData] = await Promise.all([
-          gamesRes.json(),
-          jamsRes.json(),
-        ]);
-        setGames(gamesData);
-        setGameJams(jamsData);
-      }
+      await handleApiResponse(gamesRes, 'fetch games');
+      await handleApiResponse(jamsRes, 'fetch game jams');
+
+      const [gamesData, jamsData] = await Promise.all([
+        gamesRes.json(),
+        jamsRes.json(),
+      ]);
+      setGames(gamesData);
+      setGameJams(jamsData);
     } catch (error) {
       console.error('Failed to fetch data:', error);
     } finally {
@@ -98,18 +101,15 @@ export default function AdminGames() {
         ranking: formData.ranking ? parseInt(formData.ranking) : null,
       };
 
-      const response = await fetch(url, {
+      const response = await apiFetch(url, {
         method: editing ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify(processedData),
-      });
+      }, editing ? 'update game' : 'create game');
 
-      if (response.ok) {
-        await fetchData();
-        resetForm();
-        alert(editing ? 'Game updated!' : 'Game created!');
-      }
+      await fetchData();
+      resetForm();
+      alert(editing ? 'Game updated!' : 'Game created!');
     } catch (error) {
       console.error('Failed to save game:', error);
       alert('Failed to save game');
@@ -162,18 +162,12 @@ export default function AdminGames() {
     if (!confirm('Are you sure you want to delete this game?')) return;
 
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/admin/games/${id}`,
-        {
-          method: 'DELETE',
-          credentials: 'include',
-        }
-      );
+      const response = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/games/${id}`, {
+        method: 'DELETE',
+      }, 'delete game');
 
-      if (response.ok) {
-        await fetchData();
-        alert('Game deleted!');
-      }
+      await fetchData();
+      alert('Game deleted!');
     } catch (error) {
       console.error('Failed to delete game:', error);
       alert('Failed to delete game');
@@ -357,27 +351,21 @@ export default function AdminGames() {
         credentials: 'include'
       });
 
+      await handleApiResponse(response, 'import teams');
       const data = await response.json();
 
-      if (!response.ok) {
-        setImportError(data.error || 'Import failed');
-        if (data.details) {
-          console.error('Import details:', data.details);
-        }
-      } else {
-        setImportMessage(`✅ Successfully imported ${data.summary.successfully_imported} teams!`);
-        
-        if (data.summary.failed > 0) {
-          setImportMessage(prev => prev + `\n⚠️ ${data.summary.failed} teams failed to import`);
-        }
-        
-        // Refresh the games list
-        await fetchData();
+      setImportMessage(`✅ Successfully imported ${data.summary.successfully_imported} teams!`);
+      
+      if (data.summary.failed > 0) {
+        setImportMessage(prev => prev + `\n⚠️ ${data.summary.failed} teams failed to import`);
+      }
+      
+      // Refresh the games list
+      await fetchData();
 
-        // Log any warnings
-        if (data.summary.warnings > 0) {
-          console.warn('Import warnings:', data.results.warnings);
-        }
+      // Log any warnings
+      if (data.summary.warnings > 0) {
+        console.warn('Import warnings:', data.results.warnings);
       }
     } catch (error) {
       console.error('Error importing CSV:', error);
@@ -385,7 +373,9 @@ export default function AdminGames() {
     } finally {
       setImporting(false);
     }
-  };  if (loading) {
+  };
+
+  if (loading) {
     return <div className="text-white">Loading...</div>;
   }
 

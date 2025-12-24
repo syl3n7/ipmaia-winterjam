@@ -7,7 +7,7 @@ A comprehensive web application for IPMAIA's WinterJam event - a 45-hour game de
 ## ✨ Features
 
 - **🎮 Event Management**: Complete game jam lifecycle management
-- **👤 OIDC Authentication**: Secure admin access via PocketID
+- **👤 Authentication**: Local admin authentication (DB-backed). External OIDC/PocketID support is deprecated/disabled by default.
 - **📊 Admin Dashboard**: Full control over front page content, events, and games
 - **🤖 Auto-Migration**: Automated database setup and updates with timing metrics
 - **📱 Responsive Design**: Mobile and desktop optimized with modal game details
@@ -95,8 +95,8 @@ docker compose logs backend | grep -E "(⏳|🎯|✅|❌|🚀)"
          │                       │                       │
          ▼                       ▼                       ▼
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│ Auto-Migration  │    │ OIDC Auth       │    │ Admin Panel     │
-│ System          │    │ (PocketID)      │    │ (/admin)        │
+│ Auto-Migration  │    │ Auth (Local)    │    │ Admin Panel     │
+│ System          │    │ (DB / JWT)      │    │ (/admin)        │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
@@ -156,6 +156,7 @@ docker compose logs backend | grep -E "(⏳|🎯|✅|❌|🚀)"
 | `DB_PASSWORD` | Database password | `your_secure_password` |
 | `JWT_SECRET` | JWT signing key | `your_jwt_secret_here` |
 | `SESSION_SECRET` | Session encryption key | `your_session_secret_here` |
+| `DEV_BYPASS_CSRF` | Optional dev helper — when true (or when `NODE_ENV !== 'production'`), the server will skip CSRF checks for admin endpoints to simplify local development. In production, ensure `NODE_ENV=production` to enforce CSRF. | `true` |
 | `OIDC_ISSUER_URL` | PocketID instance URL | `https://your-auth-server.com` |
 | `OIDC_CLIENT_ID` | OIDC application ID | `your_client_id` |
 | `OIDC_CLIENT_SECRET` | OIDC application secret | `your_client_secret` |
@@ -353,12 +354,10 @@ SESSION_SECRET=your-256-bit-session-secret
 FRONTEND_URL=https://ipmaia-winterjam.pt
 NEXT_PUBLIC_API_URL=https://api.ipmaia-winterjam.pt/api
 
-# OIDC (PocketID)
-OIDC_ISSUER_URL=https://your-pocketid-domain.com
-OIDC_CLIENT_ID=your-client-id
-OIDC_CLIENT_SECRET=your-client-secret
-OIDC_REDIRECT_URI=https://api.ipmaia-winterjam.pt/api/auth/oidc/callback
-OIDC_ADMIN_EMAIL=admin@ipmaia-winterjam.pt
+# External OIDC / PocketID (optional - deprecated)
+# External OIDC / PocketID integration is disabled by default in this codebase.
+# To re-enable, restore the provider client and set the following environment variables (optional):
+# OIDC_ISSUER_URL, OIDC_CLIENT_ID, OIDC_CLIENT_SECRET, OIDC_REDIRECT_URI, OIDC_ADMIN_EMAIL
 ```
 
 ### SSL Certificate Renewal
@@ -412,6 +411,31 @@ docker stats
 - **HTTPS Only**: HTTP automatically redirects to HTTPS
 - **Isolated Networks**: Docker containers communicate via private networks
 - **Minimal Exposed Ports**: Only 80 and 443 exposed on host
+- **CSRF Protection**: Admin endpoints require a valid CSRF token for state-changing requests when running in production. The frontend fetches the token from `GET /api/auth/csrf-token` (response `{ csrfToken }` and a readable `XSRF-TOKEN` cookie) and must include it as the `csrf-token` header for POST/PUT/DELETE requests. For development the server skips CSRF checks for admin routes when `NODE_ENV !== 'production'` to simplify local testing; this behavior can be tightened in dev by setting `NODE_ENV=production` or adjusting server configuration.
+
+#### Example (fetch token + send request)
+
+```javascript
+// Fetch CSRF token (usually done after login / on app init)
+const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/csrf-token`, { credentials: 'include' });
+if (res.ok) {
+  const { csrfToken } = await res.json();
+  // Store token in memory (never in localStorage); our AdminAuthContext stores it in context
+}
+
+// Use token for state-changing request
+await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/games`, {
+  method: 'POST',
+  credentials: 'include',
+  headers: {
+    'Content-Type': 'application/json',
+    'csrf-token': csrfToken  // required in production
+  },
+  body: JSON.stringify({ title: 'New Game' })
+});
+```
+
+> Tip: The project provides `apiFetch` via `AdminAuthContext` which automatically adds the CSRF token header for non-GET requests when available.
 
 ### 🚧 Maintenance Mode
 

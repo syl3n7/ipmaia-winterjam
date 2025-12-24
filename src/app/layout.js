@@ -34,12 +34,6 @@ export default function RootLayout({ children }) {
         <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased h-screen flex flex-col`}>
-        <Script
-          defer
-          src="https://static.cloudflareinsights.com/beacon.min.js"
-          data-cf-beacon='{"token": "288377c903af4e4187b8b239e29790e9"}'
-          strategy="afterInteractive"
-        />
         {/* Google Analytics */}
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-FG2M7N9TK1"

@@ -1,6 +1,11 @@
 // API utility functions for frontend
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.ipmaia-winterjam.pt/api';
+export const API_BASE_URL = (() => {
+  const raw = process.env.NEXT_PUBLIC_API_URL || 'https://api.ipmaia-winterjam.pt';
+  // Ensure we have a trailing /api (without double //)
+  if (raw.endsWith('/api')) return raw.replace(/\/$/, '');
+  return raw.replace(/\/$/, '') + '/api';
+})();
 
 // Helper function to handle API responses
 const handleResponse = async (response) => {

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { API_BASE_URL } from '@/utils/api';
 import { useAdminAuth } from '@/contexts/AdminAuthContext';
 
 function LoginPageContent() {
@@ -20,19 +21,7 @@ function LoginPageContent() {
     }
   }, [user, isAdmin, router, returnUrl]);
 
-  const handleLogin = async () => {
-    setIsLoading(true);
-    setError('');
 
-    try {
-      // Redirect to OIDC login endpoint with return URL
-      const loginUrl = `${process.env.NEXT_PUBLIC_API_URL}/auth/oidc/login${returnUrl !== '/admin' ? `?returnUrl=${encodeURIComponent(returnUrl)}` : ''}`;
-      window.location.href = loginUrl;
-    } catch (err) {
-      setError('Failed to initiate login. Please try again.');
-      setIsLoading(false);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 flex items-center justify-center px-4">
@@ -56,40 +45,10 @@ function LoginPageContent() {
             </div>
           )}
 
-          <div className="text-center">
-            <p className="text-gray-300 text-sm mb-4">
-              You&apos;ll be redirected to PocketID for secure authentication
-            </p>
-
-            <button
-              onClick={handleLogin}
-              disabled={isLoading}
-              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-transparent"
-            >
-              {isLoading ? (
-                <div className="flex items-center justify-center">
-                  <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white mr-2"></div>
-                  Connecting...
-                </div>
-              ) : (
-                <div className="flex items-center justify-center">
-                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-                  </svg>
-                  Login with PocketID
-                </div>
-              )}
-            </button>
-          </div>
-
-          {/* Info Section */}
-          <div className="bg-white/5 rounded-lg p-4">
-            <h3 className="text-white font-semibold mb-2">What happens next?</h3>
-            <ul className="text-gray-300 text-sm space-y-1">
-              <li>• You&apos;ll be redirected to PocketID</li>
-              <li>• Sign in with your institutional account</li>
-              <li>• Return here with admin access</li>
-            </ul>
+          {/* Isolated Auth Form */}
+          <div className="bg-white/5 rounded-lg p-4 mb-6">
+            <h3 className="text-white font-semibold mb-2">Login / Register</h3>
+            <IsolatedAuthForm returnUrl={returnUrl} />
           </div>
         </div>
 
@@ -104,6 +63,88 @@ function LoginPageContent() {
         </div>
       </div>
     </div>
+  );
+}
+
+function IsolatedAuthForm({ returnUrl }) {
+  const [mode, setMode] = useState('login');
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const router = useRouter();
+  const { checkAuth } = useAdminAuth();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    try {
+      const endpoint = mode === 'login' ? '/auth/isolated/login' : '/auth/isolated/register';
+      const body = mode === 'login'
+        ? { username, password }
+        : { username, email, password };
+      const res = await fetch(`${API_BASE_URL}${endpoint}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Authentication failed');
+      if (data.token) {
+        // Token is returned for compatibility but sessions are the primary auth mechanism
+        await checkAuth();
+        router.push(returnUrl);
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="flex space-x-2 mb-2">
+        <button type="button" className={`px-3 py-1 rounded ${mode === 'login' ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300'}`} onClick={() => setMode('login')}>Login</button>
+        <button type="button" className={`px-3 py-1 rounded ${mode === 'register' ? 'bg-purple-600 text-white' : 'bg-gray-700 text-gray-300'}`} onClick={() => setMode('register')}>Register</button>
+      </div>
+      <input
+        type="text"
+        className="w-full p-2 rounded bg-gray-900 text-white border border-gray-700"
+        placeholder="Username"
+        value={username}
+        onChange={e => setUsername(e.target.value)}
+        required
+      />
+      {mode === 'register' && (
+        <input
+          type="email"
+          className="w-full p-2 rounded bg-gray-900 text-white border border-gray-700"
+          placeholder="Email"
+          value={email}
+          onChange={e => setEmail(e.target.value)}
+          required
+        />
+      )}
+      <input
+        type="password"
+        className="w-full p-2 rounded bg-gray-900 text-white border border-gray-700"
+        placeholder="Password"
+        value={password}
+        onChange={e => setPassword(e.target.value)}
+        required
+      />
+      <button
+        type="submit"
+        className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-200"
+        disabled={loading}
+      >
+        {loading ? 'Processing...' : mode === 'login' ? 'Login' : 'Register'}
+      </button>
+      {error && <div className="text-red-400 text-sm mt-2">{error}</div>}
+    </form>
   );
 }
 

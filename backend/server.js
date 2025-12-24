@@ -176,19 +176,41 @@ app.use(session({
   }
 }));
 
-// CSRF Protection middleware - skip for admin API routes
-app.use((req, res, next) => {
-  // Skip CSRF for admin API routes (already protected by session auth)
-  if (req.path.startsWith('/api/admin') || 
+// Helper to determine whether CSRF checks should be skipped for a request
+function shouldSkipCsrf(req) {
+  // Always allow isolated auth endpoints in non-production for convenience
+  if (process.env.NODE_ENV !== 'production') {
+    if (
+      req.path.startsWith('/api/auth/isolated/register') ||
+      req.path.startsWith('/api/auth/isolated/login') ||
+      req.path.startsWith('/api/auth/isolated/logout')
+    ) {
+      return true;
+    }
+
+    // In development, allow skipping CSRF for admin endpoints to simplify local testing
+    if (
+      req.path.startsWith('/api/admin') || 
       req.path.startsWith('/api/rules/admin') || 
       req.path.startsWith('/api/frontpage/admin') ||
       req.path.startsWith('/api/sponsors/upload-logo') ||
       req.path.startsWith('/api/sponsors/admin') ||
       (req.path.match(/^\/api\/sponsors\/\d+$/) && (req.method === 'PUT' || req.method === 'DELETE')) ||
-      (req.path === '/api/sponsors' && req.method === 'POST')) {
-    return next();
+      (req.path === '/api/sponsors' && req.method === 'POST')
+    ) {
+      return true;
+    }
   }
-  // Apply CSRF for other routes
+
+  return false;
+}
+
+// Export helper for testing
+module.exports.shouldSkipCsrf = shouldSkipCsrf;
+
+// CSRF Protection middleware - use helper to decide skipping
+app.use((req, res, next) => {
+  if (shouldSkipCsrf(req)) return next();
   csrf({ header: 'csrf-token' })(req, res, next);
 });
 
@@ -307,4 +329,4 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`📊 Admin interface: ${process.env.FRONTEND_URL || 'http://localhost:3000'}/admin`);
 });
 
-module.exports = app;
+module.exports = { app, shouldSkipCsrf };

@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from 'react';
+import { useAdminAuth } from '@/contexts/AdminAuthContext';
 import { SpinWheel, generateWheelColors } from '@/components/SpinWheel';
-import { gameJamApi } from '@/utils/api';
+import { gameJamApi, API_BASE_URL } from '@/utils/api';
 
 const defaultWheelConfig = {
   title: '',
@@ -24,7 +25,7 @@ export default function AdminThemeWheel() {
     const checkThemesEnabled = async () => {
       try {
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/frontpage/admin/settings`,
+          `${API_BASE_URL}/frontpage/admin/settings`,
           { credentials: 'include' }
         );
 
@@ -139,18 +140,12 @@ export default function AdminThemeWheel() {
         return;
       }
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/gamejams/${activeJam.id}`, {
+      const res = await apiFetch(`${API_BASE_URL}/admin/gamejams/${activeJam.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          theme: chosen.text,
-        }),
-      });
+        body: JSON.stringify({ theme: chosen.text }),
+      }, 'persist theme');
 
-      if (!res.ok) {
-        throw new Error('Failed to save theme');
-      }
       const data = await res.json();
       setCurrentTheme(data.theme || chosen.text);
       setStatus(`Saved "${chosen.text}" as the theme for the active jam (${activeJam.name}).`);

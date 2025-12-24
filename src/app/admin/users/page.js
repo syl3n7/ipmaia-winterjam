@@ -3,15 +3,26 @@
 import { useAdminAuth } from '@/contexts/AdminAuthContext';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { API_BASE_URL } from '@/utils/api';
 
 export default function AdminUsers() {
-  const { user, isSuperAdmin } = useAdminAuth();
+  const { user, isSuperAdmin, apiFetch } = useAdminAuth();
   const router = useRouter();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [filter, setFilter] = useState('all'); // all, admin, super_admin, user
-  const [pocketidStatus, setPocketidStatus] = useState(null);
+  const [registrationEnabled, setRegistrationEnabled] = useState(null);
+  const [loadingRegistration, setLoadingRegistration] = useState(true);
+
+  // Invite modal state
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [inviteUsername, setInviteUsername] = useState('');
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteExpires, setInviteExpires] = useState('7d');
+  const [inviteSendEmail, setInviteSendEmail] = useState(true);
+  const [inviteError, setInviteError] = useState('');
+  const [inviteResult, setInviteResult] = useState(null);
 
   useEffect(() => {
     // Only super admins can access this page
@@ -22,37 +33,17 @@ export default function AdminUsers() {
     
     if (isSuperAdmin) {
       fetchUsers();
-      checkPocketIDStatus();
+      fetchRegistrationStatus();
     }
   }, [user, isSuperAdmin, router]);
 
-  const checkPocketIDStatus = async () => {
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/pocketid/status`, {
-        credentials: 'include',
-      });
-      if (response.ok) {
-        const status = await response.json();
-        setPocketidStatus(status);
-      }
-    } catch (error) {
-      console.error('Failed to check PocketID status:', error);
-    }
-  };
 
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/users`, {
-        credentials: 'include',
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setUsers(data);
-      } else {
-        console.error('Failed to fetch users');
-      }
+      const response = await apiFetch(`${API_BASE_URL}/admin/users`, {}, 'fetch users');
+      const data = await response.json();
+      setUsers(data);
     } catch (error) {
       console.error('Error fetching users:', error);
     } finally {
@@ -60,80 +51,120 @@ export default function AdminUsers() {
     }
   };
 
+  const fetchRegistrationStatus = async () => {
+    try {
+      setLoadingRegistration(true);
+      const res = await apiFetch(`${API_BASE_URL}/admin/registration`, {}, 'fetch registration status');
+      const payload = await res.json();
+      setRegistrationEnabled(payload.enabled);
+    } catch (err) {
+      console.error('Failed to fetch registration status:', err);
+    } finally {
+      setLoadingRegistration(false);
+    }
+  };
+
+  // Helpers for invite modal and registration toggle (moved out of JSX for clarity)
+  const handleOpenInviteModal = () => setShowInviteModal(true);
+  const handleCloseInvite = () => {
+    setShowInviteModal(false);
+    setInviteResult(null);
+    setInviteError('');
+    setInviteUsername('');
+    setInviteEmail('');
+    setInviteExpires('7d');
+    setInviteSendEmail(true);
+  };
+
+  const handleCreateInvite = async () => {
+    setInviteError('');
+    try {
+      if (!inviteUsername || !inviteEmail) return setInviteError('Username and email are required');
+      const res = await apiFetch(`${API_BASE_URL}/admin/users/invite`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: inviteUsername, email: inviteEmail, expiresOption: inviteExpires, sendEmail: inviteSendEmail })
+      }, 'create invite');
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Invite failed');
+
+      if (!inviteSendEmail && data && data.inviteLink) {
+        try {
+          await navigator.clipboard.writeText(data.inviteLink);
+          setInviteResult({ ...data, copiedToClipboard: true });
+        } catch (copyErr) {
+          console.warn('Clipboard copy failed:', copyErr);
+          setInviteResult({ ...data, copiedToClipboard: false });
+        }
+      } else {
+        setInviteResult({ ...data, copiedToClipboard: false });
+      }
+
+      setInviteError('');
+      await fetchUsers();
+    } catch (err) {
+      setInviteError(err.message);
+    }
+  };
+
+  const handleToggleRegistrationClick = async () => {
+    const confirmMsg = registrationEnabled ? 'Disable public registration? This will prevent new users from registering via the public form.' : 'Enable public registration? New users will be able to register via the public form.';
+    if (!confirm(confirmMsg)) return;
+    try {
+      const res = await apiFetch(`${API_BASE_URL}/admin/registration`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled: !registrationEnabled }),
+      }, 'toggle registration');
+      const payload = await res.json();
+      setRegistrationEnabled(payload.enabled);
+      alert(`Public registration ${payload.enabled ? 'enabled' : 'disabled'}`);
+    } catch (err) {
+      console.error('Failed to toggle registration:', err);
+      alert('Failed to update registration status');
+    }
+  };
+
   const handleChangeRole = async (userId, userEmail, newRole) => {
-    if (!confirm(`Are you sure you want to change this user's role to ${newRole}?\n\nNote: This creates a local role override. PocketID groups remain unchanged.`)) {
+    if (!confirm(`Are you sure you want to change this user's role to ${newRole}?\n\nNote: This creates a local role override.`)) {
       return;
     }
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/users/${userId}/role`, {
+      const response = await apiFetch(`${API_BASE_URL}/admin/users/${userId}/role`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({ role: newRole, email: userEmail }),
-      });
+      }, 'update user role');
 
-      if (response.ok) {
-        alert('✅ User role updated successfully!');
-        await fetchUsers();
-      } else {
-        const error = await response.json();
-        alert(`❌ Failed to update role: ${error.error || 'Unknown error'}`);
-      }
+      alert('✅ User role updated successfully!');
+      await fetchUsers();
     } catch (error) {
       console.error('Error updating role:', error);
       alert('❌ Failed to update role');
     }
   };
 
+  // PocketID sync removed - disabled
   const handleSyncUsers = async () => {
-    if (!confirm('Sync users from PocketID?\n\nThis will add new users from PocketID to the local database.\nExisting user settings will be preserved.')) {
-      return;
-    }
-
-    try {
-      setSyncing(true);
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/users/sync-from-pocketid`, {
-        method: 'POST',
-        credentials: 'include',
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        alert(`✅ Sync complete!\n\nCreated: ${result.created}\nSkipped: ${result.skipped}\nTotal: ${result.total}`);
-        await fetchUsers();
-      } else {
-        const error = await response.json();
-        alert(`❌ Sync failed: ${error.error || 'Unknown error'}`);
-      }
-    } catch (error) {
-      console.error('Error syncing users:', error);
-      alert('❌ Failed to sync users');
-    } finally {
-      setSyncing(false);
-    }
+    alert('PocketID integration is disabled. User sync is not available.');
   };
 
   const handleToggleActive = async (userId, userEmail, currentStatus) => {
     const action = currentStatus ? 'deactivate' : 'activate';
-    if (!confirm(`Are you sure you want to ${action} this user?\n\nNote: This only affects local access. PocketID account remains active.`)) {
+    if (!confirm(`Are you sure you want to ${action} this user?\n\nNote: This only affects local access.`)) {
       return;
     }
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/users/${userId}/toggle`, {
+      const response = await apiFetch(`${API_BASE_URL}/admin/users/${userId}/toggle`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({ email: userEmail }),
-      });
+      }, `${action} user`);
 
-      if (response.ok) {
-        alert(`✅ User ${action}d successfully!`);
-        await fetchUsers();
-      } else {
-        alert(`❌ Failed to ${action} user`);
-      }
+      alert(`✅ User ${action}d successfully!`);
+      await fetchUsers();
     } catch (error) {
       console.error(`Error ${action}ing user:`, error);
       alert(`❌ Failed to ${action} user`);
@@ -141,7 +172,7 @@ export default function AdminUsers() {
   };
 
   const handleDeleteUser = async (userId, userEmail, username) => {
-    if (!confirm(`⚠️ PERMANENT DELETE\n\nAre you sure you want to permanently delete ${username} (${userEmail})?\n\nThis will:\n• Remove the user from the local database\n• Cannot be undone\n• Does not affect PocketID (can be re-synced)\n\nType DELETE to confirm`)) {
+    if (!confirm(`⚠️ PERMANENT DELETE\n\nAre you sure you want to permanently delete ${username} (${userEmail})?\n\nThis will:\n• Remove the user from the local database\n• Cannot be undone\n\nType DELETE to confirm`)) {
       return;
     }
 
@@ -153,20 +184,14 @@ export default function AdminUsers() {
     }
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/users/${userId}`, {
+const response = await apiFetch(`${API_BASE_URL}/admin/users/${userId}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({ email: userEmail }),
-      });
+      }, 'delete user');
 
-      if (response.ok) {
-        alert(`✅ User ${username} deleted successfully!`);
-        await fetchUsers();
-      } else {
-        const error = await response.json();
-        alert(`❌ Failed to delete user: ${error.error || 'Unknown error'}`);
-      }
+      alert(`✅ User ${username} deleted successfully!`);
+      await fetchUsers();
     } catch (error) {
       console.error('Error deleting user:', error);
       alert('❌ Failed to delete user');
@@ -204,35 +229,34 @@ export default function AdminUsers() {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-3xl font-bold text-white">👥 User Management</h2>
-          {pocketidStatus && (
-            <div className="flex items-center gap-2 mt-2">
-              <span className={`w-2 h-2 rounded-full ${pocketidStatus.connected ? 'bg-green-500' : 'bg-red-500'}`}></span>
-              <span className="text-sm text-gray-400">
-                {pocketidStatus.connected ? 'Connected to PocketID' : pocketidStatus.configured ? 'PocketID API not responding' : 'PocketID API not configured'}
-              </span>
-            </div>
-          )}
         </div>
-        <div className="flex gap-2">
-          {pocketidStatus?.connected && (
-            <button
-              onClick={handleSyncUsers}
-              disabled={syncing}
-              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {syncing ? '⏳ Syncing...' : '🔄 Sync from PocketID'}
-            </button>
-          )}
+        <div className="flex gap-2 items-center">
           <button
             onClick={fetchUsers}
             className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
           >
             🔄 Refresh
           </button>
+          <button
+            onClick={handleOpenInviteModal}
+            className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded transition-colors"
+          >
+            ✉️ Invite User
+          </button>
+
+          {/* Registration Toggle (Super Admin only) */}
+          {typeof registrationEnabled === 'boolean' && (
+            <button
+              onClick={handleToggleRegistrationClick}
+              className={`px-3 py-2 rounded ${registrationEnabled ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'} text-white transition-colors`}
+            >
+              {registrationEnabled ? 'Disable Registration' : 'Enable Registration'}
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Stats */}
+      <div className="text-white text-lg">Stats</div>
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
           <div className="text-gray-400 text-sm mb-1">Total Users</div>
@@ -257,6 +281,40 @@ export default function AdminUsers() {
           </div>
         </div>
       </div>
+
+      {/* Invite Modal (moved below header for parser simplicity) */}
+      {showInviteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+          <div className="bg-gray-800 rounded-lg p-6 w-full max-w-lg">
+            <h3 className="text-xl font-semibold text-white mb-4">Invite a user</h3>
+            <div className="space-y-3">
+              <input type="text" placeholder="Username" value={inviteUsername} onChange={e => setInviteUsername(e.target.value)} className="w-full p-2 rounded bg-gray-900 text-white" />
+              <input type="email" placeholder="Email" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} className="w-full p-2 rounded bg-gray-900 text-white" />
+              <div className="flex gap-2">
+                <label className="text-sm text-gray-300">Expires:</label>
+                <select value={inviteExpires} onChange={e => setInviteExpires(e.target.value)} className="bg-gray-900 p-2 rounded text-white">
+                  <option value="1h">1 hour</option>
+                  <option value="3d">3 days</option>
+                  <option value="7d">7 days</option>
+                </select>
+                <label className="ml-4 text-sm text-gray-300 flex items-center gap-2"><input type="checkbox" checked={inviteSendEmail} onChange={e => setInviteSendEmail(e.target.checked)} /> Send email</label>
+              </div>
+              {inviteError && <div className="text-red-400">{inviteError}</div>}
+              {inviteResult && (
+                <div className="text-green-400">
+                  Invite created: <a className="text-blue-300" href={inviteResult.inviteLink} target="_blank" rel="noreferrer">Open link</a>
+                  {inviteResult.copiedToClipboard && <span className="ml-2 text-sm text-gray-300">— Link copied to clipboard</span>}
+                  {!inviteResult.copiedToClipboard && inviteResult.emailSent && <span className="ml-2 text-sm text-gray-300">— Email sent</span>}
+                </div>
+              )}
+            </div>
+            <div className="mt-4 flex justify-end gap-2">
+              <button onClick={handleCloseInvite} className="px-4 py-2 bg-gray-700 text-white rounded">Cancel</button>
+              <button onClick={handleCreateInvite} className="px-4 py-2 bg-green-600 text-white rounded">Create Invite</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Filter */}
       <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
@@ -378,20 +436,6 @@ export default function AdminUsers() {
         </div>
       </div>
 
-      {/* Info Box */}
-      <div className="bg-blue-900 bg-opacity-30 border border-blue-700 rounded-lg p-4">
-        <h4 className="text-white font-semibold mb-2">ℹ️ User Management Info</h4>
-        <ul className="text-gray-300 text-sm space-y-1">
-          <li>• <strong>PocketID Sync:</strong> Click &quot;Sync from PocketID&quot; to import users from PocketID API</li>
-          <li>• Only users in <code className="bg-gray-800 px-1 rounded">admin</code>, <code className="bg-gray-800 px-1 rounded">ipmaia</code>, or <code className="bg-gray-800 px-1 rounded">users</code> groups are synced</li>
-          <li>• <strong>Local Control:</strong> Users are stored locally after sync - you can block/modify them here</li>
-          <li>• <strong>Prevent Unauthorized Login:</strong> Deactivate users locally to block their access, even if they&apos;re still in PocketID</li>
-          <li>• Super Admin: Requires &quot;admin&quot; group + matching email (<code className="bg-gray-800 px-1 rounded">OIDC_ADMIN_EMAIL</code>)</li>
-          <li>• Role changes and deactivations are stored locally and don&apos;t affect PocketID</li>
-          <li>• You cannot modify your own account to prevent lockout</li>
-          <li>• <strong>Setup:</strong> Add <code className="bg-gray-800 px-1 rounded">POCKETID_API_URL</code> and <code className="bg-gray-800 px-1 rounded">POCKETID_API_KEY</code> to environment</li>
-        </ul>
-      </div>
     </div>
   );
 }

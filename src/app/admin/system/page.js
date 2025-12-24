@@ -2,6 +2,7 @@
 
 import { useAdminAuth } from '@/contexts/AdminAuthContext';
 import { useState, useEffect } from 'react';
+import { API_BASE_URL } from '@/utils/api';
 
 export default function AdminSystem() {
   const { user, isSuperAdmin } = useAdminAuth();
@@ -13,6 +14,20 @@ export default function AdminSystem() {
   const [showAuditLogs, setShowAuditLogs] = useState(false);
   const [maintenanceMode, setMaintenanceMode] = useState(false);
   const [systemMetrics, setSystemMetrics] = useState(null);
+
+  // Helper: format date/time in European style (DD/MM/YYYY) and 24-hour time
+  const formatDateTimeEU = (d) => {
+    if (!d) return '-';
+    const date = new Date(d);
+    return date.toLocaleString('en-GB', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    });
+  };
 
   useEffect(() => {
     loadSystemInfo();
@@ -32,13 +47,9 @@ export default function AdminSystem() {
 
   const loadMaintenanceStatus = async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/system/maintenance`, {
-        credentials: 'include',
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setMaintenanceMode(data.enabled);
-      }
+      const response = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/system/maintenance`, {}, 'load maintenance status');
+      const data = await response.json();
+      setMaintenanceMode(data.enabled);
     } catch (error) {
       console.error('Failed to load maintenance status:', error);
     }
@@ -63,8 +74,7 @@ export default function AdminSystem() {
     const startTime = Date.now();
 
     try {
-      // Extract base URL from API URL (remove /api suffix if present)
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+      const apiUrl = API_BASE_URL; // canonical API base URL (includes /api)
       const baseUrl = apiUrl.replace(/\/api$/, '');
 
       const [gameJamsRes, gamesRes, sponsorsRes, healthRes, backendVersionRes] = await Promise.allSettled([
@@ -171,18 +181,10 @@ export default function AdminSystem() {
     }
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/system/clear-cache`, {
-        method: 'POST',
-        credentials: 'include',
-      });
+      const response = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/system/clear-cache`, { method: 'POST' }, 'clear cache');
 
-      if (response.ok) {
-        alert('✅ Cache cleared successfully!');
-        await loadSystemInfo();
-      } else {
-        const error = await response.json();
-        alert(`❌ Failed to clear cache: ${error.error || 'Unknown error'}`);
-      }
+      alert('✅ Cache cleared successfully!');
+      await loadSystemInfo();
     } catch (error) {
       console.error('Failed to clear cache:', error);
       alert('❌ Failed to clear cache. Check console for details.');
@@ -195,17 +197,9 @@ export default function AdminSystem() {
     }
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/system/restart`, {
-        method: 'POST',
-        credentials: 'include',
-      });
+      const response = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/system/restart`, { method: 'POST' }, 'restart server');
 
-      if (response.ok) {
-        alert('✅ Server restart initiated. Please wait 10-15 seconds and refresh the page.');
-      } else {
-        const error = await response.json();
-        alert(`❌ Failed to restart server: ${error.error || 'Unknown error'}`);
-      }
+      alert('✅ Server restart initiated. Please wait 10-15 seconds and refresh the page.');
     } catch (error) {
       console.error('Failed to restart server:', error);
       alert('❌ Failed to restart server. Check console for details.');
@@ -214,25 +208,18 @@ export default function AdminSystem() {
 
   const handleExportDatabase = async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/export/all`, {
-        credentials: 'include',
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `database-backup-${new Date().toISOString().split('T')[0]}.json`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-        alert('✅ Database exported successfully!');
-      } else {
-        alert('❌ Failed to export database');
-      }
+      const response = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/export/all`, {}, 'export database');
+      const data = await response.json();
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `database-backup-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      alert('✅ Database exported successfully!');
     } catch (error) {
       console.error('Failed to export database:', error);
       alert('❌ Failed to export database. Check console for details.');
@@ -255,21 +242,15 @@ export default function AdminSystem() {
         const text = await file.text();
         const data = JSON.parse(text);
 
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/import`, {
+        const response = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/import`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
           body: JSON.stringify(data),
-        });
+        }, 'import database');
 
-        if (response.ok) {
-          const result = await response.json();
-          alert(`✅ Import completed!\n\nGame Jams: ${result.gamejams_imported}\nGames: ${result.games_imported}\n${result.errors.length > 0 ? '\nErrors: ' + result.errors.length : ''}`);
-          await loadSystemInfo();
-        } else {
-          const error = await response.json();
-          alert(`❌ Import failed: ${error.error || 'Unknown error'}`);
-        }
+        const result = await response.json();
+        alert(`✅ Import completed!\n\nGame Jams: ${result.gamejams_imported}\nGames: ${result.games_imported}\n${result.errors.length > 0 ? '\nErrors: ' + result.errors.length : ''}`);
+        await loadSystemInfo();
       } catch (error) {
         console.error('Import error:', error);
         alert('❌ Failed to import: ' + error.message);
@@ -402,7 +383,7 @@ export default function AdminSystem() {
             </div>
             <div className="flex justify-between">
               <span className="text-gray-400">Last Check</span>
-              <span className="text-white">{lastCheck.toLocaleTimeString()}</span>
+              <span className="text-white">{formatDateTimeEU(lastCheck)}</span>
             </div>
           </div>
         </div>
@@ -762,12 +743,7 @@ export default function AdminSystem() {
                       {auditLogs.map((log) => (
                         <tr key={log.id} className="hover:bg-gray-700">
                           <td className="px-4 py-2 text-gray-300 whitespace-nowrap text-xs">
-                            {new Date(log.created_at).toLocaleString('en-US', {
-                              month: 'short',
-                              day: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}
+                            {formatDateTimeEU(log.created_at)}
                           </td>
                           <td className="px-4 py-2 text-gray-300 font-medium">
                             {log.username || 'System'}
