@@ -409,6 +409,30 @@ const response = await apiFetch(`${API_BASE_URL}/admin/users/${userId}`, {
                         >
                           {u.is_active ? 'Deactivate' : 'Activate'}
                         </button>
+                        {isSuperAdmin && (
+                          <button
+                            onClick={async () => {
+                              const newPw = prompt('Enter new password for user (min 14 chars, include 2 special chars, uppercase, lowercase, number):');
+                              if (!newPw) return;
+                              try {
+                                const res = await apiFetch(`${API_BASE_URL}/admin/users/${u.id}/password`, {
+                                  method: 'PUT',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ password: newPw })
+                                }, 'reset user password');
+                                const payload = await res.json();
+                                alert(payload.message || 'Password updated');
+                              } catch (err) {
+                                console.error('Failed to change password:', err);
+                                alert('Failed to change password: ' + err.message);
+                              }
+                            }}
+                            className="px-2 py-1 rounded text-xs bg-yellow-600 hover:bg-yellow-700 text-white"
+                            title="Reset user password (super admin only)"
+                          >
+                            🔑 Reset PW
+                          </button>
+                        )}
                         <button
                           onClick={() => handleDeleteUser(u.id, u.email, u.username)}
                           className="px-2 py-1 rounded text-xs bg-red-800 hover:bg-red-900 text-white"

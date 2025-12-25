@@ -11,7 +11,7 @@ function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, isAdmin } = useAdminAuth();
-
+  const [registrationEnabled, setRegistrationEnabled] = useState(true);
   const returnUrl = searchParams.get('returnUrl') || '/admin';
 
   useEffect(() => {
@@ -19,6 +19,19 @@ function LoginPageContent() {
     if (user && isAdmin) {
       router.push(returnUrl);
     }
+
+    // Check public registration status and hide register option if disabled
+    (async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/auth/registration-status`);
+        if (res.ok) {
+          const payload = await res.json();
+          setRegistrationEnabled(payload.enabled);
+        }
+      } catch (err) {
+        console.warn('Failed to fetch registration status:', err);
+      }
+    })();
   }, [user, isAdmin, router, returnUrl]);
 
 
@@ -108,7 +121,9 @@ function IsolatedAuthForm({ returnUrl }) {
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="flex space-x-2 mb-2">
         <button type="button" className={`px-3 py-1 rounded ${mode === 'login' ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300'}`} onClick={() => setMode('login')}>Login</button>
-        <button type="button" className={`px-3 py-1 rounded ${mode === 'register' ? 'bg-purple-600 text-white' : 'bg-gray-700 text-gray-300'}`} onClick={() => setMode('register')}>Register</button>
+        {registrationEnabled && (
+          <button type="button" className={`px-3 py-1 rounded ${mode === 'register' ? 'bg-purple-600 text-white' : 'bg-gray-700 text-gray-300'}`} onClick={() => setMode('register')}>Register</button>
+        )}
       </div>
       <input
         type="text"

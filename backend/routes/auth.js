@@ -6,14 +6,23 @@ const { pool } = require('../config/database');
 const passport = require('passport');
 const { logAudit } = require('../utils/auditLog');
 
+const rateLimit = require('express-rate-limit');
+
 const router = express.Router();
+
+// Tight rate limit for public registration to reduce bot/spam risk
+const registrationLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: process.env.NODE_ENV === 'production' ? 10 : 50, // 10 per 15min in prod
+  message: 'Too many registration attempts, please try again later.'
+});
 
 // --- Isolated authentication system (no PocketID, no OIDC) ---
 // In-memory user store for demo (replace with DB in production)
 const isolatedUsers = [];
 
 // Registration endpoint
-router.post('/isolated/register', async (req, res) => {
+router.post('/isolated/register', registrationLimiter, async (req, res) => {
   // Determine public registration flag from DB (override env) or fallback to env/dev default
   let publicRegistrationEnabled;
   try {
@@ -34,11 +43,13 @@ router.post('/isolated/register', async (req, res) => {
 
   let { username, email, password } = req.body;
   // Use default dev credentials if not provided in dev env
-  if (process.env.NODE_ENV !== 'production') {
+  const allowDevAuto = process.env.ALLOW_DEV_AUTOLOGIN === 'true' && process.env.NODE_ENV !== 'production';
+  if (allowDevAuto) {
     username = username || 'dev-admin';
     email = email || 'dev-mail@steelchunk.eu';
     password = password || 'dev-pw';
   }
+
   if (!username || !email || !password) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
@@ -47,15 +58,45 @@ router.post('/isolated/register', async (req, res) => {
   if (dbCheck.rows.length > 0) {
     return res.status(409).json({ error: 'User already exists' });
   }
-  const passwordHash = await User.hashPassword(password);
-  // Make the first registered user a super_admin (only the very first)
-  const dbCount = await pool.query('SELECT COUNT(*) FROM users');
-  const role = dbCount.rows[0].count === '0' ? 'super_admin' : 'user';
-  const dbRes = await pool.query(
-    'INSERT INTO users (username, email, password_hash, role, is_active) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-    [username, email, passwordHash, role, true]
-  );
-  const user = dbRes.rows[0];
+
+  // Validate password strength
+  const { isStrongPassword } = require('../utils/validation');
+  const pwCheck = isStrongPassword(password);
+  if (!pwCheck.ok) return res.status(400).json({ error: pwCheck.reason });
+
+  // Acquire advisory lock to avoid race when creating the very first user
+  const LOCK_KEY = 123456789; // arbitrary constant for app-level registration lock
+  let user = null;
+  let role = 'user';
+  try {
+    await pool.query('SELECT pg_advisory_lock($1)', [LOCK_KEY]);
+
+    const passwordHash = await User.hashPassword(password);
+
+    // Make the first registered user a super_admin (only the very first)
+    const dbCount = await pool.query('SELECT COUNT(*) FROM users');
+    role = dbCount.rows[0].count === '0' ? 'super_admin' : 'user';
+
+    let dbRes;
+    try {
+      dbRes = await pool.query(
+        'INSERT INTO users (username, email, password_hash, role, is_active) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+        [username, email, passwordHash, role, true]
+      );
+    } catch (err) {
+      // Handle unique constraint (race or dupes)
+      if (err.code === '23505') {
+        return res.status(409).json({ error: 'User with that username or email already exists' });
+      }
+      throw err;
+    }
+
+    user = dbRes.rows[0];
+  } finally {
+    // Release advisory lock if held
+    try { await pool.query('SELECT pg_advisory_unlock($1)', [LOCK_KEY]); } catch (unlockErr) { /* ignore */ }
+  }
+
   const token = generateToken(user);
 
   // If this is the first user, disable public registration automatically
@@ -109,18 +150,20 @@ router.post('/isolated/register', async (req, res) => {
 // Login endpoint
 router.post('/isolated/login', async (req, res) => {
   let { username, password } = req.body;
-  // Use default dev credentials if not provided in dev env
-  if (process.env.NODE_ENV !== 'production') {
+  // Dev auto-login gated behind ALLOW_DEV_AUTOLOGIN
+  const allowDevAuto = process.env.ALLOW_DEV_AUTOLOGIN === 'true' && process.env.NODE_ENV !== 'production';
+  if (allowDevAuto) {
     username = username || 'dev-admin';
     password = password || 'dev-pw';
   }
+
   // Find user in DB
   const dbRes = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
-  const user = dbRes.rows[0];
-  if (!user || !user.is_active) {
+  const row = dbRes.rows[0];
+  if (!row || !row.is_active) {
     try {
       await logAudit({
-        userId: user ? user.id : null,
+        userId: row ? row.id : null,
         username: username,
         action: 'LOGIN_FAILED',
         description: 'Invalid credentials - user not found or inactive',
@@ -131,12 +174,14 @@ router.post('/isolated/login', async (req, res) => {
     }
     return res.status(401).json({ error: 'Invalid credentials' });
   }
-  const valid = await bcrypt.compare(password, user.password_hash);
-  if (!valid) {
+
+  const userObj = new User({ id: row.id, username: row.username, email: row.email, passwordHash: row.password_hash });
+  const { ok, needsRehash } = await userObj.verifyPassword(password);
+  if (!ok) {
     try {
       await logAudit({
-        userId: user.id,
-        username: user.username,
+        userId: row.id,
+        username: row.username,
         action: 'LOGIN_FAILED',
         description: 'Invalid credentials - wrong password',
         req
@@ -146,21 +191,32 @@ router.post('/isolated/login', async (req, res) => {
     }
     return res.status(401).json({ error: 'Invalid credentials' });
   }
-  const token = generateToken(user);
+
+  // If we verified against bcrypt, rehash with Argon2 and update DB for migration
+  if (needsRehash && row.password_hash && row.password_hash.startsWith('$2')) {
+    try {
+      const newHash = await User.hashPassword(password);
+      await pool.query('UPDATE users SET password_hash = $1 WHERE id = $2', [newHash, row.id]);
+    } catch (err) {
+      console.error('❌ Failed to migrate bcrypt hash to argon2:', err);
+    }
+  }
+
+  const token = generateToken(row);
   // Optionally set session cookie for compatibility
-  req.session.userId = user.id;
-  req.session.username = user.username;
-  req.session.role = user.role;
-  req.session.email = user.email;
+  req.session.userId = row.id;
+  req.session.username = row.username;
+  req.session.role = row.role;
+  req.session.email = row.email;
 
   // Audit log: successful login
   try {
     await logAudit({
-      userId: user.id,
-      username: user.username,
+      userId: row.id,
+      username: row.username,
       action: 'LOGIN',
       tableName: 'users',
-      recordId: user.id,
+      recordId: row.id,
       description: 'User logged in via isolated login',
       req
     });
@@ -168,7 +224,25 @@ router.post('/isolated/login', async (req, res) => {
     console.error('❌ Failed to write audit log for login:', err);
   }
 
-  res.json({ message: 'Login successful', user: { id: user.id, username: user.username, email: user.email, role: user.role }, token });
+  res.json({ message: 'Login successful', user: { id: row.id, username: row.username, email: row.email, role: row.role }, token });
+});
+
+// Public endpoint to check if public registration is enabled
+router.get('/registration-status', async (req, res) => {
+  try {
+    const settingRes = await pool.query("SELECT setting_value FROM front_page_settings WHERE setting_key = 'public_registration_enabled'");
+    let enabled;
+    if (settingRes.rows.length > 0) {
+      enabled = settingRes.rows[0].setting_value === 'true';
+    } else {
+      enabled = process.env.PUBLIC_REGISTRATION_ENABLED === 'true' || process.env.NODE_ENV !== 'production';
+    }
+    res.json({ enabled });
+  } catch (err) {
+    console.warn('⚠️ Failed to read public registration setting from DB, falling back to environment settings:', err.message);
+    const enabled = process.env.PUBLIC_REGISTRATION_ENABLED === 'true' || process.env.NODE_ENV !== 'production';
+    res.json({ enabled });
+  }
 });
 
 // Invite acceptance endpoints
@@ -212,6 +286,11 @@ router.post('/invite/:token/accept', async (req, res) => {
     if (!matchedInvite || matchedInvite.used || new Date(matchedInvite.expires_at) <= new Date()) {
       return res.status(400).json({ error: 'Invalid or expired token' });
     }
+
+    // Validate password strength
+    const { isStrongPassword } = require('../utils/validation');
+    const pwCheck = isStrongPassword(password);
+    if (!pwCheck.ok) return res.status(400).json({ error: pwCheck.reason });
 
     // Set user's password
     const passwordHash = await User.hashPassword(password);

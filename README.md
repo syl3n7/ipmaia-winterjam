@@ -29,6 +29,17 @@ cp .env.example .env
 nano .env
 ```
 
+### Security notes & Argon2
+- Install Argon2 in the backend for strong password hashing:
+
+```bash
+cd backend
+npm install argon2
+```
+
+- To enable the legacy dev auto-login behavior during local testing, set `ALLOW_DEV_AUTOLOGIN=true` in your `.env` (disabled by default).
+- Recommended Argon2 / bcrypt environment variables are included in `.env.example` (ARGON2_* and BCRYPT_SALT_ROUNDS).
+
 ### 2. Deploy with Docker (Recommended)
 ```bash
 # Start everything with automated migration

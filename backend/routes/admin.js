@@ -1028,10 +1028,12 @@ router.put('/registration', requireSuperAdmin, async (req, res) => {
     const { enabled } = req.body;
     if (typeof enabled !== 'boolean') return res.status(400).json({ error: 'Invalid value for enabled' });
 
+    console.log('PUT /admin/registration - updating enabled =>', enabled);
     await pool.query(
       "INSERT INTO front_page_settings (setting_key, setting_value, setting_type, display_name, section, display_order) VALUES ('public_registration_enabled', $1, 'boolean', 'Allow Public Registration', 'auth', 0) ON CONFLICT (setting_key) DO UPDATE SET setting_value = $1, updated_at = CURRENT_TIMESTAMP",
       [enabled ? 'true' : 'false']
     );
+    console.log('PUT /admin/registration - DB update complete');
 
     // Audit log
     try {
@@ -1058,6 +1060,43 @@ router.put('/registration', requireSuperAdmin, async (req, res) => {
 // Invite a new user (admin only) - creates user if not exists and returns invite token (link)
 const { sendInviteEmail, SMTP_CONFIGURED } = require('../utils/email');
 const { logAudit } = require('../utils/auditLog');
+const { isStrongPassword } = require('../utils/validation');
+const User = require('../models/User');
+
+// Super Admin: change user's password
+router.put('/users/:id/password', requireSuperAdmin, async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const { password } = req.body;
+    if (!password) return res.status(400).json({ error: 'Missing password' });
+
+    const pwCheck = isStrongPassword(password);
+    if (!pwCheck.ok) return res.status(400).json({ error: pwCheck.reason });
+
+    const passwordHash = await User.hashPassword(password);
+    await pool.query('UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2', [passwordHash, userId]);
+
+    try {
+      await logAudit({
+        userId: req.session.userId,
+        username: req.session.username,
+        action: 'UPDATE',
+        tableName: 'users',
+        recordId: userId,
+        description: 'Super admin changed user password',
+        newValues: { password_reset: true },
+        req
+      });
+    } catch (err) {
+      console.error('❌ Failed to write audit log for password reset:', err);
+    }
+
+    res.json({ success: true, message: 'Password updated' });
+  } catch (error) {
+    console.error('Error updating user password:', error);
+    res.status(500).json({ error: 'Failed to update password' });
+  }
+});
 
 router.post('/users/invite', requireSuperAdmin, async (req, res) => {
   try {
