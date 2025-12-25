@@ -61,7 +61,7 @@ function LoginPageContent() {
           {/* Isolated Auth Form */}
           <div className="bg-white/5 rounded-lg p-4 mb-6">
             <h3 className="text-white font-semibold mb-2">Login / Register</h3>
-            <IsolatedAuthForm returnUrl={returnUrl} />
+            <IsolatedAuthForm returnUrl={returnUrl} registrationEnabled={registrationEnabled} />
           </div>
         </div>
 
@@ -79,7 +79,7 @@ function LoginPageContent() {
   );
 }
 
-function IsolatedAuthForm({ returnUrl }) {
+function IsolatedAuthForm({ returnUrl, registrationEnabled }) {
   const [mode, setMode] = useState('login');
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
