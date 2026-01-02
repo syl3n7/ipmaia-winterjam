@@ -10,7 +10,7 @@
     "health": "node scripts/health-check.js"
   },
   "dependencies": {
-    "express": "^4.18.2",
+    "express": "^4.22.1",
     "pg": "^8.13.0",
     "bcryptjs": "^2.4.3",
     "jsonwebtoken": "^9.0.2",
