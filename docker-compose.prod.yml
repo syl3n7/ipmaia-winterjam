@@ -21,6 +21,8 @@ services:
   backend:
     image: ghcr.io/syl3n7/ipmaia-winterjam-backend:latest
     restart: unless-stopped
+    ports:
+      - "3013:3001"
     depends_on:
       db:
         condition: service_healthy
@@ -61,6 +63,8 @@ services:
   frontend:
     image: ghcr.io/syl3n7/ipmaia-winterjam:latest
     restart: unless-stopped
+    ports:
+      - "3011:3000"
     depends_on:
       - backend
     environment:
@@ -73,23 +77,23 @@ services:
       - winterjam-network
 
   # Nginx Reverse Proxy with SSL
-  nginx:
-    image: nginx:alpine
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx.prod.conf:/etc/nginx/nginx.conf:ro
-      - ./ssl:/etc/nginx/ssl:ro
-      - ./maintenance.html:/usr/share/nginx/html/maintenance.html:ro
-      - /tmp/maintenance_flag:/var/maintenance_flag:ro
-      - backend_uploads:/var/www/uploads:ro
-    depends_on:
-      - frontend
-      - backend
-    networks:
-      - winterjam-network
+  # nginx:
+  #   image: nginx:alpine
+  #   restart: unless-stopped
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   volumes:
+  #     - ./nginx.prod.conf:/etc/nginx/nginx.conf:ro
+  #     - ./ssl:/etc/nginx/ssl:ro
+  #     - ./maintenance.html:/usr/share/nginx/html/maintenance.html:ro
+  #     - /tmp/maintenance_flag:/var/maintenance_flag:ro
+  #     - backend_uploads:/var/www/uploads:ro
+  #   depends_on:
+  #     - frontend
+  #     - backend
+  #   networks:
+  #     - winterjam-network
 
   # Watchtower - Auto-update containers when new images are pushed
   watchtower:
