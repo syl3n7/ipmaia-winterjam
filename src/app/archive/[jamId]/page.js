@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { X, Trophy, ChevronDown } from 'lucide-react';
-import { notFound } from 'next/navigation';
+import { notFound, useParams } from 'next/navigation';
 import Background from "../../../components/Background";
 import Link from "next/link";
 
@@ -9,8 +9,8 @@ import Link from "next/link";
 export const dynamicParams = true;
 export const dynamic = 'force-dynamic';
 
-export default function GameJamArchivePage({ params }) {
-  const { jamId } = params;
+export default function GameJamArchivePage() {
+  const { jamId } = useParams();
   const [jamData, setJamData] = useState(null);
   const [games, setGames] = useState([]);
   const [showAllGames, setShowAllGames] = useState(false);
