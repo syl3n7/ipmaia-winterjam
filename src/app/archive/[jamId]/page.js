@@ -5,6 +5,10 @@ import { notFound } from 'next/navigation';
 import Background from "../../../components/Background";
 import Link from "next/link";
 
+// Tell Next.js to generate pages dynamically for any jamId
+export const dynamicParams = true;
+export const dynamic = 'force-dynamic';
+
 export default function GameJamArchivePage({ params }) {
   const { jamId } = params;
   const [jamData, setJamData] = useState(null);
