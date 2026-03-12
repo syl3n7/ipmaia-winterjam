@@ -12,6 +12,7 @@ const csrf = require('lusca').csrf;
 require('dotenv').config();
 
 const { pool } = require('./config/database');
+const { getClientIp } = require('./utils/clientIp');
 const authRoutes = require('./routes/auth');
 const gameJamRoutes = require('./routes/gamejams');
 const gameRoutes = require('./routes/games');
@@ -24,7 +25,14 @@ const sponsorRoutes = require('./routes/sponsors');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Trust proxy (important for reverse proxy setups like Zoraxy/NPM)
+// Trust proxy (important for reverse proxy setups like Zoraxy/NPM).
+// Your reverse proxy MUST forward the following headers so the backend can
+// identify real client IPs instead of the proxy's own IP:
+//   X-Forwarded-For: <client-ip>, <proxy-ip>   (standard, usually added automatically)
+//   X-Real-IP: <client-ip>                      (Nginx / Zoraxy custom header)
+// In Nginx:  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+//            proxy_set_header X-Real-IP $remote_addr;
+// In Zoraxy: enable "X-Forwarded-For" / "X-Real-IP" passthrough in the reverse proxy rule.
 app.set('trust proxy', 1);
 
 // Middleware to extract and attach client info to request
@@ -81,19 +89,46 @@ app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" }, // Allow cross-origin images
 }));
 
+// Health check and version endpoints are intentionally placed BEFORE the
+// global rate limiter so that monitoring tools and reverse proxy health
+// probes are never throttled regardless of request frequency.
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'OK', 
+    timestamp: new Date().toISOString(),
+    version: process.env.APP_VERSION || '1.0.0-dev',
+    buildDate: process.env.BUILD_DATE || 'unknown',
+    gitSha: process.env.GIT_SHA || 'unknown'
+  });
+});
+
+app.get('/api/version', (req, res) => {
+  res.json({
+    service: 'backend',
+    version: process.env.APP_VERSION || '1.0.0-dev',
+    buildDate: process.env.BUILD_DATE || 'unknown',
+    gitSha: process.env.GIT_SHA || 'unknown',
+    nodeVersion: process.version,
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
+
 // Rate limiting
 const limiter = rateLimit({
   windowMs: process.env.NODE_ENV === 'production' ? 15 * 60 * 1000 : 60 * 60 * 1000, // 15 min prod, 1 hour dev
   max: (req, res) => {
     if (req.session && req.session.role === 'super_admin') {
-      return process.env.NODE_ENV === 'production' ? 1000 : 10000; // Higher limit for super admins
+      return process.env.NODE_ENV === 'production' ? 2000 : 10000; // Higher limit for super admins
     }
-    return process.env.NODE_ENV === 'production' ? 100 : 1000; // Standard limits
+    return process.env.NODE_ENV === 'production' ? 300 : 1000; // Standard limits (relaxed from 100)
   },
   message: 'Too many requests from this IP, please try again later.',
+  // Use the real client IP extracted from proxy headers so that the
+  // reverse proxy's IP is never counted instead of the actual client IP.
+  keyGenerator: (req) => getClientIp(req),
   // Skip rate limiting for internal Docker network requests
   skip: (req) => {
-    const ip = req.ip || req.connection.remoteAddress || '';
+    const ip = getClientIp(req);
     // Docker bridge network typically uses 172.x.x.x range
     // Also skip localhost and private network ranges
     const isInternalIP = 
@@ -236,28 +271,8 @@ app.use('/api/frontpage', frontPageRoutes);
 app.use('/api/rules', rulesRoutes);
 app.use('/api/sponsors', sponsorRoutes);
 
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
-    timestamp: new Date().toISOString(),
-    version: process.env.APP_VERSION || '1.0.0-dev',
-    buildDate: process.env.BUILD_DATE || 'unknown',
-    gitSha: process.env.GIT_SHA || 'unknown'
-  });
-});
-
-// Version endpoint
-app.get('/api/version', (req, res) => {
-  res.json({
-    service: 'backend',
-    version: process.env.APP_VERSION || '1.0.0-dev',
-    buildDate: process.env.BUILD_DATE || 'unknown',
-    gitSha: process.env.GIT_SHA || 'unknown',
-    nodeVersion: process.version,
-    environment: process.env.NODE_ENV || 'development'
-  });
-});
+// Health check endpoint and version endpoint are defined before the rate
+// limiter above; these duplicate definitions are removed.
 
 // Debug endpoint to check file system
 app.get('/debug/files', (req, res) => {
