@@ -5,6 +5,7 @@ const fs = require('fs').promises;
 const rateLimit = require('express-rate-limit');
 const { pool } = require('../config/database');
 const { requireAdmin } = require('./auth');
+const { getClientIp } = require('../utils/clientIp');
 const router = express.Router();
 
 // Rate limiter for logo uploads
@@ -14,10 +15,7 @@ const uploadLimiter = rateLimit({
   message: 'Too many upload attempts, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => {
-    const ip = req.ip || req.connection.remoteAddress || '0.0.0.0';
-    return ip.split(':')[0];
-  }
+  keyGenerator: (req) => getClientIp(req)
 });
 
 // Configure multer for sponsor logo uploads
