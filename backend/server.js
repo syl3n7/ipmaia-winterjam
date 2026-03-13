@@ -89,6 +89,30 @@ app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" }, // Allow cross-origin images
 }));
 
+// CORS configuration – must be applied BEFORE health/version endpoints so
+// that browser cross-origin requests to those routes receive the correct
+// Access-Control-Allow-Origin header.
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    // Allow specific frontend URL for credentials
+    const allowedOrigins = [
+      process.env.FRONTEND_URL || 'http://localhost:3000',
+      'https://ipmaia-winterjam.pt',
+      'http://localhost:3000',
+    ];
+    
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(null, true); // Allow all origins for now (public API)
+    }
+  },
+  credentials: true,
+}));
+
 // Health check and version endpoints are intentionally placed BEFORE the
 // global rate limiter so that monitoring tools and reverse proxy health
 // probes are never throttled regardless of request frequency.
@@ -148,28 +172,6 @@ const limiter = rateLimit({
 });
 
 app.use(limiter);
-
-// CORS configuration
-app.use(cors({
-  origin: (origin, callback) => {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-    
-    // Allow specific frontend URL for credentials
-    const allowedOrigins = [
-      process.env.FRONTEND_URL || 'http://localhost:3000',
-      'https://ipmaia-winterjam.pt',
-      'http://localhost:3000',
-    ];
-    
-    if (allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(null, true); // Allow all origins for now (public API)
-    }
-  },
-  credentials: true,
-}));
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
