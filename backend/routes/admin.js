@@ -1100,8 +1100,12 @@ router.put('/users/:id/password', requireSuperAdmin, async (req, res) => {
 
 router.post('/users/invite', requireSuperAdmin, async (req, res) => {
   try {
-    const { username, email, expiresOption, sendEmail } = req.body;
+    const { username, email, expiresOption, sendEmail, role } = req.body;
     if (!email || !username) return res.status(400).json({ error: 'Missing username or email' });
+
+    // Validate role — only allow user or admin via invite; super_admin must be promoted separately
+    const validInviteRoles = ['user', 'admin'];
+    const assignedRole = validInviteRoles.includes(role) ? role : 'user';
 
     // Rate limit: one invite per minute per admin
     const lastInvite = await pool.query(
@@ -1123,9 +1127,13 @@ router.post('/users/invite', requireSuperAdmin, async (req, res) => {
       // Create user with no password (user will set password via invite link)
       const insert = await pool.query(
         'INSERT INTO users (username, email, password_hash, role, is_active) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-        [username, email, '', 'user', true]
+        [username, email, '', assignedRole, true]
       );
       user = insert.rows[0];
+    } else if (user.role !== assignedRole) {
+      // If user already exists and role differs, update it
+      await pool.query('UPDATE users SET role = $1, updated_at = NOW() WHERE id = $2', [assignedRole, user.id]);
+      user.role = assignedRole;
     }
 
     // Compute expiresAt based on option (defaults to 7 days)

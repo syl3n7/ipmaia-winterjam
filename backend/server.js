@@ -6,7 +6,6 @@ const rateLimit = require('express-rate-limit');
 const cookieParser = require('cookie-parser');
 const session = require('express-session');
 const pgSession = require('connect-pg-simple')(session);
-const passport = require('passport');
 const path = require('path');
 const csrf = require('lusca').csrf;
 require('dotenv').config();
@@ -183,7 +182,9 @@ function shouldSkipCsrf(req) {
     if (
       req.path.startsWith('/api/auth/isolated/register') ||
       req.path.startsWith('/api/auth/isolated/login') ||
-      req.path.startsWith('/api/auth/isolated/logout')
+      req.path.startsWith('/api/auth/isolated/logout') ||
+      req.path.startsWith('/api/auth/verify-email') ||
+      req.path.startsWith('/api/auth/resend-verification')
     ) {
       return true;
     }
@@ -212,24 +213,6 @@ module.exports.shouldSkipCsrf = shouldSkipCsrf;
 app.use((req, res, next) => {
   if (shouldSkipCsrf(req)) return next();
   csrf({ header: 'csrf-token' })(req, res, next);
-});
-
-// Initialize Passport
-app.use(passport.initialize());
-app.use(passport.session());
-
-// Passport serialization (required for sessions)
-passport.serializeUser((user, done) => {
-  done(null, user.id);
-});
-
-passport.deserializeUser(async (id, done) => {
-  try {
-    const result = await pool.query('SELECT * FROM users WHERE id = $1', [id]);
-    done(null, result.rows[0]);
-  } catch (error) {
-    done(error);
-  }
 });
 
 // Serve static files (uploaded images, etc.)
