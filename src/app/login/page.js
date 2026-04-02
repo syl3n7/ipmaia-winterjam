@@ -86,6 +86,10 @@ function IsolatedAuthForm({ returnUrl, registrationEnabled }) {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [errorCode, setErrorCode] = useState('');
+  const [notice, setNotice] = useState('');
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendDone, setResendDone] = useState(false);
   const router = useRouter();
   const { checkAuth } = useAdminAuth();
 
@@ -93,6 +97,8 @@ function IsolatedAuthForm({ returnUrl, registrationEnabled }) {
     e.preventDefault();
     setLoading(true);
     setError('');
+    setErrorCode('');
+    setNotice('');
     try {
       const endpoint = mode === 'login' ? '/auth/isolated/login' : '/auth/isolated/register';
       const body = mode === 'login'
@@ -102,9 +108,19 @@ function IsolatedAuthForm({ returnUrl, registrationEnabled }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
+        credentials: 'include',
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Authentication failed');
+      if (!res.ok) {
+        setErrorCode(data.code || '');
+        throw new Error(data.error || 'Authentication failed');
+      }
+      if (mode === 'register' && data.verificationPending) {
+        setNotice('Registration successful! Please check your email and click the verification link before logging in.');
+        setMode('login');
+        setPassword('');
+        return;
+      }
       if (data.token) {
         // Token is returned for compatibility but sessions are the primary auth mechanism
         await checkAuth();
@@ -117,14 +133,38 @@ function IsolatedAuthForm({ returnUrl, registrationEnabled }) {
     }
   };
 
+  const handleResendVerification = async () => {
+    setResendLoading(true);
+    setResendDone(false);
+    try {
+      await fetch(`${API_BASE_URL}/auth/resend-verification`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username }),
+      });
+    } catch {
+      // Ignore errors — the endpoint always returns a generic message
+    } finally {
+      setResendLoading(false);
+      setResendDone(true);
+    }
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="flex space-x-2 mb-2">
-        <button type="button" className={`px-3 py-1 rounded ${mode === 'login' ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300'}`} onClick={() => setMode('login')}>Login</button>
+        <button type="button" className={`px-3 py-1 rounded ${mode === 'login' ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300'}`} onClick={() => { setMode('login'); setError(''); setErrorCode(''); setNotice(''); }}>Login</button>
         {registrationEnabled && (
-          <button type="button" className={`px-3 py-1 rounded ${mode === 'register' ? 'bg-purple-600 text-white' : 'bg-gray-700 text-gray-300'}`} onClick={() => setMode('register')}>Register</button>
+          <button type="button" className={`px-3 py-1 rounded ${mode === 'register' ? 'bg-purple-600 text-white' : 'bg-gray-700 text-gray-300'}`} onClick={() => { setMode('register'); setError(''); setErrorCode(''); setNotice(''); }}>Register</button>
         )}
       </div>
+
+      {notice && (
+        <div className="bg-green-500/20 border border-green-500/30 rounded-lg p-3">
+          <p className="text-green-300 text-sm">{notice}</p>
+        </div>
+      )}
+
       <input
         type="text"
         className="w-full p-2 rounded bg-gray-900 text-white border border-gray-700"
@@ -158,7 +198,28 @@ function IsolatedAuthForm({ returnUrl, registrationEnabled }) {
       >
         {loading ? 'Processing...' : mode === 'login' ? 'Login' : 'Register'}
       </button>
-      {error && <div className="text-red-400 text-sm mt-2">{error}</div>}
+
+      {error && (
+        <div className="text-red-400 text-sm mt-2">
+          {error}
+          {errorCode === 'EMAIL_NOT_VERIFIED' && (
+            <div className="mt-2">
+              {resendDone ? (
+                <p className="text-green-400 text-xs">Verification email sent. Check your inbox.</p>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleResendVerification}
+                  disabled={resendLoading}
+                  className="text-blue-400 underline text-xs hover:text-blue-300 disabled:opacity-50"
+                >
+                  {resendLoading ? 'Sending…' : 'Resend verification email'}
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      )}
     </form>
   );
 }

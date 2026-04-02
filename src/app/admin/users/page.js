@@ -19,6 +19,7 @@ export default function AdminUsers() {
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [inviteUsername, setInviteUsername] = useState('');
   const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteRole, setInviteRole] = useState('user');
   const [inviteExpires, setInviteExpires] = useState('7d');
   const [inviteSendEmail, setInviteSendEmail] = useState(true);
   const [inviteError, setInviteError] = useState('');
@@ -72,6 +73,7 @@ export default function AdminUsers() {
     setInviteError('');
     setInviteUsername('');
     setInviteEmail('');
+    setInviteRole('user');
     setInviteExpires('7d');
     setInviteSendEmail(true);
   };
@@ -83,7 +85,7 @@ export default function AdminUsers() {
       const res = await apiFetch(`${API_BASE_URL}/admin/users/invite`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: inviteUsername, email: inviteEmail, expiresOption: inviteExpires, sendEmail: inviteSendEmail })
+        body: JSON.stringify({ username: inviteUsername, email: inviteEmail, role: inviteRole, expiresOption: inviteExpires, sendEmail: inviteSendEmail })
       }, 'create invite');
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Invite failed');
@@ -290,8 +292,15 @@ const response = await apiFetch(`${API_BASE_URL}/admin/users/${userId}`, {
             <div className="space-y-3">
               <input type="text" placeholder="Username" value={inviteUsername} onChange={e => setInviteUsername(e.target.value)} className="w-full p-2 rounded bg-gray-900 text-white" />
               <input type="email" placeholder="Email" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} className="w-full p-2 rounded bg-gray-900 text-white" />
-              <div className="flex gap-2">
-                <label className="text-sm text-gray-300">Expires:</label>
+              <div className="flex gap-2 items-center">
+                <label className="text-sm text-gray-300 whitespace-nowrap">Role:</label>
+                <select value={inviteRole} onChange={e => setInviteRole(e.target.value)} className="bg-gray-900 p-2 rounded text-white">
+                  <option value="user">User</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+              <div className="flex gap-2 items-center">
+                <label className="text-sm text-gray-300 whitespace-nowrap">Expires:</label>
                 <select value={inviteExpires} onChange={e => setInviteExpires(e.target.value)} className="bg-gray-900 p-2 rounded text-white">
                   <option value="1h">1 hour</option>
                   <option value="3d">3 days</option>

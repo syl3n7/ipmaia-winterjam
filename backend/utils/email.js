@@ -39,7 +39,7 @@ async function sendVerificationEmail(to, verificationLink) {
     const info = await transporter.sendMail({
       from: process.env.FROM_EMAIL,
       to,
-      subject: 'Verify your email — IPMAIA WinterJam',
+      subject: 'Verify your email -- IPMAIA WinterJam',
       text: `Please verify your email address by visiting the following link:\n\n${verificationLink}\n\nThis link expires in 24 hours. If you did not register, you can safely ignore this email.`,
       html: `<p>Please verify your email address to complete your <strong>IPMAIA WinterJam</strong> registration.</p><p><a href="${verificationLink}">Verify my email</a></p><p>This link expires in 24 hours. If you did not register, you can safely ignore this email.</p>`
     });

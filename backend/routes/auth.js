@@ -11,6 +11,9 @@ const rateLimit = require('express-rate-limit');
 
 const router = express.Router();
 
+const EMAIL_VERIFICATION_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
+const RESEND_VERIFICATION_MESSAGE = 'If your account exists and is unverified, a new email has been sent.';
+
 // Tight rate limit for public registration to reduce bot/spam risk
 const registrationLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -155,7 +158,7 @@ router.post('/isolated/register', registrationLimiter, async (req, res) => {
     try {
       const verifyToken = crypto.randomBytes(32).toString('hex');
       const tokenHash = await bcrypt.hash(verifyToken, 10);
-      const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+      const expiresAt = new Date(Date.now() + EMAIL_VERIFICATION_EXPIRY_MS);
 
       await pool.query(
         'INSERT INTO email_verification_tokens (user_id, token_hash, expires_at) VALUES ($1, $2, $3)',
@@ -493,12 +496,12 @@ router.post('/resend-verification', async (req, res) => {
 
     // Always return success to avoid user enumeration
     if (!user || user.email_verified || !SMTP_CONFIGURED) {
-      return res.json({ message: 'If your account exists and is unverified, a new email has been sent.' });
+      return res.json({ message: RESEND_VERIFICATION_MESSAGE });
     }
 
     const verifyToken = crypto.randomBytes(32).toString('hex');
     const tokenHash = await bcrypt.hash(verifyToken, 10);
-    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    const expiresAt = new Date(Date.now() + EMAIL_VERIFICATION_EXPIRY_MS);
 
     // Invalidate old tokens for this user
     await pool.query(
@@ -514,7 +517,7 @@ router.post('/resend-verification', async (req, res) => {
     const verifyLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/verify-email/${verifyToken}`;
     await sendVerificationEmail(user.email, verifyLink);
 
-    res.json({ message: 'If your account exists and is unverified, a new email has been sent.' });
+    res.json({ message: RESEND_VERIFICATION_MESSAGE });
   } catch (err) {
     console.error('Error resending verification:', err);
     res.status(500).json({ error: 'Failed to resend verification email.' });
