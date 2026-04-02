@@ -110,28 +110,51 @@ class GameJam {
   static async update(id, data) {
     console.log('🔄 GameJam.update - ID:', id);
     console.log('🔄 GameJam.update - Data:', JSON.stringify(data, null, 2));
-    
+
+    // Strict allowlist — only these columns may be updated via this method.
+    // Prevents column-name injection when req.body is passed directly as `data`.
+    const ALLOWED_FIELDS = new Set([
+      'name', 'theme', 'description',
+      'start_date', 'end_date',
+      'registration_start_date', 'registration_end_date',
+      'registration_url', 'rules_pdf_url',
+      'is_active', 'banner_image_url',
+      'introduction', 'prizes_content', 'schedule_content',
+      'reception_datetime', 'theme_announcement_datetime',
+      'awards_ceremony_datetime', 'evaluation_datetime',
+      'show_theme', 'show_description', 'show_start_date', 'show_end_date',
+      'date_fallback', 'show_registration_dates', 'registration_date_fallback',
+      'show_registration_url', 'show_rules_pdf_url', 'show_banner_image',
+      'banner_fallback', 'custom_fields', 'custom_fields_visibility',
+      'slug', 'archive_url'
+    ]);
+
     const fields = [];
     const values = [];
     let index = 1;
 
     // Date field names that should convert empty strings to null
-    const dateFields = [
-      'start_date', 'end_date', 
+    const dateFields = new Set([
+      'start_date', 'end_date',
       'registration_start_date', 'registration_end_date',
-      'reception_datetime', 'theme_announcement_datetime', 'awards_ceremony_datetime', 'evaluation_datetime'
-    ];
+      'reception_datetime', 'theme_announcement_datetime',
+      'awards_ceremony_datetime', 'evaluation_datetime'
+    ]);
 
     Object.keys(data).forEach(key => {
+      if (!ALLOWED_FIELDS.has(key)) {
+        console.log(`⏭️ Skipping disallowed field: ${key}`);
+        return;
+      }
       if (data[key] !== undefined) {
         let value = data[key];
-        
+
         // Convert empty strings to null for date/timestamp fields
-        if (dateFields.includes(key) && value === '') {
+        if (dateFields.has(key) && value === '') {
           value = null;
           console.log(`🔄 Converting empty ${key} to NULL`);
         }
-        
+
         // Convert objects to JSON strings for custom fields
         if (key === 'custom_fields' || key === 'custom_fields_visibility') {
           if (typeof value === 'object' && value !== null) {
@@ -139,7 +162,7 @@ class GameJam {
             console.log(`🔄 Converting ${key} object to JSON:`, value);
           }
         }
-        
+
         fields.push(`${key} = $${index}`);
         values.push(value);
         console.log(`📝 Field ${index}: ${key} = ${value} (type: ${typeof value})`);

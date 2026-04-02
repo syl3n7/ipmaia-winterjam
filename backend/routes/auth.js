@@ -1,14 +1,18 @@
 const express = require('express');
+const crypto = require('crypto');
 const User = require('../models/User');
 const { generateToken, verifyToken } = require('../utils/auth');
 const bcrypt = require('bcryptjs');
 const { pool } = require('../config/database');
-const passport = require('passport');
 const { logAudit } = require('../utils/auditLog');
+const { sendVerificationEmail, SMTP_CONFIGURED } = require('../utils/email');
 
 const rateLimit = require('express-rate-limit');
 
 const router = express.Router();
+
+const EMAIL_VERIFICATION_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
+const RESEND_VERIFICATION_MESSAGE = 'If your account exists and is unverified, a new email has been sent.';
 
 // Tight rate limit for public registration to reduce bot/spam risk
 const registrationLimiter = rateLimit({
@@ -97,8 +101,6 @@ router.post('/isolated/register', registrationLimiter, async (req, res) => {
     try { await pool.query('SELECT pg_advisory_unlock($1)', [LOCK_KEY]); } catch (unlockErr) { /* ignore */ }
   }
 
-  const token = generateToken(user);
-
   // If this is the first user, disable public registration automatically
   if (role === 'super_admin') {
     try {
@@ -144,7 +146,43 @@ router.post('/isolated/register', registrationLimiter, async (req, res) => {
     console.error('❌ Failed to write audit log for registration:', err);
   }
 
-  res.status(201).json({ message: 'User registered', user: { id: user.id, username: user.username, email: user.email, role: user.role }, token });
+  // Handle email verification
+  // Auto-verify: first user (super_admin), dev auto-login mode, or no SMTP configured
+  const autoVerify = role === 'super_admin' || allowDevAuto || !SMTP_CONFIGURED;
+  let verificationPending = false;
+
+  if (autoVerify) {
+    await pool.query('UPDATE users SET email_verified = true WHERE id = $1', [user.id]);
+  } else {
+    // Send verification email
+    try {
+      const verifyToken = crypto.randomBytes(32).toString('hex');
+      const tokenHash = await bcrypt.hash(verifyToken, 10);
+      const expiresAt = new Date(Date.now() + EMAIL_VERIFICATION_EXPIRY_MS);
+
+      await pool.query(
+        'INSERT INTO email_verification_tokens (user_id, token_hash, expires_at) VALUES ($1, $2, $3)',
+        [user.id, tokenHash, expiresAt]
+      );
+
+      const verifyLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/verify-email/${verifyToken}`;
+      await sendVerificationEmail(user.email, verifyLink);
+      verificationPending = true;
+    } catch (err) {
+      console.error('❌ Failed to send verification email:', err);
+      // Non-fatal: user can request resend later
+    }
+  }
+
+  const responseToken = generateToken(user);
+  res.status(201).json({
+    message: verificationPending
+      ? 'User registered. Please check your email to verify your account before logging in.'
+      : 'User registered',
+    user: { id: user.id, username: user.username, email: user.email, role: user.role, email_verified: autoVerify },
+    token: responseToken,
+    verificationPending
+  });
 });
 
 // Login endpoint
@@ -203,11 +241,32 @@ router.post('/isolated/login', async (req, res) => {
   }
 
   const token = generateToken(row);
-  // Optionally set session cookie for compatibility
+
+  // Check email verification — only enforce when SMTP is configured
+  if (SMTP_CONFIGURED && !row.email_verified) {
+    try {
+      await logAudit({
+        userId: row.id,
+        username: row.username,
+        action: 'LOGIN_FAILED',
+        description: 'Login blocked — email not verified',
+        req
+      });
+    } catch (err) {
+      console.error('❌ Failed to write audit log for unverified login:', err);
+    }
+    return res.status(401).json({
+      error: 'Please verify your email address before logging in. Check your inbox for the verification link.',
+      code: 'EMAIL_NOT_VERIFIED'
+    });
+  }
+
+  // Set session
   req.session.userId = row.id;
   req.session.username = row.username;
   req.session.role = row.role;
   req.session.email = row.email;
+  req.session.emailVerified = row.email_verified;
 
   // Audit log: successful login
   try {
@@ -217,14 +276,14 @@ router.post('/isolated/login', async (req, res) => {
       action: 'LOGIN',
       tableName: 'users',
       recordId: row.id,
-      description: 'User logged in via isolated login',
+      description: 'User logged in',
       req
     });
   } catch (err) {
     console.error('❌ Failed to write audit log for login:', err);
   }
 
-  res.json({ message: 'Login successful', user: { id: row.id, username: row.username, email: row.email, role: row.role }, token });
+  res.json({ message: 'Login successful', user: { id: row.id, username: row.username, email: row.email, role: row.role, email_verified: row.email_verified }, token });
 });
 
 // Public endpoint to check if public registration is enabled
@@ -292,9 +351,12 @@ router.post('/invite/:token/accept', async (req, res) => {
     const pwCheck = isStrongPassword(password);
     if (!pwCheck.ok) return res.status(400).json({ error: pwCheck.reason });
 
-    // Set user's password
+    // Set user's password and mark email as verified (invite link proves email ownership)
     const passwordHash = await User.hashPassword(password);
-    await pool.query('UPDATE users SET password_hash = $1, is_active = TRUE, updated_at = NOW() WHERE id = $2', [passwordHash, matchedInvite.user_id]);
+    await pool.query(
+      'UPDATE users SET password_hash = $1, is_active = TRUE, email_verified = TRUE, updated_at = NOW() WHERE id = $2',
+      [passwordHash, matchedInvite.user_id]
+    );
 
     // Mark invite used
     await pool.query('UPDATE invites SET used = TRUE WHERE id = $1', [matchedInvite.id]);
@@ -371,13 +433,95 @@ const requireSuperAdmin = (req, res, next) => {
 router.requireAdmin = requireAdmin;
 router.requireSuperAdmin = requireSuperAdmin;
 
-// OIDC and PocketID integrations removed — using isolated auth only
+// --- Email verification endpoints ---
 
-// Legacy login endpoint now points to isolated auth/login (use frontend /login)
-router.post('/login', async (req, res) => {
-  return res.status(403).json({
-    error: 'Legacy login disabled. Use the isolated authentication endpoints or the frontend /login page.'
-  });
+// Verify email address via token link
+router.get('/verify-email/:token', async (req, res) => {
+  try {
+    const { token } = req.params;
+    const rows = await pool.query(
+      'SELECT id, user_id, token_hash, expires_at, used FROM email_verification_tokens WHERE expires_at > NOW() AND used = false'
+    );
+
+    let matched = null;
+    for (const row of rows.rows) {
+      if (await bcrypt.compare(token, row.token_hash)) {
+        matched = row;
+        break;
+      }
+    }
+
+    if (!matched) {
+      return res.status(400).json({ error: 'Invalid or expired verification link.' });
+    }
+
+    await pool.query('UPDATE users SET email_verified = true WHERE id = $1', [matched.user_id]);
+    await pool.query('UPDATE email_verification_tokens SET used = true WHERE id = $1', [matched.id]);
+
+    try {
+      await logAudit({
+        userId: matched.user_id,
+        username: null,
+        action: 'EMAIL_VERIFIED',
+        tableName: 'users',
+        recordId: matched.user_id,
+        description: 'User verified email address',
+        newValues: { email_verified: true },
+        req
+      });
+    } catch (err) {
+      console.error('❌ Failed to write audit log for email verification:', err);
+    }
+
+    res.json({ success: true, message: 'Email verified. You can now log in.' });
+  } catch (err) {
+    console.error('Error verifying email:', err);
+    res.status(500).json({ error: 'Failed to verify email.' });
+  }
+});
+
+// Resend verification email
+router.post('/resend-verification', async (req, res) => {
+  const { username, email } = req.body;
+  if (!username && !email) {
+    return res.status(400).json({ error: 'Provide username or email.' });
+  }
+
+  try {
+    const result = await pool.query(
+      'SELECT id, email, email_verified FROM users WHERE (username = $1 OR email = $2) AND is_active = true',
+      [username || null, email || null]
+    );
+    const user = result.rows[0];
+
+    // Always return success to avoid user enumeration
+    if (!user || user.email_verified || !SMTP_CONFIGURED) {
+      return res.json({ message: RESEND_VERIFICATION_MESSAGE });
+    }
+
+    const verifyToken = crypto.randomBytes(32).toString('hex');
+    const tokenHash = await bcrypt.hash(verifyToken, 10);
+    const expiresAt = new Date(Date.now() + EMAIL_VERIFICATION_EXPIRY_MS);
+
+    // Invalidate old tokens for this user
+    await pool.query(
+      'UPDATE email_verification_tokens SET used = true WHERE user_id = $1 AND used = false',
+      [user.id]
+    );
+
+    await pool.query(
+      'INSERT INTO email_verification_tokens (user_id, token_hash, expires_at) VALUES ($1, $2, $3)',
+      [user.id, tokenHash, expiresAt]
+    );
+
+    const verifyLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/verify-email/${verifyToken}`;
+    await sendVerificationEmail(user.email, verifyLink);
+
+    res.json({ message: RESEND_VERIFICATION_MESSAGE });
+  } catch (err) {
+    console.error('Error resending verification:', err);
+    res.status(500).json({ error: 'Failed to resend verification email.' });
+  }
 });
 
 // Logout (existing session-based logout)
@@ -416,7 +560,8 @@ router.get('/me', (req, res) => {
     id: req.session.userId,
     username: req.session.username,
     email: req.session.email,
-    role: req.session.role
+    role: req.session.role,
+    emailVerified: req.session.emailVerified
   });
 });
 
