@@ -1,0 +1,92 @@
+# Local development/testing compose file.
+# Builds images from source (current branch) — no nginx, no SSL, no watchtower.
+# Frontend is on http://localhost:3000
+# Backend API is on http://localhost:3001
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-winterjam}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+    volumes:
+      - postgres_data_local:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-winterjam}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API — built from ./backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: development
+      PORT: 3001
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-winterjam}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      JWT_SECRET: ${JWT_SECRET:-local-dev-jwt-secret-change-me}
+      SESSION_SECRET: ${SESSION_SECRET:-local-dev-session-secret-change-me}
+      FRONTEND_URL: http://localhost:3000
+      # Enable registration so the first user (super_admin) can be created locally
+      PUBLIC_REGISTRATION_ENABLED: "true"
+      # OIDC — optional, leave blank to skip OIDC login
+      OIDC_ISSUER_URL: ${OIDC_ISSUER_URL:-}
+      OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-}
+      OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:-}
+      OIDC_REDIRECT_URI: ${OIDC_REDIRECT_URI:-http://localhost:3001/api/auth/oidc/callback}
+      OIDC_ADMIN_EMAIL: ${OIDC_ADMIN_EMAIL:-}
+      # PocketID — optional
+      POCKETID_API_URL: ${POCKETID_API_URL:-}
+      POCKETID_API_KEY: ${POCKETID_API_KEY:-}
+    volumes:
+      - backend_uploads_local:/app/uploads
+      - shared_public_local:/app/public
+      - /tmp/maintenance_flag:/var/maintenance_flag:rw
+    healthcheck:
+      test: ["CMD", "node", "scripts/health-check.js"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Frontend Next.js — built from . (project root)
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        # Must point to the URL your browser will use to reach the backend
+        NEXT_PUBLIC_API_URL: http://localhost:3001/api
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      NEXT_PUBLIC_API_URL: http://localhost:3001/api
+    volumes:
+      - shared_public_local:/app/public
+
+volumes:
+  postgres_data_local:
+  backend_uploads_local:
+  shared_public_local:

@@ -30,7 +30,7 @@ ENV NODE_ENV production
 # Install su-exec for safe user switching
 RUN apk add --no-cache su-exec
 
-RUN adduser -S nextjs -u 1001
+RUN addgroup -S nextjs && adduser -S nextjs -u 1001 -G nextjs
 
 # Copy public files to a temporary location for syncing to shared volume
 COPY --from=builder /app/public ./public-init
