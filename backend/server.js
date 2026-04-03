@@ -19,6 +19,7 @@ const publicRoutes = require('./routes/public');
 const frontPageRoutes = require('./routes/frontpage');
 const rulesRoutes = require('./routes/rules');
 const sponsorRoutes = require('./routes/sponsors');
+const { router: formsRoutes } = require('./routes/forms');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -183,6 +184,7 @@ function shouldSkipCsrf(req) {
       req.path.startsWith('/api/auth/isolated/register') ||
       req.path.startsWith('/api/auth/isolated/login') ||
       req.path.startsWith('/api/auth/isolated/logout') ||
+      req.path.startsWith('/api/auth/logout') ||
       req.path.startsWith('/api/auth/verify-email') ||
       req.path.startsWith('/api/auth/resend-verification')
     ) {
@@ -201,6 +203,11 @@ function shouldSkipCsrf(req) {
     ) {
       return true;
     }
+  }
+
+  // Public form submission is unauthenticated — always skip CSRF
+  if (req.path.startsWith('/api/forms')) {
+    return true;
   }
 
   return false;
@@ -240,6 +247,7 @@ app.use('/api/public', publicRoutes);
 app.use('/api/frontpage', frontPageRoutes);
 app.use('/api/rules', rulesRoutes);
 app.use('/api/sponsors', sponsorRoutes);
+app.use('/api/forms', formsRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {

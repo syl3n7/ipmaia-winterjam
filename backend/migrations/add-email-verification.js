@@ -33,4 +33,8 @@ async function addEmailVerification() {
   }
 }
 
-addEmailVerification().then(() => process.exit(0)).catch(() => process.exit(1));
+module.exports = { up: addEmailVerification };
+
+if (require.main === module) {
+  addEmailVerification().then(() => process.exit(0)).catch(() => process.exit(1));
+}

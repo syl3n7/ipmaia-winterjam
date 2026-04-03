@@ -126,7 +126,7 @@ class GameJam {
       'date_fallback', 'show_registration_dates', 'registration_date_fallback',
       'show_registration_url', 'show_rules_pdf_url', 'show_banner_image',
       'banner_fallback', 'custom_fields', 'custom_fields_visibility',
-      'slug', 'archive_url'
+      'slug', 'archive_url', 'registration_form_id'
     ]);
 
     const fields = [];
@@ -161,6 +161,11 @@ class GameJam {
             value = JSON.stringify(value);
             console.log(`🔄 Converting ${key} object to JSON:`, value);
           }
+        }
+
+        // Convert empty string to null for FK fields
+        if (key === 'registration_form_id' && (value === '' || value === 0)) {
+          value = null;
         }
 
         fields.push(`${key} = $${index}`);

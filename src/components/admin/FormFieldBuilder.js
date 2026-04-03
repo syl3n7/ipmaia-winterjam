@@ -13,6 +13,19 @@ const FIELD_TYPES = [
   { value: 'textarea', label: 'Textarea', icon: '⬜' },
 ];
 
+// Mapping targets — links form fields to game record fields
+const MAPS_TO_OPTIONS = [
+  { value: '', label: '— none —' },
+  { value: 'team_name', label: 'Team Name (game.team_name)' },
+  { value: 'title', label: 'Game Title (game.title)' },
+  { value: 'description', label: 'Game Description (game.description)' },
+  { value: 'team_members', label: 'Team Members — multiline list (game.team_members)' },
+  { value: 'member_name', label: 'Individual Member Name (adds to team_members)' },
+  { value: 'github_url', label: 'GitHub URL (game.github_url)' },
+  { value: 'itch_url', label: 'Itch.io URL (game.itch_url)' },
+  { value: 'contact_email', label: 'Contact Email (stored in custom fields)' },
+];
+
 export default function FormFieldBuilder({ field, index, onUpdate, onDelete }) {
   const [expanded, setExpanded] = useState(true);
 
@@ -48,7 +61,11 @@ export default function FormFieldBuilder({ field, index, onUpdate, onDelete }) {
           <span className="text-lg font-bold w-8 text-center text-gray-400">{index + 1}</span>
           <div className="flex-1">
             <p className="text-white font-medium">{field.label}</p>
-            <p className="text-gray-400 text-xs">{fieldTypeConfig?.label} {field.required && '• Required'}</p>
+            <p className="text-gray-400 text-xs">
+              {fieldTypeConfig?.label}
+              {field.required && ' • Required'}
+              {field.maps_to && <span className="text-purple-400"> • maps→{field.maps_to}</span>}
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -110,6 +127,22 @@ export default function FormFieldBuilder({ field, index, onUpdate, onDelete }) {
             >
               {FIELD_TYPES.map(t => (
                 <option key={t.value} value={t.value}>{t.label}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Maps To */}
+          <div>
+            <label className="block text-xs font-semibold text-gray-300 mb-1">
+              Maps to Game Field <span className="text-purple-400">(for auto team/game creation)</span>
+            </label>
+            <select
+              value={field.maps_to || ''}
+              onChange={(e) => onUpdate(field.id, { maps_to: e.target.value })}
+              className="w-full px-2 py-1 bg-gray-600 border border-gray-500 rounded text-sm text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            >
+              {MAPS_TO_OPTIONS.map(opt => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
               ))}
             </select>
           </div>
@@ -180,3 +213,4 @@ export default function FormFieldBuilder({ field, index, onUpdate, onDelete }) {
     </div>
   );
 }
+

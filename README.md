@@ -2,7 +2,7 @@
 
 # IPMAIA WinterJam Website 🏔️
 
-A comprehensive web application for IPMAIA's WinterJam event - a 45-hour game development competition featuring automated database migrations, OIDC authentication, and a complete admin management system.
+A comprehensive web application for IPMAIA's WinterJam event - a 45-hour game development competition featuring automated database migrations, local admin authentication, and a complete admin management system.
 
 ## ✨ Features
 
@@ -124,7 +124,7 @@ docker compose logs backend | grep -E "(⏳|🎯|✅|❌|🚀)"
 **Backend:**
 - Node.js + Express
 - PostgreSQL database
-- OIDC authentication
+- Local authentication (DB-backed sessions + JWT)
 - Session management
 - File uploads (Multer)
 
@@ -156,6 +156,28 @@ docker compose logs backend | grep -E "(⏳|🎯|✅|❌|🚀)"
 - **Direct Links**: Quick access to itch.io pages and GitHub repositories
 - **Tag System**: Categorized games with theme and ranking tags
 
+### Forms System
+The admin panel includes a built-in Forms Manager for creating and managing custom forms (e.g. event registrations).
+
+**Admin routes:**
+- `/admin/forms` — list, edit, and delete forms; view submissions
+- `/admin/forms/builder` — visual field builder with field types: Text, Email, Phone, Select, Radio, Checkbox, Textarea
+
+**Public route:** `/form/[slug]` — renders and accepts submissions for a published form
+
+**How it works:**
+1. Admin creates a form with a unique slug and configures fields in the builder
+2. Published forms are accessible at `/form/[slug]`
+3. Submissions are stored in the database and viewable in the admin panel
+4. On submission, a confirmation email is sent to the user and a notification to the configured admin email (requires SMTP configuration — see environment variables table)
+5. Submissions can be exported as CSV from the admin panel
+
+**Key API endpoints:**
+- `POST /api/admin/forms` — create form
+- `GET /api/admin/forms/:id/submissions` — list submissions
+- `GET /api/admin/forms/:id/export` — export submissions as CSV
+- `POST /api/forms/:slug/submit` — public submission endpoint
+
 ## 🔧 Configuration
 
 ### Environment Variables
@@ -168,13 +190,12 @@ docker compose logs backend | grep -E "(⏳|🎯|✅|❌|🚀)"
 | `JWT_SECRET` | JWT signing key | `your_jwt_secret_here` |
 | `SESSION_SECRET` | Session encryption key | `your_session_secret_here` |
 | `DEV_BYPASS_CSRF` | Optional dev helper — when true (or when `NODE_ENV !== 'production'`), the server will skip CSRF checks for admin endpoints to simplify local development. In production, ensure `NODE_ENV=production` to enforce CSRF. | `true` |
-| `OIDC_ISSUER_URL` | PocketID instance URL | `https://your-auth-server.com` |
-| `OIDC_CLIENT_ID` | OIDC application ID | `your_client_id` |
-| `OIDC_CLIENT_SECRET` | OIDC application secret | `your_client_secret` |
-| `OIDC_REDIRECT_URI` | OAuth callback URL | `https://your-domain.com/api/auth/oidc/callback` |
-| `OIDC_ADMIN_EMAIL` | Admin user email | `admin@yourdomain.com` |
-| `POCKETID_API_URL` | PocketID API endpoint (optional) | `https://your-auth-server.com/api` |
-| `POCKETID_API_KEY` | PocketID API key (optional) | `your_api_key` |
+| `SMTP_HOST` | SMTP server hostname | `smtp.your-provider.com` |
+| `SMTP_PORT` | SMTP server port | `587` |
+| `SMTP_USER` | SMTP username / login | `your_smtp_user` |
+| `SMTP_PASS` | SMTP password | `your_smtp_password` |
+| `SMTP_SECURE` | Use TLS (true/false) | `false` |
+| `FROM_EMAIL` | Sender address for outgoing emails | `no-reply@ipmaia-winterjam.pt` |
 | `STARTUP_DELAY` | Docker startup delay (seconds) | `10` (optional, default: 10) |
 | `NEXT_PUBLIC_API_URL` | Frontend API endpoint | `https://your-domain.com/api` |
 
@@ -188,7 +209,7 @@ docker compose logs backend | grep -E "(⏳|🎯|✅|❌|🚀)"
 **Backend (Node.js)**
 - Auto-migration on startup
 - Health check endpoint `/health`
-- OIDC authentication
+- Local admin authentication
 - Admin panel at `/admin`
 
 **Frontend (Next.js)**
@@ -267,7 +288,9 @@ ipmaia-winterjam/
 │   ├── timed-build.sh    # Docker build timing script
 │   └── timing-aliases.sh # Helper aliases
 ├── next-sitemap.config.js # Sitemap configuration
-├── docker-compose.yml    # Container orchestration
+├── docker-compose.local.yml  # Local development compose
+├── docker-compose.prod.yml   # Production compose
+├── docker-compose.db.yml     # Database-only compose
 └── README.md            # This file
 ```
 
@@ -466,8 +489,6 @@ Automatic maintenance page system for zero-downtime deployments:
 - ⏱️ Checks service status every 10 seconds
 - 🔄 Automatically redirects when services are back
 - 📱 Mobile and desktop responsive
-
-See [MAINTENANCE.md](MAINTENANCE.md) for full documentation.
 
 ---
 

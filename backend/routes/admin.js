@@ -1188,6 +1188,145 @@ router.get('/pocketid/status', requireSuperAdmin, async (req, res) => {
   res.status(404).json({ configured: false, connected: false, message: 'PocketID integration disabled' });
 });
 
+// ─── Forms Management ─────────────────────────────────────────────────────────
+const Form = require('../models/Form');
+const FormSubmission = require('../models/FormSubmission');
+const { buildGameDataFromSubmission } = require('./forms');
+
+router.get('/forms', async (req, res) => {
+  try {
+    const forms = await Form.findAll();
+    res.json(forms);
+  } catch (err) {
+    console.error('Error fetching forms:', err);
+    res.status(500).json({ error: 'Failed to fetch forms' });
+  }
+});
+
+router.post('/forms', async (req, res) => {
+  try {
+    const { name, slug, description, fields, notification_email, success_message,
+            submit_button_text, status, gamejam_id, settings } = req.body;
+
+    if (!name || typeof name !== 'string') {
+      return res.status(400).json({ error: 'Form name is required.' });
+    }
+
+    // Auto-generate slug if missing
+    const finalSlug = (slug || name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+    const form = await Form.create({
+      name, slug: finalSlug, description, fields, notification_email,
+      success_message, submit_button_text, status: status || 'draft',
+      gamejam_id, settings,
+    });
+    res.status(201).json(form);
+  } catch (err) {
+    if (err.code === '23505') {
+      return res.status(409).json({ error: 'A form with that slug already exists.' });
+    }
+    console.error('Error creating form:', err);
+    res.status(500).json({ error: 'Failed to create form' });
+  }
+});
+
+router.get('/forms/:id', async (req, res) => {
+  try {
+    const form = await Form.findById(req.params.id);
+    if (!form) return res.status(404).json({ error: 'Form not found' });
+    res.json(form);
+  } catch (err) {
+    console.error('Error fetching form:', err);
+    res.status(500).json({ error: 'Failed to fetch form' });
+  }
+});
+
+router.put('/forms/:id', async (req, res) => {
+  try {
+    const form = await Form.update(req.params.id, req.body);
+    if (!form) return res.status(404).json({ error: 'Form not found' });
+    res.json(form);
+  } catch (err) {
+    if (err.code === '23505') {
+      return res.status(409).json({ error: 'A form with that slug already exists.' });
+    }
+    console.error('Error updating form:', err);
+    res.status(500).json({ error: 'Failed to update form' });
+  }
+});
+
+router.delete('/forms/:id', requireSuperAdmin, async (req, res) => {
+  try {
+    const deleted = await Form.delete(req.params.id);
+    if (!deleted) return res.status(404).json({ error: 'Form not found' });
+    res.json({ message: 'Form deleted' });
+  } catch (err) {
+    console.error('Error deleting form:', err);
+    res.status(500).json({ error: 'Failed to delete form' });
+  }
+});
+
+// Submissions list
+router.get('/forms/:id/submissions', async (req, res) => {
+  try {
+    const form = await Form.findById(req.params.id);
+    if (!form) return res.status(404).json({ error: 'Form not found' });
+    const submissions = await FormSubmission.findByForm(req.params.id);
+    res.json({ form, submissions });
+  } catch (err) {
+    console.error('Error fetching submissions:', err);
+    res.status(500).json({ error: 'Failed to fetch submissions' });
+  }
+});
+
+router.delete('/forms/:id/submissions/:sid', requireSuperAdmin, async (req, res) => {
+  try {
+    const deleted = await FormSubmission.delete(req.params.sid);
+    if (!deleted) return res.status(404).json({ error: 'Submission not found' });
+    res.json({ message: 'Submission deleted' });
+  } catch (err) {
+    console.error('Error deleting submission:', err);
+    res.status(500).json({ error: 'Failed to delete submission' });
+  }
+});
+
+/**
+ * POST /api/admin/forms/:id/submissions/:sid/create-game
+ * Creates a game record from a form submission using field mapping (maps_to).
+ */
+router.post('/forms/:id/submissions/:sid/create-game', async (req, res) => {
+  try {
+    const form = await Form.findById(req.params.id);
+    if (!form) return res.status(404).json({ error: 'Form not found' });
+    if (!form.gamejam_id) return res.status(400).json({ error: 'This form is not linked to a game jam.' });
+
+    const submission = await FormSubmission.findById(req.params.sid);
+    if (!submission) return res.status(404).json({ error: 'Submission not found' });
+    if (submission.processed) {
+      return res.status(409).json({ error: 'This submission has already been processed.', game_id: submission.game_id });
+    }
+
+    const fields = Array.isArray(form.fields) ? form.fields : [];
+    const data = submission.data || {};
+
+    const gameData = buildGameDataFromSubmission(data, fields, form.gamejam_id);
+
+    // Allow admin overrides from request body
+    const overrides = req.body || {};
+    if (overrides.title) gameData.title = overrides.title;
+    if (overrides.team_name) gameData.team_name = overrides.team_name;
+
+    const game = await Game.create(gameData);
+
+    await FormSubmission.markProcessed(submission.id, game.id, `Manually created by admin ${req.session.username}`);
+
+    res.status(201).json({ game, message: 'Game created from submission.' });
+  } catch (err) {
+    console.error('Error creating game from submission:', err);
+    res.status(500).json({ error: 'Failed to create game from submission' });
+  }
+});
+
 // Audit Logs
 const { getAuditLogs, getAuditStats } = require('../utils/auditLog');
 

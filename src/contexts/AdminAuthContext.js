@@ -57,16 +57,19 @@ export function AdminAuthProvider({ children }) {
 
   const logout = async () => {
     try {
+      const headers = {};
+      if (csrfToken) headers['csrf-token'] = csrfToken;
       await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/logout`, {
         method: 'POST',
         credentials: 'include',
+        headers,
       });
-      setUser(null);
-      window.location.href = '/';
     } catch (err) {
       console.error('Logout failed:', err);
-      // Even if logout fails, clear local state and redirect
+    } finally {
+      // Always clear local state and redirect regardless of API response
       setUser(null);
+      setCsrfToken(null);
       window.location.href = '/';
     }
   };

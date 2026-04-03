@@ -1,62 +1,52 @@
 'use client';
 
-import Image from "next/image";
-import ResponsiveForm from "../../components/ResponsiveForms";
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+
+const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
 export default function Page() {
-  const [formsEnabled, setFormsEnabled] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+  const [status, setStatus] = useState('loading'); // loading | no-jam | no-form
 
   useEffect(() => {
-    const checkFormsEnabled = async () => {
+    async function redirect() {
       try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/frontpage/admin/settings`,
-          { credentials: 'include' }
-        );
-
-        if (response.ok) {
-          const settingsBySection = await response.json();
-          const allSettings = Object.values(settingsBySection).flat();
-          const formsSetting = allSettings.find(s => s.setting_key === 'enable_forms');
-          setFormsEnabled(formsSetting ? formsSetting.setting_value === 'true' : false);
-        } else {
-          // If API fails, assume forms are disabled for security
-          setFormsEnabled(false);
-        }
-      } catch (error) {
-        console.error('Failed to check forms status:', error);
-        setFormsEnabled(false);
-      } finally {
-        setLoading(false);
+        const res = await fetch(`${API}/public/gamejams`);
+        if (!res.ok) { setStatus('no-jam'); return; }
+        const jams = await res.json();
+        const active = jams.find(j => j.is_active);
+        if (!active) { setStatus('no-jam'); return; }
+        if (!active.registration_url) { setStatus('no-form'); return; }
+        router.replace(active.registration_url);
+      } catch {
+        setStatus('no-jam');
       }
-    };
+    }
+    redirect();
+  }, [router]);
 
-    checkFormsEnabled();
-  }, []);
-
-  if (loading) {
+  if (status === 'loading') {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-white">Loading...</div>
+      <div className="flex items-center justify-center min-h-screen bg-gray-950">
+        <div className="text-gray-400 animate-pulse">Redirecting…</div>
       </div>
     );
   }
 
-  if (!formsEnabled) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-900">
-        <div className="text-center p-8">
-          <div className="text-6xl mb-4">📝</div>
-          <h1 className="text-3xl font-bold text-white mb-4">Forms Temporarily Disabled</h1>
-          <p className="text-gray-400 text-lg">
-            Registration forms are currently disabled. Please check back later.
-          </p>
-        </div>
+  return (
+    <div className="flex items-center justify-center min-h-screen bg-gray-950">
+      <div className="text-center p-8 max-w-md">
+        <div className="text-6xl mb-4">{status === 'no-jam' ? '🎮' : '📝'}</div>
+        <h1 className="text-3xl font-bold text-white mb-4">
+          {status === 'no-jam' ? 'No Active Game Jam' : 'Registration Not Open Yet'}
+        </h1>
+        <p className="text-gray-400 text-lg">
+          {status === 'no-jam'
+            ? 'There is no active game jam at the moment. Check back soon!'
+            : 'The registration form for the current jam has not been set up yet. Check back soon!'}
+        </p>
       </div>
-    );
-  }
-
-  return <ResponsiveForm />;
+    </div>
+  );
 }
