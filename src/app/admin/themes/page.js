@@ -11,9 +11,11 @@ const defaultWheelConfig = {
 };
 
 export default function AdminThemeWheel() {
+  const { apiFetch } = useAdminAuth();
   const [wheelConfig, setWheelConfig] = useState(defaultWheelConfig);
   const [spinning, setSpinning] = useState(false);
   const [winner, setWinner] = useState(null);
+  const [currentTheme, setCurrentTheme] = useState('');
   const [pointerColor, setPointerColor] = useState('#ef4444');
   const [status, setStatus] = useState('');
   const [error, setError] = useState('');

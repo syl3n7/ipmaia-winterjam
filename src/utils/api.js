@@ -2,9 +2,11 @@
 
 export const API_BASE_URL = (() => {
   const raw = process.env.NEXT_PUBLIC_API_URL || 'https://api.ipmaia-winterjam.pt';
-  // Ensure we have a trailing /api (without double //)
-  if (raw.endsWith('/api')) return raw.replace(/\/$/, '');
-  return raw.replace(/\/$/, '') + '/api';
+  // Normalize: strip trailing slash, then ensure exactly one /api suffix
+  const normalized = raw.replace(/\/$/, '');
+  const apiSuffixRe = /\/api\/?$/;
+  if (apiSuffixRe.test(normalized)) return normalized.replace(apiSuffixRe, '/api');
+  return normalized + '/api';
 })();
 
 // Helper function to handle API responses

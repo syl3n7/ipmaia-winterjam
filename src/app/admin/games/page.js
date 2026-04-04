@@ -46,7 +46,7 @@ export default function AdminGames() {
     show_lore: true,
     show_ranking: true,
   });
-  const { handleApiResponse } = useAdminAuth();
+  const { handleApiResponse, apiFetch } = useAdminAuth();
 
   useEffect(() => {
     fetchData();

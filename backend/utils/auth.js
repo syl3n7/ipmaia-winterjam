@@ -1,6 +1,10 @@
 // JWT utilities for isolated authentication
 const jwt = require('jsonwebtoken');
 
+if (process.env.NODE_ENV === 'production' && !process.env.JWT_SECRET) {
+  throw new Error('FATAL: JWT_SECRET environment variable is required in production. Set it to a strong random value.');
+}
+
 const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret_key';
 const JWT_EXPIRES_IN = '2h';
 

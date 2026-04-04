@@ -12,7 +12,8 @@ const router = express.Router();
  */
 function sanitizeString(value) {
   if (typeof value !== 'string') return value;
-  return value.replace(/<[^>]*>/g, '').trim();
+  // Remove all < and > characters to prevent HTML/script injection in stored data
+  return value.replace(/[<>]/g, '').trim();
 }
 
 function sanitizeData(data) {
@@ -49,17 +50,25 @@ function validateSubmission(fields, data) {
 
     // Type-specific validation
     if (field.type === 'email') {
-      const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRe.test(value)) {
-        errors.push(`"${field.label}" must be a valid email address.`);
+      if (typeof value !== 'string') {
+        errors.push(`"${field.label}" must be a string value.`);
+      } else {
+        const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRe.test(value)) {
+          errors.push(`"${field.label}" must be a valid email address.`);
+        }
       }
     }
 
     if (field.type === 'phone') {
-      // Allow digits, spaces, +, -, (, )
-      const phoneRe = /^[+\d\s\-().]{5,30}$/;
-      if (!phoneRe.test(value)) {
-        errors.push(`"${field.label}" must be a valid phone number.`);
+      if (typeof value !== 'string') {
+        errors.push(`"${field.label}" must be a string value.`);
+      } else {
+        // Allow digits, spaces, +, -, (, )
+        const phoneRe = /^[+\d\s\-().]{5,30}$/;
+        if (!phoneRe.test(value)) {
+          errors.push(`"${field.label}" must be a valid phone number.`);
+        }
       }
     }
   }
@@ -265,6 +274,9 @@ function buildGameDataFromSubmission(data, fields, gamejam_id) {
         break;
       case 'itch_url':
         gameData.itch_url = value;
+        break;
+      case 'contact_email':
+        gameData.custom_fields.contact_email = value;
         break;
       default:
         // Unmapped fields → custom_fields

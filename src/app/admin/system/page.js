@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { API_BASE_URL } from '@/utils/api';
 
 export default function AdminSystem() {
-  const { user, isSuperAdmin } = useAdminAuth();
+  const { user, isSuperAdmin, apiFetch } = useAdminAuth();
   const [systemData, setSystemData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [lastCheck, setLastCheck] = useState(new Date());
