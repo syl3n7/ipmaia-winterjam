@@ -6,6 +6,7 @@ const rateLimit = require('express-rate-limit');
 const Rules = require('../models/Rules');
 const { requireAdmin } = require('./auth');
 const { logAudit } = require('../utils/auditLog');
+const { getClientIp } = require('../utils/clientIp');
 
 const router = express.Router();
 
@@ -16,11 +17,7 @@ const uploadLimiter = rateLimit({
   message: 'Too many upload attempts, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => {
-    // Extract IP without port (handles proxy IPs like "172.68.103.40:10934")
-    const ip = req.ip || req.connection.remoteAddress || '0.0.0.0';
-    return ip.split(':')[0];
-  }
+  keyGenerator: (req) => getClientIp(req)
 });
 
 // Configure multer for PDF uploads

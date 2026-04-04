@@ -7,7 +7,12 @@ const nextConfig = {
   output: 'standalone',
   images: {
     unoptimized: true
-  }
+  },
+  experimental: {
+    // Enable the instrumentation hook (required for Next.js < 15; no-op in Next.js 15+
+    // where it is enabled by default and the flag is no longer needed).
+    instrumentationHook: true,
+  },
 };
 
 export default nextConfig;
