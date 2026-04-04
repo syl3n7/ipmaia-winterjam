@@ -47,7 +47,7 @@ export default function AdminSystem() {
 
   const loadMaintenanceStatus = async () => {
     try {
-      const response = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/system/maintenance`, {}, 'load maintenance status');
+      const response = await apiFetch(`${API_BASE_URL}/admin/system/maintenance`, {}, 'load maintenance status');
       const data = await response.json();
       setMaintenanceMode(data.enabled);
     } catch (error) {
@@ -57,7 +57,7 @@ export default function AdminSystem() {
 
   const loadSystemMetrics = async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/system/metrics`, {
+      const response = await fetch(`${API_BASE_URL}/admin/system/metrics`, {
         credentials: 'include',
       });
       if (response.ok) {
@@ -181,7 +181,7 @@ export default function AdminSystem() {
     }
 
     try {
-      const response = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/system/clear-cache`, { method: 'POST' }, 'clear cache');
+      const response = await apiFetch(`${API_BASE_URL}/admin/system/clear-cache`, { method: 'POST' }, 'clear cache');
 
       alert('✅ Cache cleared successfully!');
       await loadSystemInfo();
@@ -197,7 +197,7 @@ export default function AdminSystem() {
     }
 
     try {
-      const response = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/system/restart`, { method: 'POST' }, 'restart server');
+      const response = await apiFetch(`${API_BASE_URL}/admin/system/restart`, { method: 'POST' }, 'restart server');
 
       alert('✅ Server restart initiated. Please wait 10-15 seconds and refresh the page.');
     } catch (error) {
@@ -208,7 +208,7 @@ export default function AdminSystem() {
 
   const handleExportDatabase = async () => {
     try {
-      const response = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/export/all`, {}, 'export database');
+      const response = await apiFetch(`${API_BASE_URL}/admin/export/all`, {}, 'export database');
       const data = await response.json();
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
@@ -242,7 +242,7 @@ export default function AdminSystem() {
         const text = await file.text();
         const data = JSON.parse(text);
 
-        const response = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/import`, {
+        const response = await apiFetch(`${API_BASE_URL}/admin/import`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data),
@@ -261,19 +261,14 @@ export default function AdminSystem() {
 
   const handleToggleMaintenanceMode = async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/system/maintenance`, {
+      const response = await apiFetch(`${API_BASE_URL}/admin/system/maintenance`, {
         method: 'POST',
-        credentials: 'include',
-      });
+      }, 'toggle maintenance mode');
 
-      if (response.ok) {
-        const result = await response.json();
-        setMaintenanceMode(result.enabled);
-        alert(`✅ ${result.message}`);
-        await loadSystemInfo();
-      } else {
-        alert('❌ Failed to toggle maintenance mode');
-      }
+      const result = await response.json();
+      setMaintenanceMode(result.enabled);
+      alert(`✅ ${result.message}`);
+      await loadSystemInfo();
     } catch (error) {
       console.error('Failed to toggle maintenance mode:', error);
       alert('❌ Failed to toggle maintenance mode');
@@ -282,7 +277,7 @@ export default function AdminSystem() {
 
   const handleTestDatabase = async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/system/test-db`, {
+      const response = await fetch(`${API_BASE_URL}/admin/system/test-db`, {
         credentials: 'include',
       });
 
@@ -301,10 +296,10 @@ export default function AdminSystem() {
   const loadAuditLogs = async () => {
     try {
       const [logsRes, statsRes] = await Promise.all([
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/audit-logs?limit=50`, {
+        fetch(`${API_BASE_URL}/admin/audit-logs?limit=50`, {
           credentials: 'include',
         }),
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/audit-logs/stats`, {
+        fetch(`${API_BASE_URL}/admin/audit-logs/stats`, {
           credentials: 'include',
         }),
       ]);
