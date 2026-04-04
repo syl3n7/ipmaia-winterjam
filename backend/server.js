@@ -215,19 +215,20 @@ app.use(session({
 
 // Helper to determine whether CSRF checks should be skipped for a request
 function shouldSkipCsrf(req) {
-  // Always allow isolated auth endpoints in non-production for convenience
-  if (process.env.NODE_ENV !== 'production') {
-    if (
-      req.path.startsWith('/api/auth/isolated/register') ||
-      req.path.startsWith('/api/auth/isolated/login') ||
-      req.path.startsWith('/api/auth/isolated/logout') ||
-      req.path.startsWith('/api/auth/logout') ||
-      req.path.startsWith('/api/auth/verify-email') ||
-      req.path.startsWith('/api/auth/resend-verification')
-    ) {
-      return true;
-    }
+  // Public isolated auth flows are called before a CSRF token is available.
+  // Keep these endpoints exempt in every environment.
+  if (
+    req.path.startsWith('/api/auth/isolated/register') ||
+    req.path.startsWith('/api/auth/isolated/login') ||
+    req.path.startsWith('/api/auth/isolated/logout') ||
+    req.path.startsWith('/api/auth/logout') ||
+    req.path.startsWith('/api/auth/verify-email') ||
+    req.path.startsWith('/api/auth/resend-verification')
+  ) {
+    return true;
+  }
 
+  if (process.env.NODE_ENV !== 'production') {
     // In development, allow skipping CSRF for admin endpoints to simplify local testing
     if (
       req.path.startsWith('/api/admin') || 

@@ -29,6 +29,22 @@ describe('CSRF helper and endpoint', () => {
     process.env.NODE_ENV = old;
   });
 
+  it('shouldSkipCsrf returns true for isolated register in production', () => {
+    const old = process.env.NODE_ENV;
+    process.env.NODE_ENV = 'production';
+    const req = { path: '/api/auth/isolated/register', method: 'POST' };
+    expect(shouldSkipCsrf(req)).to.equal(true);
+    process.env.NODE_ENV = old;
+  });
+
+  it('shouldSkipCsrf returns true for isolated login in production', () => {
+    const old = process.env.NODE_ENV;
+    process.env.NODE_ENV = 'production';
+    const req = { path: '/api/auth/isolated/login', method: 'POST' };
+    expect(shouldSkipCsrf(req)).to.equal(true);
+    process.env.NODE_ENV = old;
+  });
+
   it('GET /csrf-token returns token and sets cookie when csrfToken is available', async () => {
     const handler = findRouteHandler(authRouter, '/csrf-token', 'get');
     expect(handler).to.be.a('function');
