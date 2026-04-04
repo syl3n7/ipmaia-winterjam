@@ -1,6 +1,6 @@
 // User model for isolated authentication
 // Uses Argon2id for strong hashing when available and supports bcrypt -> argon2 migration
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 let argon2 = null;
 try {
   argon2 = require('argon2');
