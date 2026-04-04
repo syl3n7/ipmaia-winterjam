@@ -5,11 +5,12 @@ import { useAdminAuth } from '@/contexts/AdminAuthContext';
 
 export default function AdminGameJams() {
   const [gameJams, setGameJams] = useState([]);
+  const [availableForms, setAvailableForms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [activeTab, setActiveTab] = useState('basic'); // basic, dates, content, visibility
-  const { handleApiResponse } = useAdminAuth();
+  const { handleApiResponse, apiFetch } = useAdminAuth();
   const [formData, setFormData] = useState({
     // Basic info
     name: '',
@@ -25,6 +26,7 @@ export default function AdminGameJams() {
     
     // URLs
     registration_url: '',
+    registration_form_id: '',
     
     // Homepage content
     introduction: 'Uma game jam onde estudantes de desenvolvimento de jogos e entusiastas se juntam para criar experiências únicas em 45 horas. É um evento presencial no IPMAIA com mentores disponíveis, workshops, e muita colaboração. Todos os níveis de experiência são bem-vindos!',
@@ -50,7 +52,15 @@ export default function AdminGameJams() {
 
   useEffect(() => {
     fetchGameJams();
+    fetchForms();
   }, []);
+
+  const fetchForms = async () => {
+    try {
+      const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'}/admin/forms`);
+      if (res.ok) setAvailableForms(await res.json());
+    } catch {}
+  };
 
   // Auto-generate schedule content from datetime fields
   const generateScheduleContent = () => {
@@ -206,7 +216,8 @@ export default function AdminGameJams() {
       registration_end_date: gameJam.registration_end_date?.slice(0, 16) || '',
       
       registration_url: gameJam.registration_url || '',
-      
+      registration_form_id: gameJam.registration_form_id ?? '',
+
       introduction: gameJam.introduction || 'Uma game jam onde estudantes de desenvolvimento de jogos e entusiastas se juntam para criar experiências únicas em 45 horas. É um evento presencial no IPMAIA com mentores disponíveis, workshops, e muita colaboração. Todos os níveis de experiência são bem-vindos!',
       prizes_content: gameJam.prizes_content || '',
       schedule_content: gameJam.schedule_content || '',
@@ -269,6 +280,7 @@ export default function AdminGameJams() {
       registration_end_date: '',
       
       registration_url: '',
+      registration_form_id: '',
       
       introduction: 'Uma game jam onde estudantes de desenvolvimento de jogos e entusiastas se juntam para criar experiências únicas em 45 horas. É um evento presencial no IPMAIA com mentores disponíveis, workshops, e muita colaboração. Todos os níveis de experiência são bem-vindos!',
       prizes_content: '',
@@ -564,6 +576,38 @@ export default function AdminGameJams() {
                   className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded text-white focus:outline-none focus:border-blue-500"
                   placeholder="https://forms.gle/..."
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Registration Form <span className="text-purple-400 text-xs">(linked form for auto-team creation)</span>
+                </label>
+                <select
+                  value={formData.registration_form_id || ''}
+                  onChange={(e) => {
+                    const selectedId = e.target.value;
+                    const selectedForm = availableForms.find(f => String(f.id) === String(selectedId));
+                    const autoUrl = selectedForm ? `/forms/${selectedForm.slug}` : '';
+                    const currentUrl = formData.registration_url || '';
+                    const shouldUpdateUrl = !currentUrl || currentUrl.startsWith('/forms/');
+                    setFormData({
+                      ...formData,
+                      registration_form_id: selectedId,
+                      registration_url: shouldUpdateUrl ? autoUrl : currentUrl,
+                    });
+                  }}
+                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded text-white focus:outline-none focus:border-purple-500"
+                >
+                  <option value="">— None —</option>
+                  {availableForms.map(f => (
+                    <option key={f.id} value={f.id}>{f.name} ({f.status})</option>
+                  ))}
+                </select>
+                {formData.registration_form_id && (
+                  <p className="text-xs text-purple-400 mt-1">
+                    📝 <a href={`/admin/forms/${formData.registration_form_id}/submissions`} className="underline">View Submissions</a>
+                  </p>
+                )}
               </div>
               
               <div className="bg-blue-900 bg-opacity-20 border border-blue-700 rounded-lg p-4">

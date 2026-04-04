@@ -212,6 +212,16 @@ const MainNavbar = () => {
               </span>
             )}
           </div>
+
+          {/* Login Button for ease of use (dev only) */}
+          {process.env.NODE_ENV !== 'production' && (
+            <NavbarLink 
+              href="/login" 
+              className={`${linkClassName} flex items-center px-3 py-2 w-full md:w-auto`}
+            >
+              Login
+            </NavbarLink>
+          )}
         </div>
       </NavbarCollapse>
     </Navbar>

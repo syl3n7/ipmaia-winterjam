@@ -854,24 +854,17 @@ router.get('/system/test-db', requireSuperAdmin, async (req, res) => {
 });
 
 // User Management
-const pocketid = require('../utils/pocketid');
-
+// PocketID integration removed - users are local only
 router.get('/users', requireSuperAdmin, async (req, res) => {
   try {
-    const usePocketID = process.env.POCKETID_API_URL && process.env.POCKETID_API_KEY;
-    console.log('🔍 PocketID Configuration Check:');
-    console.log('   - POCKETID_API_URL:', process.env.POCKETID_API_URL ? '✅ Set' : '❌ Missing');
-    console.log('   - POCKETID_API_KEY:', process.env.POCKETID_API_KEY ? '✅ Set' : '❌ Missing');
-    
-    // Always fetch from local database now
-    // Users should be synced from PocketID first using the sync endpoint
+    // Always fetch from local database
     const result = await pool.query(
       'SELECT id, username, email, role, is_active, created_at, updated_at FROM users ORDER BY created_at DESC'
     );
     
     const users = result.rows.map(u => ({ 
       ...u, 
-      source: usePocketID ? 'synced_from_pocketid' : 'local' 
+      source: 'local'
     }));
     
     console.log(`✅ Fetched ${users.length} users from local database`);
@@ -897,8 +890,7 @@ router.put('/users/:id/role', requireSuperAdmin, async (req, res) => {
       return res.status(403).json({ error: 'Cannot change your own role' });
     }
     
-    // When using PocketID, we store role override in local DB
-    // The actual groups in PocketID remain unchanged (read-only)
+    // Role changes are local overrides stored in DB
     
     // Check if user exists in local DB
     const existingUser = await pool.query(
@@ -939,8 +931,7 @@ router.put('/users/:id/toggle', requireSuperAdmin, async (req, res) => {
       return res.status(403).json({ error: 'Cannot deactivate your own account' });
     }
     
-    // Note: We can only toggle status in local DB, not in PocketID
-    // PocketID users remain active in PocketID, but we block them locally
+    // Note: We toggle status in the local DB only; external identity providers are unaffected
     
     const result = await pool.query(
       'UPDATE users SET is_active = NOT is_active, updated_at = NOW() WHERE email = $1 RETURNING id, username, is_active',
@@ -1009,127 +1000,330 @@ router.delete('/users/:id', requireSuperAdmin, async (req, res) => {
   }
 });
 
-// Sync users from PocketID to local database
+// PocketID user sync endpoint removed/disabled
 router.post('/users/sync-from-pocketid', requireSuperAdmin, async (req, res) => {
+  res.status(404).json({ success: false, error: 'PocketID integration disabled' });
+});
+
+// Registration status - get current public registration state
+router.get('/registration', requireSuperAdmin, async (req, res) => {
   try {
-    const usePocketID = process.env.POCKETID_API_URL && process.env.POCKETID_API_KEY;
-    
-    if (!usePocketID) {
-      return res.status(400).json({
-        success: false,
-        error: 'PocketID API not configured'
-      });
+    const result = await pool.query("SELECT setting_value FROM front_page_settings WHERE setting_key = 'public_registration_enabled'");
+    let enabled;
+    if (result.rows.length > 0) {
+      enabled = result.rows[0].setting_value === 'true';
+    } else {
+      enabled = process.env.PUBLIC_REGISTRATION_ENABLED === 'true' || process.env.NODE_ENV !== 'production';
     }
-
-    console.log('🔄 Starting PocketID user sync...');
-    const pocketidUsers = await pocketid.getAdminUsers();
-    
-    let created = 0;
-    let updated = 0;
-    let skipped = 0;
-
-    for (const pocketUser of pocketidUsers) {
-      const groupNames = pocketUser.groupNames || [];
-      
-      // Determine role from PocketID groups
-      let role = 'admin'; // Default to admin since we only sync admin/ipmaia users
-      if (groupNames.includes('admin') && pocketUser.email === process.env.OIDC_ADMIN_EMAIL) {
-        role = 'super_admin';
-      }
-
-      // Prepare username from PocketID data
-      const username = pocketUser.username || 
-                      pocketUser.displayName || 
-                      pocketUser.email?.split('@')[0] || 
-                      'user';
-
-      // Check if user exists
-      const existing = await pool.query(
-        'SELECT id, role, is_active FROM users WHERE email = $1',
-        [pocketUser.email]
-      );
-
-      if (existing.rows.length > 0) {
-        // User exists - only update if they don't have a local role override
-        const localUser = existing.rows[0];
-        // Skip update to preserve local overrides
-        skipped++;
-        console.log('   ⏭️  Skipped %s (preserving local settings)', pocketUser.email);
-      } else {
-        // Create new user
-        // Check if user is disabled in PocketID
-        const isActive = !pocketUser.disabled;
-        
-        await pool.query(`
-          INSERT INTO users (username, email, password_hash, role, is_active, created_at, updated_at)
-          VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
-        `, [
-          username,
-          pocketUser.email,
-          '', // No password for OIDC users
-          role,
-          isActive
-        ]);
-        created++;
-        console.log('   ✅ Created %s with role: %s (active: %s)', pocketUser.email, role, isActive);
-      }
-    }
-
-    console.log(`🎉 Sync complete: ${created} created, ${updated} updated, ${skipped} skipped`);
-
-    res.json({
-      success: true,
-      created,
-      updated,
-      skipped,
-      total: pocketidUsers.length,
-      message: `Synced ${created} new users from PocketID`
-    });
+    res.json({ enabled });
   } catch (error) {
-    console.error('❌ Error syncing users from PocketID:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to sync users from PocketID',
-      details: error.message
-    });
+    console.error('Error fetching registration status:', error);
+    res.status(500).json({ error: 'Failed to fetch registration status' });
   }
 });
 
-// PocketID connection status
-router.get('/pocketid/status', requireSuperAdmin, async (req, res) => {
+// Update registration status (enable/disable public registration)
+router.put('/registration', requireSuperAdmin, async (req, res) => {
   try {
-    const configured = !!(process.env.POCKETID_API_URL && process.env.POCKETID_API_KEY);
-    
-    console.log('🔍 PocketID Status Check:');
-    console.log('   - Configured:', configured);
-    console.log('   - API URL:', process.env.POCKETID_API_URL);
-    console.log('   - API Key:', process.env.POCKETID_API_KEY ? '***set***' : 'missing');
-    
-    if (!configured) {
-      return res.json({
-        configured: false,
-        connected: false,
-        message: 'PocketID API not configured. Set POCKETID_API_URL and POCKETID_API_KEY'
+    const { enabled } = req.body;
+    if (typeof enabled !== 'boolean') return res.status(400).json({ error: 'Invalid value for enabled' });
+
+    console.log('PUT /admin/registration - updating enabled =>', enabled);
+    await pool.query(
+      "INSERT INTO front_page_settings (setting_key, setting_value, setting_type, display_name, section, display_order) VALUES ('public_registration_enabled', $1, 'boolean', 'Allow Public Registration', 'auth', 0) ON CONFLICT (setting_key) DO UPDATE SET setting_value = $1, updated_at = CURRENT_TIMESTAMP",
+      [enabled ? 'true' : 'false']
+    );
+    console.log('PUT /admin/registration - DB update complete');
+
+    // Audit log
+    try {
+      await logAudit({
+        userId: req.session.userId,
+        username: req.session.username || req.session.email,
+        action: 'UPDATE',
+        tableName: 'front_page_settings',
+        description: `${enabled ? 'Enabled' : 'Disabled'} public registration via admin`,
+        newValues: { public_registration_enabled: enabled },
+        req
       });
+    } catch (err) {
+      console.error('❌ Failed to write audit log for registration toggle:', err);
     }
-    
-    console.log('🔄 Testing PocketID connection...');
-    const connected = await pocketid.healthCheck();
-    console.log('   - Connected:', connected);
-    
-    res.json({
-      configured: true,
-      connected: connected,
-      apiUrl: process.env.POCKETID_API_URL,
-      message: connected ? 'Connected to PocketID' : 'Failed to connect to PocketID'
-    });
+
+    res.json({ enabled });
   } catch (error) {
-    console.error('❌ Error checking PocketID status:', error);
-    res.json({
-      configured: true,
-      connected: false,
-      error: error.message
+    console.error('Error updating registration status:', error);
+    res.status(500).json({ error: 'Failed to update registration status' });
+  }
+});
+
+// Invite a new user (admin only) - creates user if not exists and returns invite token (link)
+const { sendInviteEmail, SMTP_CONFIGURED } = require('../utils/email');
+const { logAudit } = require('../utils/auditLog');
+const { isStrongPassword } = require('../utils/validation');
+const User = require('../models/User');
+
+// Super Admin: change user's password
+router.put('/users/:id/password', requireSuperAdmin, async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const { password } = req.body;
+    if (!password) return res.status(400).json({ error: 'Missing password' });
+
+    const pwCheck = isStrongPassword(password);
+    if (!pwCheck.ok) return res.status(400).json({ error: pwCheck.reason });
+
+    const passwordHash = await User.hashPassword(password);
+    await pool.query('UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2', [passwordHash, userId]);
+
+    try {
+      await logAudit({
+        userId: req.session.userId,
+        username: req.session.username,
+        action: 'UPDATE',
+        tableName: 'users',
+        recordId: userId,
+        description: 'Super admin changed user password',
+        newValues: { password_reset: true },
+        req
+      });
+    } catch (err) {
+      console.error('❌ Failed to write audit log for password reset:', err);
+    }
+
+    res.json({ success: true, message: 'Password updated' });
+  } catch (error) {
+    console.error('Error updating user password:', error);
+    res.status(500).json({ error: 'Failed to update password' });
+  }
+});
+
+router.post('/users/invite', requireSuperAdmin, async (req, res) => {
+  try {
+    const { username, email, expiresOption, sendEmail, role } = req.body;
+    if (!email || !username) return res.status(400).json({ error: 'Missing username or email' });
+
+    // Validate role — only allow user or admin via invite; super_admin must be promoted separately
+    const validInviteRoles = ['user', 'admin'];
+    const assignedRole = validInviteRoles.includes(role) ? role : 'user';
+
+    // Rate limit: one invite per minute per admin
+    const lastInvite = await pool.query(
+      "SELECT created_at FROM invites WHERE created_by = $1 ORDER BY created_at DESC LIMIT 1",
+      [req.session.userId]
+    );
+    if (lastInvite.rows[0]) {
+      const diffMs = Date.now() - new Date(lastInvite.rows[0].created_at).getTime();
+      if (diffMs < 60 * 1000) {
+        return res.status(429).json({ error: 'Rate limit: Please wait before creating another invite (1 per minute)' });
+      }
+    }
+
+    // Check if user exists
+    let result = await pool.query('SELECT * FROM users WHERE email = $1 OR username = $2', [email, username]);
+    let user = result.rows[0];
+
+    if (!user) {
+      // Create user with no password (user will set password via invite link)
+      const insert = await pool.query(
+        'INSERT INTO users (username, email, password_hash, role, is_active) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+        [username, email, '', assignedRole, true]
+      );
+      user = insert.rows[0];
+    } else if (user.role !== assignedRole) {
+      // If user already exists and role differs, update it
+      await pool.query('UPDATE users SET role = $1, updated_at = NOW() WHERE id = $2', [assignedRole, user.id]);
+      user.role = assignedRole;
+    }
+
+    // Compute expiresAt based on option (defaults to 7 days)
+    let expiresAt = new Date(Date.now() + (7 * 24 * 60 * 60 * 1000));
+    if (expiresOption === '1h') expiresAt = new Date(Date.now() + 1 * 60 * 60 * 1000);
+    else if (expiresOption === '3d') expiresAt = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
+    else if (expiresOption === '7d') expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+    // Generate token and store hash
+    const token = require('crypto').randomBytes(32).toString('hex');
+    const bcrypt = require('bcryptjs');
+    const tokenHash = await bcrypt.hash(token, 10);
+
+    const insertInvite = await pool.query(
+      'INSERT INTO invites (user_id, token_hash, expires_at, used, created_by) VALUES ($1, $2, $3, $4, $5) RETURNING id',
+      [user.id, tokenHash, expiresAt, false, req.session.userId]
+    );
+
+    const inviteLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/invite/${token}`;
+
+    let emailSent = false;
+    if (sendEmail && SMTP_CONFIGURED) {
+      emailSent = await sendInviteEmail(email, inviteLink, expiresAt);
+    }
+
+    // Write audit log for invite creation (non-blocking)
+    try {
+      await logAudit({
+        userId: req.session.userId,
+        username: req.session.username,
+        action: 'CREATE_INVITE',
+        tableName: 'invites',
+        recordId: insertInvite.rows[0].id,
+        description: `Invite created for user ${user.id} (${user.email})`,
+        newValues: { user_id: user.id, expires_at: expiresAt.toISOString(), sendEmail: !!sendEmail },
+        req
+      });
+    } catch (err) {
+      console.error('❌ Failed to write audit log for invite creation:', err);
+    }
+
+    // NOTE: In production, you should email the invite link to the user automatically (sendEmail=true)
+    res.json({ success: true, inviteLink, expiresAt, user: { id: user.id, username: user.username, email: user.email }, emailSent });
+  } catch (error) {
+    console.error('Error creating invite:', error);
+    res.status(500).json({ error: 'Failed to create invite' });
+  }
+});
+
+// PocketID status endpoint removed
+router.get('/pocketid/status', requireSuperAdmin, async (req, res) => {
+  res.status(404).json({ configured: false, connected: false, message: 'PocketID integration disabled' });
+});
+
+// ─── Forms Management ─────────────────────────────────────────────────────────
+const Form = require('../models/Form');
+const FormSubmission = require('../models/FormSubmission');
+const { buildGameDataFromSubmission } = require('./forms');
+
+router.get('/forms', async (req, res) => {
+  try {
+    const forms = await Form.findAll();
+    res.json(forms);
+  } catch (err) {
+    console.error('Error fetching forms:', err);
+    res.status(500).json({ error: 'Failed to fetch forms' });
+  }
+});
+
+router.post('/forms', async (req, res) => {
+  try {
+    const { name, slug, description, fields, notification_email, success_message,
+            submit_button_text, status, gamejam_id, settings } = req.body;
+
+    if (!name || typeof name !== 'string') {
+      return res.status(400).json({ error: 'Form name is required.' });
+    }
+
+    // Auto-generate slug if missing
+    const finalSlug = (slug || name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+    const form = await Form.create({
+      name, slug: finalSlug, description, fields, notification_email,
+      success_message, submit_button_text, status: status || 'draft',
+      gamejam_id, settings,
     });
+    res.status(201).json(form);
+  } catch (err) {
+    if (err.code === '23505') {
+      return res.status(409).json({ error: 'A form with that slug already exists.' });
+    }
+    console.error('Error creating form:', err);
+    res.status(500).json({ error: 'Failed to create form' });
+  }
+});
+
+router.get('/forms/:id', async (req, res) => {
+  try {
+    const form = await Form.findById(req.params.id);
+    if (!form) return res.status(404).json({ error: 'Form not found' });
+    res.json(form);
+  } catch (err) {
+    console.error('Error fetching form:', err);
+    res.status(500).json({ error: 'Failed to fetch form' });
+  }
+});
+
+router.put('/forms/:id', async (req, res) => {
+  try {
+    const form = await Form.update(req.params.id, req.body);
+    if (!form) return res.status(404).json({ error: 'Form not found' });
+    res.json(form);
+  } catch (err) {
+    if (err.code === '23505') {
+      return res.status(409).json({ error: 'A form with that slug already exists.' });
+    }
+    console.error('Error updating form:', err);
+    res.status(500).json({ error: 'Failed to update form' });
+  }
+});
+
+router.delete('/forms/:id', requireSuperAdmin, async (req, res) => {
+  try {
+    const deleted = await Form.delete(req.params.id);
+    if (!deleted) return res.status(404).json({ error: 'Form not found' });
+    res.json({ message: 'Form deleted' });
+  } catch (err) {
+    console.error('Error deleting form:', err);
+    res.status(500).json({ error: 'Failed to delete form' });
+  }
+});
+
+// Submissions list
+router.get('/forms/:id/submissions', async (req, res) => {
+  try {
+    const form = await Form.findById(req.params.id);
+    if (!form) return res.status(404).json({ error: 'Form not found' });
+    const submissions = await FormSubmission.findByForm(req.params.id);
+    res.json({ form, submissions });
+  } catch (err) {
+    console.error('Error fetching submissions:', err);
+    res.status(500).json({ error: 'Failed to fetch submissions' });
+  }
+});
+
+router.delete('/forms/:id/submissions/:sid', requireSuperAdmin, async (req, res) => {
+  try {
+    const deleted = await FormSubmission.delete(req.params.sid);
+    if (!deleted) return res.status(404).json({ error: 'Submission not found' });
+    res.json({ message: 'Submission deleted' });
+  } catch (err) {
+    console.error('Error deleting submission:', err);
+    res.status(500).json({ error: 'Failed to delete submission' });
+  }
+});
+
+/**
+ * POST /api/admin/forms/:id/submissions/:sid/create-game
+ * Creates a game record from a form submission using field mapping (maps_to).
+ */
+router.post('/forms/:id/submissions/:sid/create-game', async (req, res) => {
+  try {
+    const form = await Form.findById(req.params.id);
+    if (!form) return res.status(404).json({ error: 'Form not found' });
+    if (!form.gamejam_id) return res.status(400).json({ error: 'This form is not linked to a game jam.' });
+
+    const submission = await FormSubmission.findById(req.params.sid);
+    if (!submission) return res.status(404).json({ error: 'Submission not found' });
+    if (submission.processed) {
+      return res.status(409).json({ error: 'This submission has already been processed.', game_id: submission.game_id });
+    }
+
+    const fields = Array.isArray(form.fields) ? form.fields : [];
+    const data = submission.data || {};
+
+    const gameData = buildGameDataFromSubmission(data, fields, form.gamejam_id);
+
+    // Allow admin overrides from request body
+    const overrides = req.body || {};
+    if (overrides.title) gameData.title = overrides.title;
+    if (overrides.team_name) gameData.team_name = overrides.team_name;
+
+    const game = await Game.create(gameData);
+
+    await FormSubmission.markProcessed(submission.id, game.id, `Manually created by admin ${req.session.username}`);
+
+    res.status(201).json({ game, message: 'Game created from submission.' });
+  } catch (err) {
+    console.error('Error creating game from submission:', err);
+    res.status(500).json({ error: 'Failed to create game from submission' });
   }
 });
 

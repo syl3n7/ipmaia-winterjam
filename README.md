@@ -102,6 +102,29 @@ ipmaia-winterjam/
 
 ---
 
+### Forms System
+The admin panel includes a built-in Forms Manager for creating and managing custom forms (e.g. event registrations).
+
+**Admin routes:**
+- `/admin/forms` — list, edit, and delete forms; view submissions
+- `/admin/forms/builder` — visual field builder with field types: Text, Email, Phone, Select, Radio, Checkbox, Textarea
+
+**Public route:** `/forms/[slug]` — renders and accepts submissions for a published form
+
+**How it works:**
+1. Admin creates a form with a unique slug and configures fields in the builder
+2. Published forms are accessible at `/forms/[slug]`
+3. Submissions are stored in the database and viewable in the admin panel
+4. On submission, a confirmation email is sent to the user and a notification to the configured admin email (requires SMTP configuration — see environment variables table)
+5. Submissions can be exported as CSV from the admin panel submissions view
+
+**Key API endpoints:**
+- `POST /api/admin/forms` — create form
+- `GET /api/admin/forms/:id/submissions` — list submissions
+- `POST /api/forms/:slug/submit` — public submission endpoint
+
+CSV export is currently available from the admin UI rather than as a separate documented admin API endpoint.
+
 ## 🔧 Configuration
 
 ### Environment Variables

@@ -16,7 +16,7 @@ NC='\033[0m' # No Color
 if [ ! -f .env ]; then
     echo -e "${RED}❌ Error: .env file not found!${NC}"
     echo -e "${YELLOW}📝 Please create .env with your production values${NC}"
-    echo -e "${BLUE}Required variables: DB_NAME, DB_USER, DB_PASSWORD, JWT_SECRET, SESSION_SECRET, FRONTEND_URL, NEXT_PUBLIC_API_URL, OIDC_* variables${NC}"
+    echo -e "${BLUE}Required variables: DB_NAME, DB_USER, DB_PASSWORD, JWT_SECRET, SESSION_SECRET, FRONTEND_URL, NEXT_PUBLIC_API_URL${NC}"
     exit 1
 fi
 

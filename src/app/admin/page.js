@@ -39,7 +39,7 @@ export default function AdminDashboard() {
   const checkMaintenanceMode = async () => {
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/admin/maintenance/status`,
+        `${process.env.NEXT_PUBLIC_API_URL}/admin/system/maintenance`,
         { credentials: 'include' }
       );
       await handleApiResponse(response, 'check maintenance status');
@@ -54,7 +54,7 @@ export default function AdminDashboard() {
   const toggleMaintenanceMode = async () => {
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/admin/maintenance/toggle`,
+        `${process.env.NEXT_PUBLIC_API_URL}/admin/system/maintenance`,
         {
           method: 'POST',
           credentials: 'include',
@@ -76,7 +76,7 @@ export default function AdminDashboard() {
 
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/admin/cache/clear`,
+        `${process.env.NEXT_PUBLIC_API_URL}/admin/system/clear-cache`,
         {
           method: 'POST',
           credentials: 'include',
@@ -219,7 +219,7 @@ export default function AdminDashboard() {
           <li>• Use the sidebar to navigate between different admin sections</li>
           <li>• All changes are saved automatically to the database</li>
           <li>• Click &quot;Back to Site&quot; to view the public website</li>
-          <li>• Contact support if you encounter any issues</li>
+          <li>• Contact <a href={`mailto:webmaster@steelchunk.eu?subject=${encodeURIComponent('Support - Winterjam - Dashboard')}`} className="text-blue-400 underline">support</a> if you encounter any issues</li>
         </ul>
       </div>
     </div>

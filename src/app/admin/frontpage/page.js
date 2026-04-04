@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { useAdminAuth } from '@/contexts/AdminAuthContext';
+import { API_BASE_URL } from '@/utils/api';
 
 export default function AdminFrontPage() {
   const [loading, setLoading] = useState(true);
@@ -13,6 +15,7 @@ export default function AdminFrontPage() {
     enable_forms: false,
   });
   const [savingToggles, setSavingToggles] = useState(false);
+  const { handleApiResponse, apiFetch } = useAdminAuth();
 
   useEffect(() => {
     loadBannerStatus();
@@ -22,86 +25,73 @@ export default function AdminFrontPage() {
   const loadBannerStatus = async () => {
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/frontpage/admin/settings`,
+        `${API_BASE_URL}/frontpage/admin/settings`,
         { credentials: 'include' }
       );
 
-      if (response.ok) {
-        const settingsBySection = await response.json();
-        const allSettings = Object.values(settingsBySection).flat();
+      await handleApiResponse(response, 'load banner status');
+      const settingsBySection = await response.json();
+      const allSettings = Object.values(settingsBySection).flat();
 
-        const backgroundImage = allSettings.find(
-          (s) => s.setting_key === 'hero_background_image'
-        );
-        const backgroundFilename = allSettings.find(
-          (s) => s.setting_key === 'hero_background_filename'
-        );
+      const backgroundImage = allSettings.find(
+        (s) => s.setting_key === 'hero_background_image'
+      );
+      const backgroundFilename = allSettings.find(
+        (s) => s.setting_key === 'hero_background_filename'
+      );
 
-        if (backgroundFilename && backgroundFilename.setting_value) {
-          setBannerStatus({
-            filename: backgroundFilename.setting_value,
-            url: backgroundImage?.setting_value || 'N/A',
-            updated_at: backgroundFilename.updated_at,
-          });
-        } else {
-          setBannerStatus(null);
-        }
+      if (backgroundFilename && backgroundFilename.setting_value) {
+        setBannerStatus({
+          filename: backgroundFilename.setting_value,
+          url: backgroundImage?.setting_value || 'N/A',
+          updated_at: backgroundFilename.updated_at,
+        });
+      } else {
+        setBannerStatus(null);
       }
     } catch (error) {
       console.error('Failed to load banner status:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }; 
 
   const loadFeatureToggles = async () => {
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/frontpage/admin/settings`,
+        `${API_BASE_URL}/frontpage/admin/settings`,
         { credentials: 'include' }
       );
 
-      if (response.ok) {
-        const settingsBySection = await response.json();
-        const allSettings = Object.values(settingsBySection).flat();
+      await handleApiResponse(response, 'load feature toggles');
+      const settingsBySection = await response.json();
+      const allSettings = Object.values(settingsBySection).flat();
 
-        const toggles = {};
-        ['enable_raffle_wheel', 'enable_jam_themes', 'enable_forms'].forEach(key => {
-          const setting = allSettings.find(s => s.setting_key === key);
-          toggles[key] = setting ? setting.setting_value === 'true' : false;
-        });
+      const toggles = {};
+      ['enable_raffle_wheel', 'enable_jam_themes', 'enable_forms'].forEach(key => {
+        const setting = allSettings.find(s => s.setting_key === key);
+        toggles[key] = setting ? setting.setting_value === 'true' : false;
+      });
 
-        setFeatureToggles(toggles);
-      }
+      setFeatureToggles(toggles);
     } catch (error) {
       console.error('Failed to load feature toggles:', error);
     }
-  };
+  }; 
 
   const saveFeatureToggle = async (key, value) => {
     setSavingToggles(true);
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/frontpage/admin/settings/${key}`,
-        {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-          body: JSON.stringify({ value: value.toString() }),
-        }
-      );
+      await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/frontpage/admin/settings/${key}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ value: value.toString() }),
+      }, `save feature toggle ${key}`);
 
-      if (response.ok) {
-        setFeatureToggles(prev => ({ ...prev, [key]: value }));
-        // Dispatch event to notify other components (like layout) of the update
-        window.dispatchEvent(new CustomEvent('featureTogglesUpdated'));
-        alert('Feature toggle updated successfully!');
-      } else {
-        const error = await response.json();
-        alert(`Failed to update: ${error.error || 'Unknown error'}`);
-      }
+      setFeatureToggles(prev => ({ ...prev, [key]: value }));
+      // Dispatch event to notify other components (like layout) of the update
+      window.dispatchEvent(new CustomEvent('featureTogglesUpdated'));
+      alert('Feature toggle updated successfully!');
     } catch (error) {
       console.error('Failed to save feature toggle:', error);
       alert('Failed to update feature toggle');
@@ -123,26 +113,17 @@ export default function AdminFrontPage() {
       const formData = new FormData();
       formData.append('image', imageFile);
 
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/frontpage/admin/upload-background`,
-        {
-          method: 'POST',
-          credentials: 'include',
-          body: formData,
-        }
-      );
+      await apiFetch(`${API_BASE_URL}/frontpage/admin/upload-background`, {
+        method: 'POST',
+        body: formData,
+      }, 'upload background image');
 
-      if (response.ok) {
-        await loadBannerStatus();
-        setImageFile(null);
-        // Reset file input
-        const fileInput = document.getElementById('banner-image-file');
-        if (fileInput) fileInput.value = '';
-        alert('Background image uploaded successfully!');
-      } else {
-        const error = await response.json();
-        alert(`Upload failed: ${error.error || 'Unknown error'}`);
-      }
+      await loadBannerStatus();
+      setImageFile(null);
+      // Reset file input
+      const fileInput = document.getElementById('banner-image-file');
+      if (fileInput) fileInput.value = '';
+      alert('Background image uploaded successfully!');
     } catch (error) {
       console.error('Upload failed:', error);
       alert('Failed to upload image');

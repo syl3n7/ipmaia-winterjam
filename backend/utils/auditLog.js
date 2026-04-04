@@ -68,6 +68,32 @@ async function logAudit({
   } catch (error) {
     // Don't throw error - audit logging should not break the main operation
     console.error('❌ Failed to write audit log:', error);
+    // Retry a few times using a short in-memory queue to handle transient DB hiccups
+    try {
+      const { enqueueTask } = require('./dbQueue');
+      enqueueTask(async () => {
+        await pool.query(
+          `INSERT INTO audit_logs (
+            user_id, username, action, table_name, record_id, 
+            description, old_values, new_values, ip_address, user_agent
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+          [
+            userId,
+            username,
+            action,
+            tableName,
+            recordId,
+            description,
+            oldValues ? JSON.stringify(oldValues) : null,
+            newValues ? JSON.stringify(newValues) : null,
+            ipAddress,
+            userAgent
+          ]
+        );
+      }, { attempts: 5, baseDelayMs: 2000, maxDelayMs: 30000 });
+    } catch (enqueueErr) {
+      console.error('❌ Failed to enqueue audit log retry:', enqueueErr);
+    }
   }
 }
 

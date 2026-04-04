@@ -6,7 +6,6 @@ const rateLimit = require('express-rate-limit');
 const cookieParser = require('cookie-parser');
 const session = require('express-session');
 const pgSession = require('connect-pg-simple')(session);
-const passport = require('passport');
 const path = require('path');
 const csrf = require('lusca').csrf;
 require('dotenv').config();
@@ -21,6 +20,7 @@ const publicRoutes = require('./routes/public');
 const frontPageRoutes = require('./routes/frontpage');
 const rulesRoutes = require('./routes/rules');
 const sponsorRoutes = require('./routes/sponsors');
+const { router: formsRoutes } = require('./routes/forms');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -213,38 +213,50 @@ app.use(session({
   }
 }));
 
-// CSRF Protection middleware - skip for admin API routes
-app.use((req, res, next) => {
-  // Skip CSRF for admin API routes (already protected by session auth)
-  if (req.path.startsWith('/api/admin') || 
+// Helper to determine whether CSRF checks should be skipped for a request
+function shouldSkipCsrf(req) {
+  // Always allow isolated auth endpoints in non-production for convenience
+  if (process.env.NODE_ENV !== 'production') {
+    if (
+      req.path.startsWith('/api/auth/isolated/register') ||
+      req.path.startsWith('/api/auth/isolated/login') ||
+      req.path.startsWith('/api/auth/isolated/logout') ||
+      req.path.startsWith('/api/auth/logout') ||
+      req.path.startsWith('/api/auth/verify-email') ||
+      req.path.startsWith('/api/auth/resend-verification')
+    ) {
+      return true;
+    }
+
+    // In development, allow skipping CSRF for admin endpoints to simplify local testing
+    if (
+      req.path.startsWith('/api/admin') || 
       req.path.startsWith('/api/rules/admin') || 
       req.path.startsWith('/api/frontpage/admin') ||
       req.path.startsWith('/api/sponsors/upload-logo') ||
       req.path.startsWith('/api/sponsors/admin') ||
       (req.path.match(/^\/api\/sponsors\/\d+$/) && (req.method === 'PUT' || req.method === 'DELETE')) ||
-      (req.path === '/api/sponsors' && req.method === 'POST')) {
-    return next();
+      (req.path === '/api/sponsors' && req.method === 'POST')
+    ) {
+      return true;
+    }
   }
-  // Apply CSRF for other routes
+
+  // Public form submission is unauthenticated — always skip CSRF
+  if (req.path.startsWith('/api/forms')) {
+    return true;
+  }
+
+  return false;
+}
+
+// Export helper for testing
+module.exports.shouldSkipCsrf = shouldSkipCsrf;
+
+// CSRF Protection middleware - use helper to decide skipping
+app.use((req, res, next) => {
+  if (shouldSkipCsrf(req)) return next();
   csrf({ header: 'csrf-token' })(req, res, next);
-});
-
-// Initialize Passport
-app.use(passport.initialize());
-app.use(passport.session());
-
-// Passport serialization (required for sessions)
-passport.serializeUser((user, done) => {
-  done(null, user.id);
-});
-
-passport.deserializeUser(async (id, done) => {
-  try {
-    const result = await pool.query('SELECT * FROM users WHERE id = $1', [id]);
-    done(null, result.rows[0]);
-  } catch (error) {
-    done(error);
-  }
 });
 
 // Serve static files (uploaded images, etc.)
@@ -272,6 +284,7 @@ app.use('/api/public', publicRoutes);
 app.use('/api/frontpage', frontPageRoutes);
 app.use('/api/rules', rulesRoutes);
 app.use('/api/sponsors', sponsorRoutes);
+app.use('/api/forms', formsRoutes);
 
 // Health check endpoint and version endpoint are defined before the rate
 // limiter above; these duplicate definitions are removed.
@@ -324,4 +337,4 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`📊 Admin interface: ${process.env.FRONTEND_URL || 'http://localhost:3000'}/admin`);
 });
 
-module.exports = app;
+module.exports = { app, shouldSkipCsrf };

@@ -1,6 +1,13 @@
 // API utility functions for frontend
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.ipmaia-winterjam.pt/api';
+export const API_BASE_URL = (() => {
+  const raw = process.env.NEXT_PUBLIC_API_URL || 'https://api.ipmaia-winterjam.pt';
+  // Normalize: strip trailing slash, then ensure exactly one /api suffix
+  const normalized = raw.replace(/\/$/, '');
+  const apiSuffixRe = /\/api\/?$/;
+  if (apiSuffixRe.test(normalized)) return normalized.replace(apiSuffixRe, '/api');
+  return normalized + '/api';
+})();
 
 // Helper function to handle API responses
 const handleResponse = async (response) => {

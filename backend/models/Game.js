@@ -118,24 +118,32 @@ class Game {
   static async update(id, data) {
     console.log('🔄 Game.update - ID:', id);
     console.log('🔄 Game.update - Data:', JSON.stringify(data, null, 2));
-    
+
+    // Strict allowlist — only these columns may be updated via this method.
+    // Prevents column-name injection when req.body is passed directly as `data`.
+    const ALLOWED_FIELDS = new Set([
+      'game_jam_id', 'title', 'description', 'team_name', 'team_members',
+      'github_url', 'itch_url', 'screenshot_urls', 'tags',
+      'is_featured', 'thumbnail_url', 'instructions', 'lore', 'ranking',
+      'show_title', 'show_description', 'show_team_name', 'show_team_members',
+      'show_github_url', 'show_itch_url', 'show_screenshots', 'screenshot_fallback',
+      'show_tags', 'show_thumbnail', 'thumbnail_fallback',
+      'show_instructions', 'show_lore', 'show_ranking',
+      'custom_fields', 'custom_fields_visibility'
+    ]);
+
     const fields = [];
     const values = [];
     let index = 1;
 
-    // Read-only fields that should not be in UPDATE queries (they're from JOINs)
-    const readOnlyFields = ['game_jam_name', 'game_jam_theme'];
-
     Object.keys(data).forEach(key => {
-      // Skip read-only fields
-      if (readOnlyFields.includes(key)) {
-        console.log(`⏭️ Skipping read-only field: ${key}`);
+      if (!ALLOWED_FIELDS.has(key)) {
+        console.log(`⏭️ Skipping disallowed field: ${key}`);
         return;
       }
-      
       if (data[key] !== undefined) {
         let value = data[key];
-        
+
         // Convert arrays to JSON strings for PostgreSQL JSON columns
         if (key === 'team_members' || key === 'tags' || key === 'screenshot_urls') {
           if (Array.isArray(value)) {
@@ -143,7 +151,7 @@ class Game {
             console.log(`🔄 Converting ${key} array to JSON:`, value);
           }
         }
-        
+
         // Convert objects to JSON strings for custom fields
         if (key === 'custom_fields' || key === 'custom_fields_visibility') {
           if (typeof value === 'object' && value !== null) {
@@ -151,7 +159,7 @@ class Game {
             console.log(`🔄 Converting ${key} object to JSON:`, value);
           }
         }
-        
+
         fields.push(`${key} = $${index}`);
         values.push(value);
         index++;
