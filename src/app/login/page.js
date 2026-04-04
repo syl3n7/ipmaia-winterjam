@@ -89,6 +89,12 @@ function IsolatedAuthForm({ returnUrl, registrationEnabled }) {
   const router = useRouter();
   const { checkAuth } = useAdminAuth();
 
+  useEffect(() => {
+    if (!registrationEnabled && mode === 'register') {
+      setMode('login');
+    }
+  }, [registrationEnabled, mode]);
+
   const switchMode = (newMode) => {
     setMode(newMode);
     setError('');
@@ -155,8 +161,8 @@ function IsolatedAuthForm({ returnUrl, registrationEnabled }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      {/* Mode switcher — always rendered to preserve layout; invisible when registration is off */}
-      <div className={registrationEnabled ? '' : 'invisible'} aria-hidden={!registrationEnabled}>
+      {/* Mode switcher — sign in is always available; register is hidden when disabled */}
+      <div>
         <div className="flex border-b border-white/10 mb-1">
           <button
             type="button"
@@ -170,18 +176,24 @@ function IsolatedAuthForm({ returnUrl, registrationEnabled }) {
               mode === 'login' ? 'opacity-100' : 'opacity-0'
             }`} />
           </button>
-          <button
-            type="button"
-            onClick={() => switchMode('register')}
-            className={`flex-1 pb-3 text-sm font-semibold tracking-wide transition-colors duration-200 relative focus:outline-none ${
-              mode === 'register' ? 'text-white' : 'text-slate-500 hover:text-slate-300'
-            }`}
-          >
-            Register
-            <span className={`absolute bottom-0 inset-x-0 h-0.5 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 transition-opacity duration-300 ${
-              mode === 'register' ? 'opacity-100' : 'opacity-0'
-            }`} />
-          </button>
+          {registrationEnabled ? (
+            <button
+              type="button"
+              onClick={() => switchMode('register')}
+              className={`flex-1 pb-3 text-sm font-semibold tracking-wide transition-colors duration-200 relative focus:outline-none ${
+                mode === 'register' ? 'text-white' : 'text-slate-500 hover:text-slate-300'
+              }`}
+            >
+              Register
+              <span className={`absolute bottom-0 inset-x-0 h-0.5 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 transition-opacity duration-300 ${
+                mode === 'register' ? 'opacity-100' : 'opacity-0'
+              }`} />
+            </button>
+          ) : (
+            <div className="flex-1 pb-3 text-sm font-medium text-slate-500 text-right select-none">
+              Registration disabled
+            </div>
+          )}
         </div>
       </div>
 

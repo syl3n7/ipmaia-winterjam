@@ -11,6 +11,7 @@
     "test": "mocha --recursive tests"
   },
   "dependencies": {
+    "argon2": "^0.44.0",
     "bcryptjs": "^2.4.3",
     "brace-expansion": "^2.0.3",
     "connect-pg-simple": "^9.0.1",

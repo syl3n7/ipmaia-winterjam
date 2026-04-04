@@ -27,79 +27,85 @@ const isolatedUsers = [];
 
 // Registration endpoint
 router.post('/isolated/register', registrationLimiter, async (req, res) => {
-  // Determine public registration flag from DB (override env) or fallback to env/dev default
-  let publicRegistrationEnabled;
   try {
-    const settingRes = await pool.query("SELECT setting_value FROM front_page_settings WHERE setting_key = 'public_registration_enabled'");
-    if (settingRes.rows.length > 0) {
-      publicRegistrationEnabled = settingRes.rows[0].setting_value === 'true';
-    } else {
+    // Determine public registration flag from DB (override env) or fallback to env/dev default
+    let publicRegistrationEnabled;
+    try {
+      const settingRes = await pool.query("SELECT setting_value FROM front_page_settings WHERE setting_key = 'public_registration_enabled'");
+      if (settingRes.rows.length > 0) {
+        publicRegistrationEnabled = settingRes.rows[0].setting_value === 'true';
+      } else {
+        publicRegistrationEnabled = process.env.PUBLIC_REGISTRATION_ENABLED === 'true' || process.env.NODE_ENV !== 'production';
+      }
+    } catch (err) {
+      console.warn('⚠️ Failed to read public registration setting from DB, falling back to environment settings:', err.message);
       publicRegistrationEnabled = process.env.PUBLIC_REGISTRATION_ENABLED === 'true' || process.env.NODE_ENV !== 'production';
     }
-  } catch (err) {
-    console.warn('⚠️ Failed to read public registration setting from DB, falling back to environment settings:', err.message);
-    publicRegistrationEnabled = process.env.PUBLIC_REGISTRATION_ENABLED === 'true' || process.env.NODE_ENV !== 'production';
-  }
 
-  if (!publicRegistrationEnabled) {
-    return res.status(403).json({ error: 'Public registration is disabled. Admins can invite users.' });
-  }
+    // Allow bootstrap registration for the very first user even when public registration is disabled.
+    const userCountResult = await pool.query('SELECT COUNT(*) FROM users');
+    const userCount = Number(userCountResult.rows[0]?.count || 0);
+    const isBootstrapRegistration = userCount === 0;
 
-  let { username, email, password } = req.body;
-  // Use default dev credentials if not provided in dev env
-  const allowDevAuto = process.env.ALLOW_DEV_AUTOLOGIN === 'true' && process.env.NODE_ENV !== 'production';
-  if (allowDevAuto) {
-    username = username || 'dev-admin';
-    email = email || 'dev-mail@steelchunk.eu';
-    password = password || 'dev-pw';
-  }
-
-  if (!username || !email || !password) {
-    return res.status(400).json({ error: 'Missing required fields' });
-  }
-  // Check if user exists in DB
-  const dbCheck = await pool.query('SELECT * FROM users WHERE username = $1 OR email = $2', [username, email]);
-  if (dbCheck.rows.length > 0) {
-    return res.status(409).json({ error: 'User already exists' });
-  }
-
-  // Validate password strength
-  const { isStrongPassword } = require('../utils/validation');
-  const pwCheck = isStrongPassword(password);
-  if (!pwCheck.ok) return res.status(400).json({ error: pwCheck.reason });
-
-  // Acquire advisory lock to avoid race when creating the very first user
-  const LOCK_KEY = 123456789; // arbitrary constant for app-level registration lock
-  let user = null;
-  let role = 'user';
-  try {
-    await pool.query('SELECT pg_advisory_lock($1)', [LOCK_KEY]);
-
-    const passwordHash = await User.hashPassword(password);
-
-    // Make the first registered user a super_admin (only the very first)
-    const dbCount = await pool.query('SELECT COUNT(*) FROM users');
-    role = dbCount.rows[0].count === '0' ? 'super_admin' : 'user';
-
-    let dbRes;
-    try {
-      dbRes = await pool.query(
-        'INSERT INTO users (username, email, password_hash, role, is_active) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-        [username, email, passwordHash, role, true]
-      );
-    } catch (err) {
-      // Handle unique constraint (race or dupes)
-      if (err.code === '23505') {
-        return res.status(409).json({ error: 'User with that username or email already exists' });
-      }
-      throw err;
+    if (!publicRegistrationEnabled && !isBootstrapRegistration) {
+      return res.status(403).json({ error: 'Public registration is disabled. Admins can invite users.' });
     }
 
-    user = dbRes.rows[0];
-  } finally {
-    // Release advisory lock if held
-    try { await pool.query('SELECT pg_advisory_unlock($1)', [LOCK_KEY]); } catch (unlockErr) { /* ignore */ }
-  }
+    let { username, email, password } = req.body;
+    // Use default dev credentials if not provided in dev env
+    const allowDevAuto = process.env.ALLOW_DEV_AUTOLOGIN === 'true' && process.env.NODE_ENV !== 'production';
+    if (allowDevAuto) {
+      username = username || 'dev-admin';
+      email = email || 'dev-mail@steelchunk.eu';
+      password = password || 'dev-pw';
+    }
+
+    if (!username || !email || !password) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+    // Check if user exists in DB
+    const dbCheck = await pool.query('SELECT * FROM users WHERE username = $1 OR email = $2', [username, email]);
+    if (dbCheck.rows.length > 0) {
+      return res.status(409).json({ error: 'User already exists' });
+    }
+
+    // Validate password strength
+    const { isStrongPassword } = require('../utils/validation');
+    const pwCheck = isStrongPassword(password);
+    if (!pwCheck.ok) return res.status(400).json({ error: pwCheck.reason });
+
+    // Acquire advisory lock to avoid race when creating the very first user
+    const LOCK_KEY = 123456789; // arbitrary constant for app-level registration lock
+    let user = null;
+    let role = 'user';
+    try {
+      await pool.query('SELECT pg_advisory_lock($1)', [LOCK_KEY]);
+
+      const passwordHash = await User.hashPassword(password);
+
+      // Make the first registered user a super_admin (only the very first)
+      const dbCount = await pool.query('SELECT COUNT(*) FROM users');
+      role = dbCount.rows[0].count === '0' ? 'super_admin' : 'user';
+
+      let dbRes;
+      try {
+        dbRes = await pool.query(
+          'INSERT INTO users (username, email, password_hash, role, is_active) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+          [username, email, passwordHash, role, true]
+        );
+      } catch (err) {
+        // Handle unique constraint (race or dupes)
+        if (err.code === '23505') {
+          return res.status(409).json({ error: 'User with that username or email already exists' });
+        }
+        throw err;
+      }
+
+      user = dbRes.rows[0];
+    } finally {
+      // Release advisory lock if held
+      try { await pool.query('SELECT pg_advisory_unlock($1)', [LOCK_KEY]); } catch (unlockErr) { /* ignore */ }
+    }
 
   // If this is the first user, disable public registration automatically
   if (role === 'super_admin') {
@@ -174,15 +180,21 @@ router.post('/isolated/register', registrationLimiter, async (req, res) => {
     }
   }
 
-  const responseToken = generateToken(user);
-  res.status(201).json({
-    message: verificationPending
-      ? 'User registered. Please check your email to verify your account before logging in.'
-      : 'User registered',
-    user: { id: user.id, username: user.username, email: user.email, role: user.role, email_verified: autoVerify },
-    token: responseToken,
-    verificationPending
-  });
+    const responseToken = generateToken(user);
+    res.status(201).json({
+      message: verificationPending
+        ? 'User registered. Please check your email to verify your account before logging in.'
+        : 'User registered',
+      user: { id: user.id, username: user.username, email: user.email, role: user.role, email_verified: autoVerify },
+      token: responseToken,
+      verificationPending
+    });
+  } catch (err) {
+    console.error('❌ Isolated registration failed:', err);
+    return res.status(500).json({
+      error: process.env.NODE_ENV === 'production' ? 'Registration failed. Please try again later.' : err.message
+    });
+  }
 });
 
 // Login endpoint
