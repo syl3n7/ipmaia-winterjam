@@ -27,7 +27,7 @@
     "morgan": "^1.10.1",
     "multer": "^2.1.0",
     "node-fetch": "^2.7.0",
-    "nodemailer": "^8.0.4",
+    "nodemailer": "^8.0.5",
     "passport": "^0.7.0",
     "passport-openidconnect": "^0.1.2",
     "pg": "^8.13.0"
