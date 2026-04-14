@@ -198,6 +198,7 @@ export default function AdminThemeWheel() {
       const res = await apiFetch(`${API_BASE_URL}/admin/gamejams/${selectedJamId}/theme-wheel`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
+        // `theme` updates the jam's official theme field; `winner` records the last spin result
         body: JSON.stringify({ theme: chosen.text, winner: chosen.text }),
       }, 'persist theme');
 

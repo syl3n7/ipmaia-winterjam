@@ -183,10 +183,6 @@ export default function RafflePage() {
 
     try {
       const response = await apiFetch(`${API_BASE_URL}/public/gamejams/${selectedGameJam}/games`, {}, 'load jam teams');
-      if (!response.ok) {
-        throw new Error('Failed to fetch games');
-      }
-
       const games = await response.json();
       
       // Convert games to team format for raffle
