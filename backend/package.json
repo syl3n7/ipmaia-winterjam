@@ -45,7 +45,10 @@
     "npm": ">=8.0.0"
   },
   "overrides": {
-    "tar": "7.5.10"
+    "tar": "7.5.10",
+    "glob": {
+      "minimatch": "5.1.9"
+    }
   },
   "keywords": [
     "express",
