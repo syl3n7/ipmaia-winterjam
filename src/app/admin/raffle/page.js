@@ -3,6 +3,7 @@ import { useState, useRef, useEffect, useMemo } from 'react';
 import { SpinWheel, generateWheelColors } from '@/components/SpinWheel';
 import AdminProtectedRoute from '@/components/AdminProtectedRoute';
 import { useAdminAuth } from '@/contexts/AdminAuthContext';
+import { API_BASE_URL } from '@/utils/api';
 
 export default function RafflePage() {
   const [teams, setTeams] = useState([]);
@@ -28,13 +29,16 @@ export default function RafflePage() {
   const [showManualEntry, setShowManualEntry] = useState(false);
   const [raffleEnabled, setRaffleEnabled] = useState(false);
   const [checkingEnabled, setCheckingEnabled] = useState(true);
+  const [saveStatus, setSaveStatus] = useState('');
+  const [saveError, setSaveError] = useState('');
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     // Check if raffle is enabled
     const checkRaffleEnabled = async () => {
       try {
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/frontpage/admin/settings`,
+          `${API_BASE_URL}/frontpage/admin/settings`,
           { credentials: 'include' }
         );
 
@@ -58,7 +62,7 @@ export default function RafflePage() {
 
     const fetchGameJams = async () => {
       try {
-        const response = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/gamejams`, {}, 'fetch game jams');
+        const response = await apiFetch(`${API_BASE_URL}/admin/gamejams`, {}, 'fetch game jams');
         const data = await response.json();
         setGameJams(data);
         if (data.length > 0) {
@@ -129,7 +133,7 @@ export default function RafflePage() {
     formData.append('gameJamId', selectedGameJam);
 
     try {
-      const response = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/games/import-teams`, {
+      const response = await apiFetch(`${API_BASE_URL}/admin/games/import-teams`, {
         method: 'POST',
         body: formData,
       }, 'import teams');
@@ -178,7 +182,7 @@ export default function RafflePage() {
     setImportMessage('');
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/public/gamejams/${selectedGameJam}/games`);
+      const response = await apiFetch(`${API_BASE_URL}/public/gamejams/${selectedGameJam}/games`, {}, 'load jam teams');
       if (!response.ok) {
         throw new Error('Failed to fetch games');
       }
@@ -312,12 +316,6 @@ export default function RafflePage() {
           if (fields.length > 3) {
             const memberString = fields[3];
             
-            // Debug: Log the member string for Escumalha
-            if (teamName === 'Escumalha') {
-              console.log('🔍 Escumalha member string:', JSON.stringify(memberString));
-              console.log('🔍 Contains newlines:', memberString.includes('\n'));
-            }
-            
             // Split by comma OR newline (some teams use newlines instead of commas)
             members = memberString
               .split(/[,\n\r]+/)  // Split by comma, newline, or carriage return
@@ -341,11 +339,6 @@ export default function RafflePage() {
                 return true;
               })
               .slice(0, 20);
-            
-            // Debug: Log parsed members for Escumalha
-            if (teamName === 'Escumalha') {
-              console.log('🔍 Escumalha parsed members:', members);
-            }
           }
           
           // Validation: At least one member required
@@ -526,6 +519,8 @@ export default function RafflePage() {
 
   const clearWinners = () => {
     setWinners([]);
+    setSaveStatus('');
+    setSaveError('');
   };
 
   const addBackWinner = (winnerId) => {
@@ -552,7 +547,50 @@ export default function RafflePage() {
     setWinners(prev => prev.filter(w => w.id !== winnerId));
   };
 
+  const saveRaffleResults = async () => {
+    if (!selectedGameJam) {
+      setSaveError('❌ No game jam selected. Load teams from a jam first.');
+      return;
+    }
+    if (winners.length === 0) {
+      setSaveError('❌ No winners to save yet. Spin the wheel first.');
+      return;
+    }
 
+    setSaving(true);
+    setSaveStatus('');
+    setSaveError('');
+
+    try {
+      const jamId = selectedGameJam;
+      const jam = gameJams.find(j => j.id.toString() === jamId);
+
+      const raffleRecord = {
+        savedAt: new Date().toISOString(),
+        jamName: jam?.name || jamId,
+        winners: winners.map((w, idx) => ({
+          rank: idx + 1,
+          teamName: w.name,
+          members: w.members || [],
+          timestamp: w.timestamp,
+        })),
+      };
+
+      const response = await apiFetch(`${API_BASE_URL}/admin/gamejams/${jamId}/theme-wheel`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ winner: raffleRecord }),
+      }, 'save raffle results');
+
+      await response.json();
+      setSaveStatus(`✅ Raffle results saved for "${jam?.name || 'selected jam'}".`);
+    } catch (err) {
+      console.error('Failed to save raffle results', err);
+      setSaveError('❌ Failed to save results to backend. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const addManualTeam = () => {
     if (!newTeamName.trim()) {
@@ -598,11 +636,6 @@ export default function RafflePage() {
   const removeSelectedTeams = () => {
     setTeams(teams.filter(team => !selectedTeams.includes(team.id)));
     setSelectedTeams([]);
-  };
-
-  const getWheelColors = (index, total) => {
-    const hue = (index * 360) / total;
-    return `hsl(${hue}, 70%, 60%)`;
   };
 
   const teamItems = useMemo(() => {
@@ -934,13 +967,35 @@ export default function RafflePage() {
                   <div className="bg-gradient-to-r from-yellow-500 to-orange-500 rounded-lg p-6 mb-8">
                     <div className="flex justify-between items-center mb-4">
                       <h2 className="text-2xl font-bold">🏆 Winners ({winners.length}) 🏆</h2>
-                      <button
-                        onClick={clearWinners}
-                        className="bg-red-600 hover:bg-red-700 px-3 py-1 rounded text-sm transition"
-                      >
-                        Clear All
-                      </button>
+                      <div className="flex items-center gap-2">
+                        {selectedGameJam && (
+                          <button
+                            onClick={saveRaffleResults}
+                            disabled={saving}
+                            className="bg-green-700 hover:bg-green-800 disabled:bg-gray-600 disabled:cursor-not-allowed px-3 py-1 rounded text-sm transition"
+                            title="Save raffle results to the selected game jam"
+                          >
+                            {saving ? '🔄 Saving...' : '💾 Save Results'}
+                          </button>
+                        )}
+                        <button
+                          onClick={clearWinners}
+                          className="bg-red-600 hover:bg-red-700 px-3 py-1 rounded text-sm transition"
+                        >
+                          Clear All
+                        </button>
+                      </div>
                     </div>
+                    {saveStatus && (
+                      <div className="bg-green-800 bg-opacity-70 text-green-100 text-sm rounded px-3 py-2 mb-3">
+                        {saveStatus}
+                      </div>
+                    )}
+                    {saveError && (
+                      <div className="bg-red-800 bg-opacity-70 text-red-100 text-sm rounded px-3 py-2 mb-3">
+                        {saveError}
+                      </div>
+                    )}
                     <div className="space-y-2 max-h-48 overflow-y-auto">
                       {winners.map((winner, index) => (
                         <div key={winner.id} className="bg-white bg-opacity-20 rounded p-3 flex justify-between items-center">
@@ -1108,7 +1163,7 @@ export default function RafflePage() {
                     } disabled:bg-gray-600 disabled:cursor-not-allowed`}
                   >
                     {jamSelectorMode === 'import' 
-                      ? '✅ Select Jam' 
+                      ? (importing ? '🔄 Importing...' : '✅ Import Teams') 
                       : (importing ? '🔄 Loading...' : '🎯 Load Teams')}
                   </button>
                 </div>
