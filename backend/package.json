@@ -48,7 +48,8 @@
     "tar": "7.5.10",
     "glob": {
       "minimatch": "5.1.9"
-    }
+    },
+    "serialize-javascript": "7.0.3"
   },
   "keywords": [
     "express",
