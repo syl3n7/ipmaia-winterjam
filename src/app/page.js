@@ -117,8 +117,6 @@ export default function Home() {
 
   useEffect(() => {
     const checkEventStatus = async () => {
-      if (!isLoading) return; // Skip if we're already using cached data
-      
       try {
         // Use local browser time
         const now = new Date();
@@ -188,7 +186,7 @@ export default function Home() {
     // Check every 5 minutes instead of every minute to reduce API calls
     const interval = setInterval(checkEventStatus, 300000);
     return () => clearInterval(interval);
-  }, [isLoading]);
+  }, []);
 
   useEffect(() => {
     const apiUrl = typeof window === 'undefined' 
