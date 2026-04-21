@@ -26,6 +26,7 @@ export default function Home() {
   const [hasEventEnded, setHasEventEnded] = useState(false);
   const [registrationOpen, setRegistrationOpen] = useState(false);
   const [registrationClosed, setRegistrationClosed] = useState(false);
+  const [noActiveJam, setNoActiveJam] = useState(false);
   const [currentTime, setCurrentTime] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [fetchError, setFetchError] = useState(false);
@@ -125,12 +126,10 @@ export default function Home() {
         // Fetch current game jam data
         const gameJam = await fetchCurrentGameJam();
         
-        let eventStart, eventEnd;
-        
-        if (gameJam) {
-          // Use dates from backend
-          eventStart = new Date(gameJam.start_date);
-          eventEnd = new Date(gameJam.end_date);
+        if (gameJam && gameJam.is_active) {
+          // Active game jam found — use its dates
+          const eventStart = new Date(gameJam.start_date);
+          const eventEnd = new Date(gameJam.end_date);
           const regStart = gameJam.registration_start_date ? new Date(gameJam.registration_start_date) : null;
           const regEnd = gameJam.registration_end_date ? new Date(gameJam.registration_end_date) : null;
           
@@ -139,33 +138,43 @@ export default function Home() {
           const regIsOpen = regStart && now >= regStart;
           const regIsClosed = regEnd && now > regEnd;
           
+          setNoActiveJam(false);
           setRegistrationOpen(regIsOpen);
           setRegistrationClosed(regIsClosed);
-        } else {
-          // Fallback to hardcoded dates if backend data unavailable
-          eventStart = new Date('2025-02-14T17:00:00Z');
-          eventEnd = new Date('2025-02-16T14:00:00Z');
-        }
-        
-        const hasStarted = now >= eventStart;
-        const hasEnded = now >= eventEnd;
+          setHasEventStarted(hasStarted);
+          setHasEventEnded(hasEnded);
 
-        // Save to localStorage (browser only)
-        if (typeof window !== 'undefined') {
-          try {
-            localStorage.setItem('eventStatus', JSON.stringify({
-              hasStarted,
-              hasEnded,
-              timestamp: Date.now()
-            }));
-          } catch (error) {
-            // Could not store event status in localStorage
+          // Save to localStorage (browser only)
+          if (typeof window !== 'undefined') {
+            try {
+              localStorage.setItem('eventStatus', JSON.stringify({
+                hasStarted,
+                hasEnded,
+                timestamp: Date.now()
+              }));
+            } catch (error) {
+              // Could not store event status in localStorage
+            }
+          }
+        } else {
+          // No active game jam (backend returned inactive jam or nothing)
+          setNoActiveJam(true);
+          setHasEventStarted(false);
+          setHasEventEnded(false);
+          setRegistrationOpen(false);
+          setRegistrationClosed(false);
+
+          // Clear stale cached status
+          if (typeof window !== 'undefined') {
+            try {
+              localStorage.removeItem('eventStatus');
+            } catch (error) {
+              // Could not clear event status from localStorage
+            }
           }
         }
         
         setCurrentTime(now);
-        setHasEventStarted(hasStarted);
-        setHasEventEnded(hasEnded);
       } catch (error) {
         setFetchError(true);
       } finally {
@@ -464,6 +473,13 @@ export default function Home() {
                 <div className="animate-pulse bg-orange-500/30 text-transparent rounded-lg py-4 px-6 inline-block">
                   A verificar status do evento...
                 </div>
+              ) : noActiveJam ? (
+                <Link 
+                  href={latestArchiveUrl}
+                  className="bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 px-8 rounded-lg text-xl inline-flex items-center gap-2 transition-all hover:scale-105"
+                >
+                  📁 Ver Arquivo <ArrowRight size={20} />
+                </Link>
               ) : hasEventEnded ? (
                 <Link 
                   href={latestArchiveUrl}

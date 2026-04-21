@@ -67,7 +67,7 @@ const MainNavbar = () => {
       try {
         const { gameJamApi } = await import('../utils/api');
         const currentJam = await gameJamApi.getCurrent();
-        if (currentJam) {
+        if (currentJam && currentJam.is_active) {
           const now = new Date();
           const startDate = new Date(currentJam.start_date);
           const endDate = new Date(currentJam.end_date);
