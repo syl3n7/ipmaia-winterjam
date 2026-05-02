@@ -21,6 +21,8 @@ const frontPageRoutes = require('./routes/frontpage');
 const rulesRoutes = require('./routes/rules');
 const sponsorRoutes = require('./routes/sponsors');
 const { router: formsRoutes } = require('./routes/forms');
+const sf6Routes = require('./routes/sf6');
+const sf6Scraper = require('./services/sf6Scraper');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -286,6 +288,7 @@ app.use('/api/frontpage', frontPageRoutes);
 app.use('/api/rules', rulesRoutes);
 app.use('/api/sponsors', sponsorRoutes);
 app.use('/api/forms', formsRoutes);
+app.use('/api/sf6', sf6Routes);
 
 // Health check endpoint and version endpoint are defined before the rate
 // limiter above; these duplicate definitions are removed.
@@ -336,6 +339,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Backend server running on port ${PORT}`);
   console.log(`🔧 API endpoints: http://localhost:${PORT}/api`);
   console.log(`📊 Admin interface: ${process.env.FRONTEND_URL || 'http://localhost:3000'}/admin`);
+  sf6Scraper.start();
 });
 
 module.exports = { app, shouldSkipCsrf };

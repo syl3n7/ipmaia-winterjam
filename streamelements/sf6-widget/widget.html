@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: transparent;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    #widget {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(10, 10, 20, 0.82);
+      border: 1.5px solid rgba(255,255,255,0.12);
+      border-radius: 10px;
+      padding: 8px 16px;
+      backdrop-filter: blur(6px);
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    }
+    #widget.show { opacity: 1; }
+
+    .stat { text-align: center; min-width: 46px; }
+    .lbl {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.4);
+      margin-bottom: 2px;
+    }
+    .val {
+      font-size: 24px;
+      font-weight: 800;
+      line-height: 1;
+    }
+    #w .val  { color: #4ade80; }
+    #l .val  { color: #f87171; }
+    #wr .val { color: #facc15; }
+
+    .sep {
+      width: 1px;
+      height: 32px;
+      background: rgba(255,255,255,0.1);
+    }
+  </style>
+</head>
+<body>
+  <div id="widget">
+    <div class="stat" id="w">
+      <div class="lbl">W</div>
+      <div class="val" id="wv">–</div>
+    </div>
+    <div class="sep"></div>
+    <div class="stat" id="l">
+      <div class="lbl">L</div>
+      <div class="val" id="lv">–</div>
+    </div>
+    <div class="sep"></div>
+    <div class="stat" id="wr">
+      <div class="lbl">WR</div>
+      <div class="val" id="wrv">–</div>
+    </div>
+  </div>
+
+  <script>
+    // ── CONFIG ── change this to your backend domain if needed ──────────────
+    var API = 'https://api.ipmaia-winterjam.pt/api/sf6/stats';
+    var POLL = 90000; // ms — matches backend scrape interval
+    // ────────────────────────────────────────────────────────────────────────
+
+    var widget = document.getElementById('widget');
+
+    function render(d) {
+      document.getElementById('wv').textContent  = d.wins;
+      document.getElementById('lv').textContent  = d.losses;
+      document.getElementById('wrv').textContent = d.winRate + '%';
+      widget.classList.add('show');
+    }
+
+    function poll() {
+      fetch(API)
+        .then(function(r) { return r.ok ? r.json() : Promise.reject(r.status); })
+        .then(render)
+        .catch(function(e) { console.warn('[SF6] fetch failed:', e); });
+    }
+
+    poll();
+    setInterval(poll, POLL);
+  </script>
+</body>
+</html>
