@@ -49,7 +49,7 @@
     "glob": {
       "minimatch": "5.1.9"
     },
-    "serialize-javascript": "7.0.3"
+    "serialize-javascript": "^7.0.5"
   },
   "keywords": [
     "express",
