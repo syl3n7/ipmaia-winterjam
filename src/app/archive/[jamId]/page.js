@@ -1,4 +1,5 @@
 'use client';
+export const runtime = 'edge';
 import { useState, useEffect } from 'react';
 import { X, Trophy, ChevronDown } from 'lucide-react';
 import { notFound, useParams } from 'next/navigation';
