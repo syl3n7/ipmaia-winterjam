@@ -61,22 +61,22 @@ services:
     networks:
       - winterjam-network
 
-  # Frontend Next.js Application
-  frontend:
-    image: ghcr.io/syl3n7/ipmaia-winterjam:latest
-    restart: unless-stopped
-    ports:
-      - "3011:3000"
-    depends_on:
-      - backend
-    environment:
-      NODE_ENV: production
-      PORT: ${FRONTEND_PORT:-3000}
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.ipmaia-winterjam.pt/api}
-    volumes:
-      - shared_public:/app/public
-    networks:
-      - winterjam-network
+  # Frontend Next.js Application (now served via Cloudflare Workers)
+  # frontend:
+  #   image: ghcr.io/syl3n7/ipmaia-winterjam:latest
+  #   restart: unless-stopped
+  #   ports:
+  #     - "3011:3000"
+  #   depends_on:
+  #     - backend
+  #   environment:
+  #     NODE_ENV: production
+  #     PORT: ${FRONTEND_PORT:-3000}
+  #     NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.ipmaia-winterjam.pt/api}
+  #   volumes:
+  #     - shared_public:/app/public
+  #   networks:
+  #     - winterjam-network
 
   # Nginx Reverse Proxy with SSL
   # nginx:
