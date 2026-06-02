@@ -22,8 +22,6 @@ const registrationLimiter = rateLimit({
 });
 
 // --- Isolated authentication system (no PocketID, no OIDC) ---
-// In-memory user store for demo (replace with DB in production)
-const isolatedUsers = [];
 
 // Registration endpoint
 router.post('/isolated/register', registrationLimiter, async (req, res) => {

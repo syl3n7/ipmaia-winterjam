@@ -106,8 +106,10 @@ app.use(cors({
     
     if (allowedOrigins.includes(origin)) {
       callback(null, true);
+    } else if (process.env.NODE_ENV !== 'production') {
+      callback(null, true); // Allow all origins in development
     } else {
-      callback(null, true); // Allow all origins for now (public API)
+      callback(new Error('Not allowed by CORS'));
     }
   },
   credentials: true,
