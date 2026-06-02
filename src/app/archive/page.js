@@ -1,17 +1,18 @@
 'use client';
+export const runtime = 'edge';
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { getCurrentGameJam } from '../../data/gameJamData';
+import { useLatestArchive } from '../../hooks/useLatestArchive';
 
 export default function ArchiveIndexPage() {
   const router = useRouter();
-  const currentJam = getCurrentGameJam();
-  
+  const latestArchiveUrl = useLatestArchive();
+
   useEffect(() => {
-    if (currentJam) {
-      router.replace('/archive/2025/winter'); // Currently hardcoded, can use dynamic path later
+    if (latestArchiveUrl !== '/archive') {
+      router.replace(latestArchiveUrl);
     }
-  }, [router, currentJam]);
+  }, [router, latestArchiveUrl]);
 
   return (
     <div className="flex items-center justify-center h-[calc(100vh-theme(spacing.16))]">
