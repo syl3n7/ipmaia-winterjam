@@ -1,0 +1,11 @@
+name = "ipmaia-winterjam"
+compatibility_date = "2026-03-15"
+compatibility_flags = ["nodejs_compat"]
+
+routes = [
+  { pattern = "ipmaia-winterjam.pt", zone_name = "ipmaia-winterjam.pt", custom_domain = true },
+  { pattern = "www.ipmaia-winterjam.pt", zone_name = "ipmaia-winterjam.pt", custom_domain = true }
+]
+
+[assets]
+directory = ".vercel/output/static"

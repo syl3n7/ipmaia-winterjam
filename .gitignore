@@ -76,6 +76,9 @@ jspm_packages/
 # Next.js build output
 .next
 
+# Cloudflare / Vercel build artifacts
+.vercel/
+
 # Nuxt.js build / generate output
 .nuxt
 dist
