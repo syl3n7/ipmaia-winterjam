@@ -1,0 +1,79 @@
+name: Deploy to Cloudflare Workers
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'next.config.mjs'
+      - 'tailwind.config.js'
+      - 'postcss.config.mjs'
+      - 'jsconfig.json'
+      - 'wrangler.toml'
+      - '.github/workflows/cloudflare.yml'
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Fetch all history for version info
+
+    - name: Generate version info
+      id: version
+      run: |
+        SHORT_SHA=$(git rev-parse --short HEAD)
+        BUILD_NUMBER=$(git rev-list --count HEAD)
+        BUILD_DATE=$(date -u +'%Y%m%d')
+        VERSION="1.${BUILD_NUMBER}.0"
+        FULL_VERSION="${VERSION}+${SHORT_SHA}.${BUILD_DATE}"
+
+        echo "version=${VERSION}" >> $GITHUB_OUTPUT
+        echo "full_version=${FULL_VERSION}" >> $GITHUB_OUTPUT
+        echo "short_sha=${SHORT_SHA}" >> $GITHUB_OUTPUT
+        echo "build_date=${BUILD_DATE}" >> $GITHUB_OUTPUT
+
+        echo "📦 Frontend Version: ${FULL_VERSION}"
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Build for Cloudflare Workers
+      env:
+        NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL || 'https://api.ipmaia-winterjam.pt/api' }}
+        NEXT_PUBLIC_APP_VERSION: ${{ steps.version.outputs.full_version }}
+        NEXT_PUBLIC_BUILD_DATE: ${{ steps.version.outputs.build_date }}
+        NEXT_PUBLIC_GIT_SHA: ${{ steps.version.outputs.short_sha }}
+        NEXT_TELEMETRY_DISABLED: 1
+      run: npm run cf:build
+
+    - name: Deploy to Cloudflare Workers
+      env:
+        CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      run: npx wrangler deploy
+
+    - name: Generate deployment summary
+      run: |
+        echo "## Cloudflare Workers Deployment Successful! 🎉" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 📦 Deployment Details" >> $GITHUB_STEP_SUMMARY
+        echo "- **Version**: ${{ steps.version.outputs.full_version }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Commit**: ${{ steps.version.outputs.short_sha }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Build Date**: ${{ steps.version.outputs.build_date }}" >> $GITHUB_STEP_SUMMARY

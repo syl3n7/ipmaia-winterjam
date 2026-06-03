@@ -232,4 +232,13 @@ router.get('/archive/:year/:season', async (req, res) => {
   }
 });
 
+// Maintenance mode status (no auth required — polled by the frontend edge middleware)
+const fs = require('fs');
+const MAINTENANCE_FILE = '/var/maintenance_flag/maintenance.on';
+
+router.get('/maintenance', (req, res) => {
+  const enabled = fs.existsSync(MAINTENANCE_FILE);
+  res.json({ enabled });
+});
+
 module.exports = router;

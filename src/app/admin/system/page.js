@@ -543,7 +543,7 @@ export default function AdminSystem() {
           <div>
             <p className="text-gray-400 text-sm mb-1">Platform</p>
             <p className="text-white font-mono bg-gray-700 px-3 py-1 rounded inline-block">
-              Next.js + Express
+              Next.js (Cloudflare Workers) + Express
             </p>
           </div>
         </div>
@@ -784,10 +784,6 @@ export default function AdminSystem() {
               </div>
             )}
 
-            <p className="text-gray-400 text-sm mt-4">
-              <strong>Note:</strong> Run the audit log migration to enable activity tracking: 
-              <code className="ml-2 bg-gray-800 px-2 py-1 rounded">node backend/migrations/add-audit-log.js</code>
-            </p>
           </div>
         </>
       )}
