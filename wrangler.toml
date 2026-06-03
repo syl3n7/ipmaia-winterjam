@@ -1,6 +1,7 @@
 name = "ipmaia-winterjam"
+main = ".open-next/worker.js"
 compatibility_date = "2026-03-15"
-compatibility_flags = ["nodejs_compat"]
+compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
 
 routes = [
   { pattern = "ipmaia-winterjam.pt", zone_name = "ipmaia-winterjam.pt", custom_domain = true },
@@ -8,4 +9,9 @@ routes = [
 ]
 
 [assets]
-directory = ".vercel/output/static"
+directory = ".open-next/assets"
+binding = "ASSETS"
+
+[[services]]
+binding = "WORKER_SELF_REFERENCE"
+service = "ipmaia-winterjam"
