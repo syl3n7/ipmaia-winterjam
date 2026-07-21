@@ -14,7 +14,7 @@
   "postbuild": "next-sitemap"
  },
  "dependencies": {
-  "brace-expansion": "^2.0.3",
+  "brace-expansion": "^2.1.2",
   "critters": "^0.0.23",
   "flowbite-react": "^0.10.2",
   "lucide-react": "^0.321.0",
