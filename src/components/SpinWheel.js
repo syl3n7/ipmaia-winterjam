@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useMemo } from 'react';
 import { Wheel } from 'spin-wheel';
 
 /**
@@ -60,11 +60,11 @@ export function SpinWheel({ items, spinning, pointerColor = '#ef4444', onSliceCh
   const wheelRef = useRef(null);
 
   // Convert our items format to spin-wheel format
-  const wheelItems = items.map(item => ({
+  const wheelItems = useMemo(() => items.map(item => ({
     label: item.text,
     backgroundColor: item.color,
     weight: 1 // Equal weight for all items
-  }));
+  })), [items]);
 
   // Initialize wheel when component mounts
   useEffect(() => {
@@ -98,7 +98,7 @@ export function SpinWheel({ items, spinning, pointerColor = '#ef4444', onSliceCh
         onSpinComplete?.(winningItem);
         onSpinEnd?.();
       },
-      onSpin: (event) => {
+      onSpin: () => {
         // Wheel started spinning
       },
     };
@@ -111,11 +111,11 @@ export function SpinWheel({ items, spinning, pointerColor = '#ef4444', onSliceCh
         wheelRef.current = null;
       }
     };
-  }, [items, debug]);
+  }, [items, wheelItems, onSliceChange, onSpinComplete, onSpinEnd, debug]);
 
   // Handle spinning state changes
   useEffect(() => {
-    if (!wheelRef.current) return;
+    if (!wheelRef.current || !items.length) return;
 
     if (spinning) {
       // Let spin-wheel library handle random winner selection and animation
@@ -125,14 +125,14 @@ export function SpinWheel({ items, spinning, pointerColor = '#ef4444', onSliceCh
 
       wheelRef.current.spinToItem(winningIndex, duration, true, numberOfRevolutions, 1);
     }
-  }, [spinning, items]);
+  }, [spinning, items, wheelItems]);
 
   // Update wheel items when items prop changes
   useEffect(() => {
     if (wheelRef.current && items.length) {
       wheelRef.current.items = wheelItems;
     }
-  }, [items]);
+  }, [items, wheelItems]);
 
   return (
     <div

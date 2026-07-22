@@ -1,4 +1,5 @@
 'use client';
+import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Background from '../components/Background';
@@ -204,9 +205,11 @@ export default function Home() {
         imageUrl={frontPageSettings.hero_background_image}
         fallbackContent={
           <div className="text-center">
-            <img 
+            <Image 
               src="/images/placeholder-image.png" 
               alt="WinterJam Background" 
+              width={400}
+              height={300}
               className="max-w-md mx-auto opacity-50"
             />
             <p className="text-gray-400 mt-4">Imagem de fundo não disponível</p>

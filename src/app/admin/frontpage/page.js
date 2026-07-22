@@ -1,5 +1,6 @@
 "use client";
 
+import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { useAdminAuth } from '@/contexts/AdminAuthContext';
 import { API_BASE_URL } from '@/utils/api';
@@ -181,9 +182,11 @@ export default function AdminFrontPage() {
             <div className="mt-4">
               <p className="text-gray-400 text-sm mb-2">Preview:</p>
               <div className="relative w-full h-48 bg-gray-900 rounded-lg overflow-hidden">
-                <img
+                <Image
                   src={bannerStatus.url}
                   alt="Background preview"
+                  width={1200}
+                  height={480}
                   className="w-full h-full object-cover"
                 />
               </div>

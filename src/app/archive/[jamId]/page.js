@@ -1,4 +1,5 @@
 'use client';
+import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { X, Trophy, ChevronDown } from 'lucide-react';
 import { notFound, useParams } from 'next/navigation';
@@ -149,9 +150,11 @@ export default function GameJamArchivePage() {
             </button>
           </div>
           
-          <img 
+          <Image 
             src={game.thumbnail} 
             alt={game.title}
+            width={800}
+            height={192}
             className="w-full h-48 object-cover rounded-lg"
           />
           
@@ -282,9 +285,11 @@ export default function GameJamArchivePage() {
                         game.ranking === 2 ? 'text-gray-300' : 'text-amber-700'} 
                     />
                   </div>
-                  <img 
+                  <Image 
                     src={game.thumbnail} 
                     alt={game.title}
+                    width={800}
+                    height={192}
                     className="w-full h-48 object-cover"
                   />
                   <div className="p-4">
@@ -327,9 +332,11 @@ export default function GameJamArchivePage() {
                   className="bg-black/50 backdrop-blur-sm rounded-xl overflow-hidden hover:transform hover:scale-105 transition-transform cursor-pointer relative hover:ring-2 hover:ring-orange-400"
                   onClick={() => setSelectedGame(game)}
                 >
-                  <img 
+                  <Image 
                     src={game.thumbnail} 
                     alt={game.title}
+                    width={800}
+                    height={192}
                     className="w-full h-48 object-cover"
                   />
                   <div className="p-4">

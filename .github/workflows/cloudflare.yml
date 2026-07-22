@@ -73,12 +73,12 @@ jobs:
         CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       run: |
         npx wrangler deploy \
-          --var NEXT_PUBLIC_APP_VERSION:${{ steps.version.outputs.full_version }} \
-          --var NEXT_PUBLIC_BUILD_DATE:${{ steps.version.outputs.build_date }} \
-          --var NEXT_PUBLIC_GIT_SHA:${{ steps.version.outputs.short_sha }} \
-          --var APP_VERSION:${{ steps.version.outputs.full_version }} \
-          --var BUILD_DATE:${{ steps.version.outputs.build_date }} \
-          --var GIT_SHA:${{ steps.version.outputs.short_sha }}
+          --var NEXT_PUBLIC_APP_VERSION=${{ steps.version.outputs.full_version }} \
+          --var NEXT_PUBLIC_BUILD_DATE=${{ steps.version.outputs.build_date }} \
+          --var NEXT_PUBLIC_GIT_SHA=${{ steps.version.outputs.short_sha }} \
+          --var APP_VERSION=${{ steps.version.outputs.full_version }} \
+          --var BUILD_DATE=${{ steps.version.outputs.build_date }} \
+          --var GIT_SHA=${{ steps.version.outputs.short_sha }}
 
     - name: Generate deployment summary
       run: |

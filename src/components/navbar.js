@@ -1,4 +1,5 @@
 "use client";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Navbar, NavbarBrand, NavbarCollapse, NavbarLink, NavbarToggle } from "flowbite-react";
@@ -122,7 +123,7 @@ const MainNavbar = () => {
   return (
     <Navbar fluid className={navbarClassName}>
       <NavbarBrand as={Link} href="/">
-        <img src="/favicon.ico" className="mr-3 h-6 sm:h-9" alt="IPMAIA WinterJam favicon" />
+        <Image src="/favicon.ico" className="mr-3 h-6 sm:h-9" alt="IPMAIA WinterJam favicon" width={36} height={36} />
         <span className={`${brandTextClassName} self-center whitespace-nowrap text-xl font-semibold`}>
           IPMAIA WinterJam
         </span>

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { Mail, Instagram, Check, MessageCircle } from 'lucide-react';
 import Background from "../../components/Background";
 import { useBackground } from "../../contexts/BackgroundContext";
@@ -89,9 +90,11 @@ export default function ContactPage() {
                   </div>
                   {/* QR Code overlay on hover */}
                   <div className="absolute inset-0 bg-white p-2 rounded-2xl shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <img
+                    <Image
                       src="/images/instagram-custom.png"
                       alt="Instagram QR Code"
+                      width={160}
+                      height={160}
                       className="w-full h-full object-contain rounded-2xl group-hover:scale-150 transition-transform duration-300"
                     />
                   </div>
@@ -119,13 +122,15 @@ export default function ContactPage() {
               <div className="flex flex-col items-center text-center space-y-4">
                 <div className="relative">
                   <div className="bg-white p-6 rounded-2xl shadow-lg group-hover:scale-110 transition-transform">
-                    <img src="/images/tiktok-icon.svg" alt="TikTok" className="w-12 h-12" />
+                    <Image src="/images/tiktok-icon.svg" alt="TikTok" width={48} height={48} className="w-12 h-12" />
                   </div>
                   {/* QR Code overlay on hover */}
                   <div className="absolute inset-0 p-2 rounded-2xl shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <img
+                    <Image
                       src="/images/tiktok-custom.png"
                       alt="TikTok QR Code"
+                      width={160}
+                      height={160}
                       className="w-full h-full object-contain rounded-2xl group-hover:scale-150 transition-transform duration-300"
                     />
                   </div>

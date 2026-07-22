@@ -1,5 +1,6 @@
 "use client";
 
+import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { useAdminAuth } from '@/contexts/AdminAuthContext';
 import { API_BASE_URL } from '@/utils/api';
@@ -306,9 +307,11 @@ export default function AdminSponsors() {
                 <tr key={sponsor.id} className="hover:bg-gray-700">
                   <td className="px-6 py-4">
                     {sponsor.logo_filename ? (
-                      <img
-                                        src={`${API_BASE_URL}/sponsors/logo/${sponsor.logo_filename}`}
+                      <Image
+                        src={`${API_BASE_URL}/sponsors/logo/${sponsor.logo_filename}`}
                         alt={sponsor.name}
+                        width={48}
+                        height={48}
                         className="h-12 w-12 object-contain"
                       />
                     ) : (
