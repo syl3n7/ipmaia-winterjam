@@ -17,6 +17,23 @@ describe('Registration validation', () => {
     if (poolStub) poolStub.restore();
   });
 
+  it('rejects invalid usernames on register', async () => {
+    const handler = findRouteHandler(authRouter, '/isolated/register', 'post');
+    expect(handler).to.be.a('function');
+
+    poolStub = sinon.stub(pool, 'query');
+    poolStub.onCall(0).resolves({ rows: [] }); // front_page_settings
+
+    const req = { body: { username: 'u!', email: 'e@x.com', password: 'StrongP@ssw0rd!!' } };
+    const res = { status: sinon.stub().returnsThis(), json: sinon.stub().returnsThis() };
+
+    await handler(req, res);
+
+    expect(res.status.calledOnce).to.be.true;
+    expect(res.status.firstCall.args[0]).to.equal(400);
+    expect(res.json.firstCall.args[0].error).to.match(/Username/);
+  });
+
   it('rejects weak passwords on register', async () => {
     const handler = findRouteHandler(authRouter, '/isolated/register', 'post');
     expect(handler).to.be.a('function');
@@ -26,7 +43,7 @@ describe('Registration validation', () => {
     poolStub.onCall(0).resolves({ rows: [] }); // front_page_settings
     poolStub.onCall(1).resolves({ rows: [] }); // users check
 
-    const req = { body: { username: 'u', email: 'e@x.com', password: 'weakpw' } };
+    const req = { body: { username: 'user123', email: 'e@x.com', password: 'weakpw' } };
     const res = { status: sinon.stub().returnsThis(), json: sinon.stub().returnsThis() };
 
     await handler(req, res);

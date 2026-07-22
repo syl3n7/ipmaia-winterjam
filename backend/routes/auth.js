@@ -58,19 +58,28 @@ router.post('/isolated/register', registrationLimiter, async (req, res) => {
       password = password || 'dev-pw';
     }
 
-    if (!username || !email || !password) {
-      return res.status(400).json({ error: 'Missing required fields' });
+    const { isValidUsername, isValidEmail, isStrongPassword } = require('../utils/validation');
+
+    const usernameCheck = isValidUsername(username);
+    if (!usernameCheck.ok) return res.status(400).json({ error: usernameCheck.reason });
+
+    const emailCheck = isValidEmail(email);
+    if (!emailCheck.ok) return res.status(400).json({ error: emailCheck.reason });
+
+    if (typeof password !== 'string' || !password.trim()) {
+      return res.status(400).json({ error: 'Password is required' });
     }
+
+    const pwCheck = isStrongPassword(password);
+    if (!pwCheck.ok) return res.status(400).json({ error: pwCheck.reason });
+
+    username = usernameCheck.value;
+    email = emailCheck.value;
     // Check if user exists in DB
     const dbCheck = await pool.query('SELECT * FROM users WHERE username = $1 OR email = $2', [username, email]);
     if (dbCheck.rows.length > 0) {
       return res.status(409).json({ error: 'User already exists' });
     }
-
-    // Validate password strength
-    const { isStrongPassword } = require('../utils/validation');
-    const pwCheck = isStrongPassword(password);
-    if (!pwCheck.ok) return res.status(400).json({ error: pwCheck.reason });
 
     // Acquire advisory lock to avoid race when creating the very first user
     const LOCK_KEY = 123456789; // arbitrary constant for app-level registration lock
@@ -204,6 +213,16 @@ router.post('/isolated/login', async (req, res) => {
     username = username || 'dev-admin';
     password = password || 'dev-pw';
   }
+
+  const { isValidUsername } = require('../utils/validation');
+  const usernameCheck = isValidUsername(username);
+  if (!usernameCheck.ok) return res.status(400).json({ error: usernameCheck.reason });
+
+  if (typeof password !== 'string' || !password.trim()) {
+    return res.status(400).json({ error: 'Password is required' });
+  }
+
+  username = usernameCheck.value;
 
   // Find user in DB
   const dbRes = await pool.query('SELECT * FROM users WHERE username = $1', [username]);

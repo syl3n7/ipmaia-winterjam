@@ -77,7 +77,7 @@ export default function AdminSystem() {
       const apiUrl = API_BASE_URL; // canonical API base URL (includes /api)
       const baseUrl = apiUrl.replace(/\/api$/, '');
 
-      const [gameJamsRes, gamesRes, sponsorsRes, healthRes, backendVersionRes] = await Promise.allSettled([
+      const [gameJamsRes, gamesRes, sponsorsRes, healthRes, backendVersionRes, frontendVersionRes] = await Promise.allSettled([
         fetch(`${apiUrl}/admin/gamejams`, {
           credentials: 'include',
         }),
@@ -89,6 +89,7 @@ export default function AdminSystem() {
         }),
         fetch(`${baseUrl}/health`),
         fetch(`${apiUrl}/version`),
+        fetch('/api/version'),
       ]);
 
       const responseTime = Date.now() - startTime;
@@ -113,14 +114,15 @@ export default function AdminSystem() {
         backendVersionRes.status === 'fulfilled' && backendVersionRes.value.ok
           ? await backendVersionRes.value.json()
           : null;
-
-      // Frontend version from environment variables
-      const frontendVersion = {
-        service: 'frontend',
-        version: process.env.NEXT_PUBLIC_APP_VERSION || '1.0.0-dev',
-        buildDate: process.env.NEXT_PUBLIC_BUILD_DATE || 'unknown',
-        gitSha: process.env.NEXT_PUBLIC_GIT_SHA || 'unknown',
-      };
+      const frontendVersion =
+        frontendVersionRes.status === 'fulfilled' && frontendVersionRes.value.ok
+          ? await frontendVersionRes.value.json()
+          : {
+              service: 'frontend',
+              version: '1.0.0-dev',
+              buildDate: 'unknown',
+              gitSha: 'unknown',
+            };
 
       setSystemData({
         health,
