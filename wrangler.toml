@@ -15,3 +15,9 @@ binding = "ASSETS"
 [[services]]
 binding = "WORKER_SELF_REFERENCE"
 service = "ipmaia-winterjam"
+
+[observability]
+[observability.logs]
+enabled = true
+invocation_logs = true
+persist = true
