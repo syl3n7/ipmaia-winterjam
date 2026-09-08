@@ -1,5 +1,5 @@
  'use client';
-import { useState, useRef, useEffect, useMemo } from 'react';
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { SpinWheel, generateWheelColors } from '@/components/SpinWheel';
 import AdminProtectedRoute from '@/components/AdminProtectedRoute';
 import { useAdminAuth } from '@/contexts/AdminAuthContext';
@@ -33,9 +33,7 @@ export default function RafflePage() {
   const [saveError, setSaveError] = useState('');
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    // Check if raffle is enabled
-    const checkRaffleEnabled = async () => {
+  const checkRaffleEnabled = useCallback(async () => {
       try {
         const response = await fetch(
           `${API_BASE_URL}/frontpage/admin/settings`,
@@ -56,11 +54,9 @@ export default function RafflePage() {
       } finally {
         setCheckingEnabled(false);
       }
-    };
+  }, []);
 
-    // Fetch available game jams on component mount
-
-    const fetchGameJams = async () => {
+  const fetchGameJams = useCallback(async () => {
       try {
         const response = await apiFetch(`${API_BASE_URL}/admin/gamejams`, {}, 'fetch game jams');
         const data = await response.json();
@@ -71,11 +67,12 @@ export default function RafflePage() {
       } catch (error) {
         console.error('Error fetching game jams:', error);
       }
-    };  
-    
+  }, [apiFetch]);
+
+  useEffect(() => {
     checkRaffleEnabled();
     fetchGameJams();
-  }, []);
+  }, [checkRaffleEnabled, fetchGameJams]);
 
   const handleFileUpload = (event) => {
     const file = event.target.files[0];

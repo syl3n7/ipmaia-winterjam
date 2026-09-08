@@ -1,7 +1,7 @@
 "use client";
 
 import Image from 'next/image';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAdminAuth } from '@/contexts/AdminAuthContext';
 import { API_BASE_URL } from '@/utils/api';
 
@@ -19,14 +19,9 @@ export default function AdminSponsors() {
     is_active: true,
   });
   const [logoFile, setLogoFile] = useState(null);
-
-  useEffect(() => {
-    fetchSponsors();
-  }, []);
-
   const { handleApiResponse, apiFetch } = useAdminAuth();
 
-  const fetchSponsors = async () => {
+  const fetchSponsors = useCallback(async () => {
     try {
       const response = await apiFetch(`${API_BASE_URL}/sponsors/admin`, {}, 'fetch sponsors');
       const data = await response.json();
@@ -37,7 +32,11 @@ export default function AdminSponsors() {
     } finally {
       setLoading(false);
     }
-  }; 
+  }, [apiFetch]);
+
+  useEffect(() => {
+    fetchSponsors();
+  }, [fetchSponsors]);
 
   const handleLogoUpload = async (sponsorId) => {
     if (!logoFile) return null;
