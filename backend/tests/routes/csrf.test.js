@@ -2,7 +2,7 @@ const { expect } = require('chai');
 const sinon = require('sinon');
 
 const authRouter = require('../../routes/auth');
-const { shouldSkipCsrf } = require('../../server');
+const { redirectToAdmin, shouldSkipCsrf } = require('../../server');
 
 // Helper to find route handler for a given path and method on an Express router
 function findRouteHandler(router, path, method = 'get') {
@@ -13,6 +13,17 @@ function findRouteHandler(router, path, method = 'get') {
 }
 
 describe('CSRF helper and endpoint', () => {
+  it('redirectToAdmin redirects to the configured frontend admin page', () => {
+    const old = process.env.FRONTEND_URL;
+    process.env.FRONTEND_URL = 'https://frontend.example.test';
+    const res = { redirect: sinon.stub() };
+
+    redirectToAdmin({}, res);
+
+    expect(res.redirect.calledOnceWithExactly('https://frontend.example.test/admin')).to.be.true;
+    process.env.FRONTEND_URL = old;
+  });
+
   it('shouldSkipCsrf returns true for admin paths in dev', () => {
     const old = process.env.NODE_ENV;
     process.env.NODE_ENV = 'development';

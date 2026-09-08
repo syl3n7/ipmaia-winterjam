@@ -267,10 +267,12 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // ADMIN INTERFACE: Redirect to Next.js admin panel
 // All /admin requests are redirected to the frontend at /admin
-app.get('/admin{/*splat}', (req, res) => {
+function redirectToAdmin(req, res) {
   const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
   res.redirect(`${frontendUrl}/admin`);
-});
+}
+
+app.get('/admin{/*splat}', redirectToAdmin);
 
 // Serve favicon for admin panel
 app.get('/favicon.ico', (req, res) => {
@@ -333,11 +335,13 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Start server
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Backend server running on port ${PORT}`);
-  console.log(`🔧 API endpoints: http://localhost:${PORT}/api`);
-  console.log(`📊 Admin interface: ${process.env.FRONTEND_URL || 'http://localhost:3000'}/admin`);
-});
+// Start server when this file is run directly.
+if (require.main === module) {
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 Backend server running on port ${PORT}`);
+    console.log(`🔧 API endpoints: http://localhost:${PORT}/api`);
+    console.log(`📊 Admin interface: ${process.env.FRONTEND_URL || 'http://localhost:3000'}/admin`);
+  });
+}
 
-module.exports = { app, shouldSkipCsrf };
+module.exports = { app, redirectToAdmin, shouldSkipCsrf };
