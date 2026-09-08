@@ -4,6 +4,8 @@ import { useAdminAuth } from '@/contexts/AdminAuthContext';
 import { useState, useEffect } from 'react';
 import { API_BASE_URL } from '@/utils/api';
 
+const FRONTEND_VERSION_FALLBACK = process.env.NEXT_PUBLIC_APP_VERSION || 'unknown';
+
 export default function AdminSystem() {
   const { user, isSuperAdmin, apiFetch } = useAdminAuth();
   const [systemData, setSystemData] = useState(null);
@@ -119,7 +121,7 @@ export default function AdminSystem() {
           ? await frontendVersionRes.value.json()
           : {
               service: 'frontend',
-              version: '1.0.0-dev',
+              version: FRONTEND_VERSION_FALLBACK,
               buildDate: 'unknown',
               gitSha: 'unknown',
             };
@@ -375,7 +377,9 @@ export default function AdminSystem() {
             <div className="flex justify-between">
               <span className="text-gray-400">Frontend Version</span>
               <span className="text-white font-mono text-xs">
-                {systemData?.frontendVersion?.version || '1.0.0-dev'}
+                {systemData?.frontendVersion?.version && systemData.frontendVersion.version !== 'unknown'
+                  ? systemData.frontendVersion.version
+                  : FRONTEND_VERSION_FALLBACK}
               </span>
             </div>
             <div className="flex justify-between">
