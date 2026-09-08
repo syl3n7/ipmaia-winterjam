@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAdminAuth } from '@/contexts/AdminAuthContext';
 import { SpinWheel, generateWheelColors } from '@/components/SpinWheel';
 import { API_BASE_URL } from '@/utils/api';
@@ -28,8 +28,7 @@ export default function AdminThemeWheel() {
   const [selectedJamId, setSelectedJamId] = useState('');
   const [loadingJam, setLoadingJam] = useState(false);
 
-  useEffect(() => {
-    const checkThemesEnabled = async () => {
+  const checkThemesEnabled = useCallback(async () => {
       try {
         const response = await fetch(
           `${API_BASE_URL}/frontpage/admin/settings`,
@@ -50,9 +49,9 @@ export default function AdminThemeWheel() {
       } finally {
         setCheckingEnabled(false);
       }
-    };
+  }, []);
 
-    const fetchGameJams = async () => {
+  const fetchGameJams = useCallback(async () => {
       try {
         const response = await apiFetch(`${API_BASE_URL}/admin/gamejams`, {}, 'fetch game jams');
         const data = await response.json();
@@ -63,17 +62,17 @@ export default function AdminThemeWheel() {
       } catch (err) {
         console.error('Error fetching game jams:', err);
       }
-    };
+  }, [apiFetch]);
 
+  useEffect(() => {
     checkThemesEnabled();
     fetchGameJams();
-  }, []);
+  }, [checkThemesEnabled, fetchGameJams]);
 
   // Load saved wheel config whenever selected jam changes
-  useEffect(() => {
+  const loadJamWheelConfig = useCallback(async () => {
     if (!selectedJamId) return;
 
-    const loadJamWheelConfig = async () => {
       setLoadingJam(true);
       setStatus('');
       setError('');
@@ -106,10 +105,11 @@ export default function AdminThemeWheel() {
       } finally {
         setLoadingJam(false);
       }
-    };
+  }, [apiFetch, selectedJamId]);
 
+  useEffect(() => {
     loadJamWheelConfig();
-  }, [selectedJamId]);
+  }, [loadJamWheelConfig]);
 
   function normalizeConfig(config) {
     const entries = Array.isArray(config?.entries) ? config.entries : [];

@@ -1,7 +1,7 @@
 "use client";
 
 import { useAdminAuth } from '@/contexts/AdminAuthContext';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { API_BASE_URL } from '@/utils/api';
 
@@ -25,21 +25,7 @@ export default function AdminUsers() {
   const [inviteError, setInviteError] = useState('');
   const [inviteResult, setInviteResult] = useState(null);
 
-  useEffect(() => {
-    // Only super admins can access this page
-    if (user && !isSuperAdmin) {
-      router.push('/admin');
-      return;
-    }
-    
-    if (isSuperAdmin) {
-      fetchUsers();
-      fetchRegistrationStatus();
-    }
-  }, [user, isSuperAdmin, router]);
-
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
       const response = await apiFetch(`${API_BASE_URL}/admin/users`, {}, 'fetch users');
@@ -50,9 +36,9 @@ export default function AdminUsers() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [apiFetch]);
 
-  const fetchRegistrationStatus = async () => {
+  const fetchRegistrationStatus = useCallback(async () => {
     try {
       setLoadingRegistration(true);
       const res = await apiFetch(`${API_BASE_URL}/admin/registration`, {}, 'fetch registration status');
@@ -63,7 +49,20 @@ export default function AdminUsers() {
     } finally {
       setLoadingRegistration(false);
     }
-  };
+  }, [apiFetch]);
+
+  useEffect(() => {
+    // Only super admins can access this page
+    if (user && !isSuperAdmin) {
+      router.push('/admin');
+      return;
+    }
+
+    if (isSuperAdmin) {
+      fetchUsers();
+      fetchRegistrationStatus();
+    }
+  }, [fetchRegistrationStatus, fetchUsers, isSuperAdmin, router, user]);
 
   // Helpers for invite modal and registration toggle (moved out of JSX for clarity)
   const handleOpenInviteModal = () => setShowInviteModal(true);
