@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAdminAuth } from '@/contexts/AdminAuthContext';
 import Link from 'next/link';
 
@@ -11,12 +11,7 @@ export default function AdminDashboard() {
   const [maintenanceMode, setMaintenanceMode] = useState(false);
   const { handleApiResponse } = useAdminAuth();
 
-  useEffect(() => {
-    fetchStats();
-    checkMaintenanceMode();
-  }, []);
-
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     try {
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/admin/dashboard`,
@@ -34,9 +29,9 @@ export default function AdminDashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [handleApiResponse]);
 
-  const checkMaintenanceMode = async () => {
+  const checkMaintenanceMode = useCallback(async () => {
     try {
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/admin/system/maintenance`,
@@ -49,7 +44,12 @@ export default function AdminDashboard() {
       console.error('Failed to check maintenance mode:', error);
       // Don't show alert for maintenance check errors
     }
-  };
+  }, [handleApiResponse]);
+
+  useEffect(() => {
+    fetchStats();
+    checkMaintenanceMode();
+  }, [checkMaintenanceMode, fetchStats]);
 
   const toggleMaintenanceMode = async () => {
     try {

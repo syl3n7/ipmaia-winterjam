@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAdminAuth } from '@/contexts/AdminAuthContext';
 
 export default function AdminGames() {
@@ -48,11 +48,7 @@ export default function AdminGames() {
   });
   const { handleApiResponse, apiFetch } = useAdminAuth();
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       const [gamesRes, jamsRes] = await Promise.all([
         fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/games`, {
@@ -77,7 +73,11 @@ export default function AdminGames() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [handleApiResponse]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
