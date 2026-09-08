@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 const AdminAuthContext = createContext();
 
@@ -74,7 +74,7 @@ export function AdminAuthProvider({ children }) {
     }
   };
 
-  const handleApiResponse = async (response, operation = 'operation') => {
+  const handleApiResponse = useCallback(async (response, operation = 'operation') => {
     if (response.status === 401) {
       // User session expired or invalid
       console.warn('🔐 Session expired or invalid, logging out...');
@@ -100,10 +100,10 @@ export function AdminAuthProvider({ children }) {
     }
 
     return response;
-  };
+  }, []);
 
   // Helper to perform API requests with CSRF header (when available) and consistent handling
-  const apiFetch = async (url, options = {}, operation = 'operation') => {
+  const apiFetch = useCallback(async (url, options = {}, operation = 'operation') => {
     const method = (options.method || 'GET').toUpperCase();
     const opts = {
       credentials: 'include',
@@ -119,7 +119,7 @@ export function AdminAuthProvider({ children }) {
     const response = await fetch(url, opts);
     await handleApiResponse(response, operation);
     return response;
-  };
+  }, [csrfToken, handleApiResponse]);
 
   const isAdmin = user && (user.role === 'admin' || user.role === 'super_admin');
   const isSuperAdmin = user && user.role === 'super_admin';

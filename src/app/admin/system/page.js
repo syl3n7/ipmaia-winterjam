@@ -1,7 +1,7 @@
 "use client";
 
 import { useAdminAuth } from '@/contexts/AdminAuthContext';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { API_BASE_URL } from '@/utils/api';
 
 const FRONTEND_VERSION_FALLBACK = process.env.NEXT_PUBLIC_APP_VERSION || 'unknown';
@@ -31,23 +31,7 @@ export default function AdminSystem() {
     });
   };
 
-  useEffect(() => {
-    loadSystemInfo();
-    loadSystemMetrics();
-    if (isSuperAdmin) {
-      loadAuditLogs();
-      loadMaintenanceStatus();
-    }
-    
-    // Auto-refresh metrics every 30 seconds
-    const metricsInterval = setInterval(() => {
-      loadSystemMetrics();
-    }, 30000);
-    
-    return () => clearInterval(metricsInterval);
-  }, [isSuperAdmin]);
-
-  const loadMaintenanceStatus = async () => {
+  const loadMaintenanceStatus = useCallback(async () => {
     try {
       const response = await apiFetch(`${API_BASE_URL}/admin/system/maintenance`, {}, 'load maintenance status');
       const data = await response.json();
@@ -55,9 +39,9 @@ export default function AdminSystem() {
     } catch (error) {
       console.error('Failed to load maintenance status:', error);
     }
-  };
+  }, [apiFetch]);
 
-  const loadSystemMetrics = async () => {
+  const loadSystemMetrics = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/admin/system/metrics`, {
         credentials: 'include',
@@ -69,9 +53,9 @@ export default function AdminSystem() {
     } catch (error) {
       console.error('Failed to load system metrics:', error);
     }
-  };
+  }, []);
 
-  const loadSystemInfo = async () => {
+  const loadSystemInfo = useCallback(async () => {
     setLoading(true);
     const startTime = Date.now();
 
@@ -141,7 +125,7 @@ export default function AdminSystem() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const handleRefresh = () => {
     loadSystemInfo();
@@ -297,7 +281,7 @@ export default function AdminSystem() {
     }
   };
 
-  const loadAuditLogs = async () => {
+  const loadAuditLogs = useCallback(async () => {
     try {
       const [logsRes, statsRes] = await Promise.all([
         fetch(`${API_BASE_URL}/admin/audit-logs?limit=50`, {
@@ -320,7 +304,19 @@ export default function AdminSystem() {
     } catch (error) {
       console.error('Failed to load audit logs:', error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadSystemInfo();
+    loadSystemMetrics();
+    if (isSuperAdmin) {
+      loadAuditLogs();
+      loadMaintenanceStatus();
+    }
+
+    const metricsInterval = setInterval(loadSystemMetrics, 30000);
+    return () => clearInterval(metricsInterval);
+  }, [isSuperAdmin, loadAuditLogs, loadMaintenanceStatus, loadSystemInfo, loadSystemMetrics]);
 
   const isHealthy = systemData?.health?.status === 'OK';
 
