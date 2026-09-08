@@ -267,7 +267,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // ADMIN INTERFACE: Redirect to Next.js admin panel
 // All /admin requests are redirected to the frontend at /admin
-app.get('/admin*', (req, res) => {
+app.get('/admin{/*splat}', (req, res) => {
   const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
   res.redirect(`${frontendUrl}/admin`);
 });
