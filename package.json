@@ -11,7 +11,8 @@
   "docker:build": "docker build -t ipmaia-winterjam .",
   "docker:run": "docker run -d --name ipmaia-winterjam -p 3000:3000 ipmaia-winterjam",
   "docker:stop": "docker stop ipmaia-winterjam && docker rm ipmaia-winterjam",
-  "postbuild": "next-sitemap"
+  "postbuild": "next-sitemap",
+  "test:e2e": "node scripts/e2e-smoke.mjs"
  },
  "dependencies": {
   "brace-expansion": "^5.0.9",

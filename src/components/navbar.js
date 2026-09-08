@@ -62,6 +62,17 @@ const MainNavbar = () => {
     fetchGameJams();
   }, []);
 
+  useEffect(() => {
+    if (!isArchiveOpen) return undefined;
+
+    const closeOnEscape = (event) => {
+      if (event.key === 'Escape') setIsArchiveOpen(false);
+    };
+
+    document.addEventListener('keydown', closeOnEscape);
+    return () => document.removeEventListener('keydown', closeOnEscape);
+  }, [isArchiveOpen]);
+
   // Determine button state based on current game jam
   useEffect(() => {
     const checkEventStatus = async () => {
@@ -137,13 +148,15 @@ const MainNavbar = () => {
             <button 
               className={`flex items-center justify-between gap-1 px-3 py-2 rounded ${linkClassName} w-full`}
               onClick={() => setIsArchiveOpen(!isArchiveOpen)}
+              aria-expanded={isArchiveOpen}
+              aria-controls="archive-menu"
             >
               Arquivo
               <ChevronDown size={16} className={`transition-transform ${isArchiveOpen ? 'rotate-180' : ''}`} />
             </button>
             
             {isArchiveOpen && (
-              <div className={`md:absolute static md:top-full md:left-0 md:mt-1 w-full md:w-48 rounded-md md:shadow-lg border ${dropdownClassName} md:z-50`}>
+              <div id="archive-menu" role="menu" className={`md:absolute static md:top-full md:left-0 md:mt-1 w-full md:w-48 rounded-md md:shadow-lg border ${dropdownClassName} md:z-50`}>
                 <div className="py-1">
                   {isLoadingArchive ? (
                     <div className="px-4 py-2 text-gray-400">A carregar...</div>
@@ -154,6 +167,7 @@ const MainNavbar = () => {
                         href={item.path}
                         className={`block px-4 py-2 ${linkClassName} w-full`}
                         onClick={() => setIsArchiveOpen(false)}
+                        role="menuitem"
                       >
                         <span>{item.name}</span>
                       </Link>

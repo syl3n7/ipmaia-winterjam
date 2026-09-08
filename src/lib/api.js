@@ -2,6 +2,19 @@
 
 import { API_BASE_URL } from '@/utils/api';
 
+const REQUEST_TIMEOUT_MS = 10000;
+const MAX_GET_RETRIES = 2;
+
+export class ApiError extends Error {
+  constructor(message, { status = 0, code = 'REQUEST_FAILED', details = null } = {}) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    this.code = code;
+    this.details = details;
+  }
+}
+
 class ApiClient {
   constructor() {
     this.baseURL = API_BASE_URL;
@@ -9,32 +22,54 @@ class ApiClient {
 
   async request(endpoint, options = {}) {
     const url = `${this.baseURL}${endpoint}`;
-    
-    const config = {
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
-      credentials: 'include', // Include cookies for sessions
-      ...options,
-    };
 
-    if (config.body && typeof config.body !== 'string') {
-      config.body = JSON.stringify(config.body);
-    }
+    const method = (options.method || 'GET').toUpperCase();
+    const canRetry = method === 'GET';
+    let lastError;
 
-    try {
-      const response = await fetch(url, config);
-      
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({ error: 'Request failed' }));
-        throw new Error(error.error || `HTTP ${response.status}`);
+    for (let attempt = 0; attempt <= (canRetry ? MAX_GET_RETRIES : 0); attempt += 1) {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+      const config = {
+        headers: {
+          'Content-Type': 'application/json',
+          ...options.headers,
+        },
+        credentials: 'include',
+        ...options,
+        signal: options.signal || controller.signal,
+      };
+
+      if (config.body && typeof config.body !== 'string') {
+        config.body = JSON.stringify(config.body);
       }
 
-      return await response.json();
-    } catch (error) {
-      throw error;
+      try {
+        const response = await fetch(url, config);
+        const payload = await response.json().catch(() => null);
+
+        if (!response.ok) {
+          const error = new ApiError(
+            payload?.error || payload?.message || `Request failed with HTTP ${response.status}`,
+            { status: response.status, code: payload?.code, details: payload?.details }
+          );
+          if (!canRetry || response.status < 500 || attempt === MAX_GET_RETRIES) throw error;
+          lastError = error;
+          continue;
+        }
+
+        return payload;
+      } catch (error) {
+        lastError = error.name === 'AbortError'
+          ? new ApiError('The request timed out', { code: 'REQUEST_TIMEOUT' })
+          : error;
+        if (!canRetry || attempt === MAX_GET_RETRIES) throw lastError;
+      } finally {
+        clearTimeout(timeout);
+      }
     }
+
+    throw lastError;
   }
 
   // Public API methods

@@ -199,7 +199,7 @@ function IsolatedAuthForm({ returnUrl, registrationEnabled }) {
 
       {/* Success notice */}
       {notice && (
-        <div className="flex gap-3 bg-emerald-500/15 border border-emerald-500/30 rounded-xl p-4">
+        <div role="status" aria-live="polite" className="flex gap-3 bg-emerald-500/15 border border-emerald-500/30 rounded-xl p-4">
           <svg className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
@@ -209,7 +209,7 @@ function IsolatedAuthForm({ returnUrl, registrationEnabled }) {
 
       {/* Error message */}
       {error && (
-        <div className="flex gap-3 bg-red-500/15 border border-red-500/30 rounded-xl p-4">
+        <div role="alert" aria-live="assertive" className="flex gap-3 bg-red-500/15 border border-red-500/30 rounded-xl p-4">
           <svg className="w-5 h-5 text-red-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
@@ -304,7 +304,7 @@ function IsolatedAuthForm({ returnUrl, registrationEnabled }) {
             type="button"
             aria-label={showPassword ? 'Hide password' : 'Show password'}
             onClick={() => setShowPassword(v => !v)}
-            className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-500 hover:text-slate-300 transition-colors duration-200"
+            className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-500 hover:text-slate-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 rounded transition-colors duration-200"
           >
             {showPassword ? (
               <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
