@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useAdminAuth } from '@/contexts/AdminAuthContext';
 import { Plus, Edit2, Trash2, Eye, ExternalLink } from 'lucide-react';
@@ -13,11 +13,7 @@ export default function FormsList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    fetchForms();
-  }, []);
-
-  async function fetchForms() {
+  const fetchForms = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
@@ -29,7 +25,11 @@ export default function FormsList() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [apiFetch]);
+
+  useEffect(() => {
+    fetchForms();
+  }, [fetchForms]);
 
   async function handleDelete(form) {
     if (!window.confirm(`Delete "${form.name}" and all its submissions? This cannot be undone.`)) return;
