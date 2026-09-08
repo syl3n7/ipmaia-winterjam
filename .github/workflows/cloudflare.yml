@@ -85,13 +85,13 @@ jobs:
         EXPECTED_VERSION: ${{ steps.version.outputs.full_version }}
       run: |
         FRONTEND_VERSION=$(curl --fail --silent --show-error \
-          --retry 5 --retry-delay 5 --retry-connrefused \
+          --retry 5 --retry-delay 5 --retry-all-errors \
           https://ipmaia-winterjam.pt/api/version)
         ACTUAL_VERSION=$(printf '%s' "$FRONTEND_VERSION" | jq -r '.version')
         test "$ACTUAL_VERSION" = "$EXPECTED_VERSION"
 
         curl --fail --silent --show-error \
-          --retry 5 --retry-delay 5 --retry-connrefused \
+          --retry 5 --retry-delay 5 --retry-all-errors \
           https://api.ipmaia-winterjam.pt/health > /dev/null
 
         echo "✅ Frontend version verified: $ACTUAL_VERSION"
