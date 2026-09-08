@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAdminAuth } from '@/contexts/AdminAuthContext';
 
 export default function AdminGameJams() {
@@ -50,17 +50,12 @@ export default function AdminGameJams() {
     show_registration_url: true,
   });
 
-  useEffect(() => {
-    fetchGameJams();
-    fetchForms();
-  }, []);
-
-  const fetchForms = async () => {
+  const fetchForms = useCallback(async () => {
     try {
       const res = await apiFetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'}/admin/forms`);
       if (res.ok) setAvailableForms(await res.json());
     } catch {}
-  };
+  }, [apiFetch]);
 
   // Auto-generate schedule content from datetime fields
   const generateScheduleContent = () => {
@@ -159,7 +154,7 @@ export default function AdminGameJams() {
     }
   };
 
-  const fetchGameJams = async () => {
+  const fetchGameJams = useCallback(async () => {
     try {
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/admin/gamejams`,
@@ -174,7 +169,12 @@ export default function AdminGameJams() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [handleApiResponse]);
+
+  useEffect(() => {
+    fetchGameJams();
+    fetchForms();
+  }, [fetchForms, fetchGameJams]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

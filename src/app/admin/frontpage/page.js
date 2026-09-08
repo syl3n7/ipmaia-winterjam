@@ -1,7 +1,7 @@
 "use client";
 
 import Image from 'next/image';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAdminAuth } from '@/contexts/AdminAuthContext';
 import { API_BASE_URL } from '@/utils/api';
 
@@ -18,12 +18,7 @@ export default function AdminFrontPage() {
   const [savingToggles, setSavingToggles] = useState(false);
   const { handleApiResponse, apiFetch } = useAdminAuth();
 
-  useEffect(() => {
-    loadBannerStatus();
-    loadFeatureToggles();
-  }, []);
-
-  const loadBannerStatus = async () => {
+  const loadBannerStatus = useCallback(async () => {
     try {
       const response = await fetch(
         `${API_BASE_URL}/frontpage/admin/settings`,
@@ -55,9 +50,9 @@ export default function AdminFrontPage() {
     } finally {
       setLoading(false);
     }
-  }; 
+  }, [handleApiResponse]);
 
-  const loadFeatureToggles = async () => {
+  const loadFeatureToggles = useCallback(async () => {
     try {
       const response = await fetch(
         `${API_BASE_URL}/frontpage/admin/settings`,
@@ -78,7 +73,12 @@ export default function AdminFrontPage() {
     } catch (error) {
       console.error('Failed to load feature toggles:', error);
     }
-  }; 
+  }, [handleApiResponse]);
+
+  useEffect(() => {
+    loadBannerStatus();
+    loadFeatureToggles();
+  }, [loadBannerStatus, loadFeatureToggles]);
 
   const saveFeatureToggle = async (key, value) => {
     setSavingToggles(true);
