@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ChevronLeft, Trash2, UserPlus, Download } from 'lucide-react';
@@ -19,11 +19,7 @@ export default function FormSubmissions() {
   const [selectedSubmission, setSelectedSubmission] = useState(null);
   const [creating, setCreating] = useState(null); // submission id being processed
 
-  useEffect(() => {
-    loadData();
-  }, [id]);
-
-  async function loadData() {
+  const loadData = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
@@ -37,7 +33,11 @@ export default function FormSubmissions() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [apiFetch, id]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   async function handleDelete(sub) {
     if (!window.confirm('Delete this submission? This cannot be undone.')) return;
