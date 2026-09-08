@@ -41,7 +41,8 @@ describe('Registration validation', () => {
     // DB says registration enabled and no existing user
     poolStub = sinon.stub(pool, 'query');
     poolStub.onCall(0).resolves({ rows: [] }); // front_page_settings
-    poolStub.onCall(1).resolves({ rows: [] }); // users check
+    poolStub.onCall(1).resolves({ rows: [{ count: '0' }] }); // user count
+    poolStub.onCall(2).resolves({ rows: [] }); // users check
 
     const req = { body: { username: 'user123', email: 'e@x.com', password: 'weakpw' } };
     const res = { status: sinon.stub().returnsThis(), json: sinon.stub().returnsThis() };
@@ -74,10 +75,11 @@ describe('Registration validation', () => {
 
     poolStub = sinon.stub(pool, 'query');
     poolStub.onCall(0).resolves({ rows: [] }); // front_page_settings
-    poolStub.onCall(1).resolves({ rows: [] }); // users check
-    poolStub.onCall(2).resolves({ rows: [] }); // advisory lock
-    poolStub.onCall(3).resolves({ rows: [{ count: '0' }] }); // count
-    poolStub.onCall(4).rejects({ code: '23505' }); // insert throws unique constraint
+    poolStub.onCall(1).resolves({ rows: [{ count: '0' }] }); // user count
+    poolStub.onCall(2).resolves({ rows: [] }); // users check
+    poolStub.onCall(3).resolves({ rows: [] }); // advisory lock
+    poolStub.onCall(4).resolves({ rows: [{ count: '0' }] }); // count
+    poolStub.onCall(5).rejects({ code: '23505' }); // insert throws unique constraint
 
     const req = { body: { username: 'dupuser', email: 'dup@example.com', password: 'StrongP@ssw0rd!!' } };
     const res = { status: sinon.stub().returnsThis(), json: sinon.stub().returnsThis() };

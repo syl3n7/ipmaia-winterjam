@@ -28,12 +28,13 @@ describe('Isolated registration - first user super_admin behavior', () => {
     // Mock DB: no users yet (COUNT=0), so first user
     poolStub = sinon.stub(pool, 'query');
     poolStub.onCall(0).resolves({ rows: [] }); // No front_page_settings row
-    poolStub.onCall(1).resolves({ rows: [] }); // Check if user exists (none)
-    poolStub.onCall(2).resolves({ rows: [] }); // advisory lock
-    poolStub.onCall(3).resolves({ rows: [{ count: '0' }] }); // COUNT(*) for role check
-    poolStub.onCall(4).resolves({ rows: [{ id: 1, username: 'testuser', email: 'test@example.com', role: 'super_admin', is_active: true }] }); // INSERT user
-    poolStub.onCall(5).resolves({ rows: [] }); // release advisory lock
-    poolStub.onCall(6).resolves({ rows: [] }); // INSERT setting (disable registration)
+    poolStub.onCall(1).resolves({ rows: [{ count: '0' }] }); // Bootstrap user count
+    poolStub.onCall(2).resolves({ rows: [] }); // Check if user exists (none)
+    poolStub.onCall(3).resolves({ rows: [] }); // advisory lock
+    poolStub.onCall(4).resolves({ rows: [{ count: '0' }] }); // COUNT(*) for role check
+    poolStub.onCall(5).resolves({ rows: [{ id: 1, username: 'testuser', email: 'test@example.com', role: 'super_admin', is_active: true }] }); // INSERT user
+    poolStub.onCall(6).resolves({ rows: [] }); // release advisory lock
+    poolStub.onCall(7).resolves({ rows: [] }); // INSERT setting (disable registration)
 
     auditStub = sinon.stub(audit, 'logAudit').resolves();
 
@@ -62,12 +63,13 @@ describe('Isolated registration - first user super_admin behavior', () => {
     // Mock DB: users exist (COUNT=1), so not first user
     poolStub = sinon.stub(pool, 'query');
     poolStub.onCall(0).resolves({ rows: [] }); // No front_page_settings row
-    poolStub.onCall(1).resolves({ rows: [] }); // Check if user exists (none)
-    poolStub.onCall(2).resolves({ rows: [] }); // advisory lock
-    poolStub.onCall(3).resolves({ rows: [{ count: '1' }] }); // COUNT(*) > 0
-    poolStub.onCall(4).resolves({ rows: [{ id: 2, username: 'user2', email: 'user2@example.com', role: 'user', is_active: true }] }); // INSERT user
-    poolStub.onCall(5).resolves({ rows: [] }); // release advisory lock
-    poolStub.onCall(6).resolves({ rows: [] }); // Audit log for user
+    poolStub.onCall(1).resolves({ rows: [{ count: '1' }] }); // Bootstrap user count
+    poolStub.onCall(2).resolves({ rows: [] }); // Check if user exists (none)
+    poolStub.onCall(3).resolves({ rows: [] }); // advisory lock
+    poolStub.onCall(4).resolves({ rows: [{ count: '1' }] }); // COUNT(*) > 0
+    poolStub.onCall(5).resolves({ rows: [{ id: 2, username: 'user2', email: 'user2@example.com', role: 'user', is_active: true }] }); // INSERT user
+    poolStub.onCall(6).resolves({ rows: [] }); // release advisory lock
+    poolStub.onCall(7).resolves({ rows: [] }); // Audit log for user
 
     auditStub = sinon.stub(audit, 'logAudit').resolves();
 
@@ -92,9 +94,11 @@ describe('Isolated registration - first user super_admin behavior', () => {
     expect(handler).to.be.a('function');
 
     // Mock DB: public registration disabled
-    poolStub = sinon.stub(pool, 'query').resolves({ rows: [{ setting_value: 'false' }] });
+    poolStub = sinon.stub(pool, 'query');
+    poolStub.onCall(0).resolves({ rows: [{ setting_value: 'false' }] }); // Registration setting
+    poolStub.onCall(1).resolves({ rows: [{ count: '1' }] }); // Existing user prevents bootstrap
 
-    const req = { body: { username: 'testuser', email: 'test@example.com', password: 'password123' } };
+    const req = { body: { username: 'testuser', email: 'test@example.com', password: 'StrongP@ssw0rd!!' } };
     const res = { status: sinon.stub().returnsThis(), json: sinon.stub().returnsThis() };
 
     await handler(req, res);

@@ -40,15 +40,6 @@ router.post('/isolated/register', registrationLimiter, async (req, res) => {
       publicRegistrationEnabled = process.env.PUBLIC_REGISTRATION_ENABLED === 'true' || process.env.NODE_ENV !== 'production';
     }
 
-    // Allow bootstrap registration for the very first user even when public registration is disabled.
-    const userCountResult = await pool.query('SELECT COUNT(*) FROM users');
-    const userCount = Number(userCountResult.rows[0]?.count || 0);
-    const isBootstrapRegistration = userCount === 0;
-
-    if (!publicRegistrationEnabled && !isBootstrapRegistration) {
-      return res.status(403).json({ error: 'Public registration is disabled. Admins can invite users.' });
-    }
-
     let { username, email, password } = req.body;
     // Use default dev credentials if not provided in dev env
     const allowDevAuto = process.env.ALLOW_DEV_AUTOLOGIN === 'true' && process.env.NODE_ENV !== 'production';
@@ -72,6 +63,15 @@ router.post('/isolated/register', registrationLimiter, async (req, res) => {
 
     const pwCheck = isStrongPassword(password);
     if (!pwCheck.ok) return res.status(400).json({ error: pwCheck.reason });
+
+    // Allow bootstrap registration for the very first user even when public registration is disabled.
+    const userCountResult = await pool.query('SELECT COUNT(*) FROM users');
+    const userCount = Number(userCountResult.rows[0]?.count || 0);
+    const isBootstrapRegistration = userCount === 0;
+
+    if (!publicRegistrationEnabled && !isBootstrapRegistration) {
+      return res.status(403).json({ error: 'Public registration is disabled. Admins can invite users.' });
+    }
 
     username = usernameCheck.value;
     email = emailCheck.value;
