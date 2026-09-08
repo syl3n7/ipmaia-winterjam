@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ChevronLeft, Eye, Save } from 'lucide-react';
@@ -22,8 +22,8 @@ export default function EditFormBuilder() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    Promise.all([
+  const loadFormData = useCallback(() => {
+    return Promise.all([
       apiFetch(`${API}/admin/forms/${id}`).then(r => r.ok ? r.json() : null),
       apiFetch(`${API}/admin/gamejams`).then(r => r.ok ? r.json() : []),
     ]).then(([form, jams]) => {
@@ -38,7 +38,11 @@ export default function EditFormBuilder() {
       setGameJams(jams);
       setLoading(false);
     }).catch(() => { setError('Failed to load form'); setLoading(false); });
-  }, [id]);
+  }, [apiFetch, id]);
+
+  useEffect(() => {
+    loadFormData();
+  }, [loadFormData]);
 
   const handleFormChange = (e) => {
     const { name, value, type, checked } = e.target;

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ChevronLeft, Plus, Eye, Save } from 'lucide-react';
@@ -35,12 +35,16 @@ export default function FormBuilder() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    apiFetch(`${API}/admin/gamejams`)
+  const loadGameJams = useCallback(() => {
+    return apiFetch(`${API}/admin/gamejams`)
       .then(r => r.ok ? r.json() : [])
       .then(setGameJams)
       .catch(() => {});
-  }, []);
+  }, [apiFetch]);
+
+  useEffect(() => {
+    loadGameJams();
+  }, [loadGameJams]);
 
   const handleFormDataChange = (e) => {
     const { name, value, type, checked } = e.target;
