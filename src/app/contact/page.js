@@ -73,9 +73,9 @@ export default function ContactPage() {
               </div>
             </div>
 
-            {/* Instagram Bubble */}
+            {/* Discord Bubble */}
             <a
-              href="https://instagram.com/winterjam_ipmaia"
+              href="https://discord.gg/X97GAg7F6E"
               target="_blank"
               rel="noopener noreferrer"
               className="group bg-gradient-to-br from-blue-50/80 via-cyan-50/70 to-blue-100/80 backdrop-blur-xl rounded-2xl shadow-2xl border-2 border-cyan-200/60 p-8 transition-all duration-300 hover:scale-105 hover:shadow-[0_8px_40px_rgba(59,130,246,0.25)] relative overflow-hidden"
@@ -85,26 +85,16 @@ export default function ContactPage() {
             >
               <div className="flex flex-col items-center text-center space-y-4">
                 <div className="relative">
-                  <div className="bg-gradient-to-r from-pink-500 to-purple-600 p-6 rounded-2xl shadow-lg group-hover:scale-110 transition-transform">
-                    <Instagram className="w-12 h-12 text-white" />
-                  </div>
-                  {/* QR Code overlay on hover */}
-                  <div className="absolute inset-0 bg-white p-2 rounded-2xl shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <Image
-                      src="/images/instagram-custom.png"
-                      alt="Instagram QR Code"
-                      width={160}
-                      height={160}
-                      className="w-full h-full object-contain rounded-2xl group-hover:scale-150 transition-transform duration-300"
-                    />
+                  <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-6 rounded-2xl shadow-lg group-hover:scale-110 transition-transform">
+                    <MessageCircle className="w-12 h-12 text-white" />
                   </div>
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900">Instagram</h3>
+                <h3 className="text-2xl font-bold text-gray-900">Discord</h3>
                 <p className="text-sm text-gray-700 break-all">
-                  @winterjam_ipmaia
+                  @staff para questões
                 </p>
-                <span className="text-pink-600 font-semibold group-hover:underline">
-                  Seguir →
+                <span className="text-indigo-600 font-semibold group-hover:underline">
+                  Entrar →
                 </span>
               </div>
             </a>
@@ -145,9 +135,9 @@ export default function ContactPage() {
               </div>
             </a>
 
-            {/* Discord Bubble */}
+            {/* Instagram Bubble */}
             <a
-              href="http://discord.gg/X97GAg7F6E"
+              href="https://instagram.com/winterjam_ipmaia"
               target="_blank"
               rel="noopener noreferrer"
               className="group bg-gradient-to-br from-blue-50/80 via-cyan-50/70 to-blue-100/80 backdrop-blur-xl rounded-2xl shadow-2xl border-2 border-cyan-200/60 p-8 transition-all duration-300 hover:scale-105 hover:shadow-[0_8px_40px_rgba(59,130,246,0.25)] relative overflow-hidden"
@@ -157,16 +147,26 @@ export default function ContactPage() {
             >
               <div className="flex flex-col items-center text-center space-y-4">
                 <div className="relative">
-                  <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-6 rounded-2xl shadow-lg group-hover:scale-110 transition-transform">
-                    <MessageCircle className="w-12 h-12 text-white" />
+                  <div className="bg-gradient-to-r from-pink-500 to-purple-600 p-6 rounded-2xl shadow-lg group-hover:scale-110 transition-transform">
+                    <Instagram className="w-12 h-12 text-white" />
+                  </div>
+                  {/* QR Code overlay on hover */}
+                  <div className="absolute inset-0 bg-white p-2 rounded-2xl shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <Image
+                      src="/images/instagram-custom.png"
+                      alt="Instagram QR Code"
+                      width={160}
+                      height={160}
+                      className="w-full h-full object-contain rounded-2xl group-hover:scale-150 transition-transform duration-300"
+                    />
                   </div>
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900">Discord</h3>
+                <h3 className="text-2xl font-bold text-gray-900">Instagram</h3>
                 <p className="text-sm text-gray-700 break-all">
-                  @staff para questões
+                  @winterjam_ipmaia
                 </p>
-                <span className="text-indigo-600 font-semibold group-hover:underline">
-                  Entrar →
+                <span className="text-pink-600 font-semibold group-hover:underline">
+                  Seguir →
                 </span>
               </div>
             </a>

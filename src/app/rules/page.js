@@ -283,7 +283,7 @@ export default function Page() {
               <div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-3">Submissão</h3>
                 <ol className="list-decimal list-inside space-y-2 ml-4 text-gray-700">
-                  <li>Os projetos devem ser submetidos ao Itch.io após o término das 45 horas e o link partilhado no <a href="http://discord.gg/X97GAg7F6E" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 underline">Discord</a>.</li>
+                  <li>Os projetos devem ser submetidos ao Itch.io após o término das 45 horas e o link partilhado no <a href="https://discord.gg/X97GAg7F6E" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 underline">Discord</a>.</li>
                 </ol>
               </div>
 
@@ -315,7 +315,7 @@ export default function Page() {
               <div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-3">Comunicação e Organização</h3>
                 <ol className="list-decimal list-inside space-y-2 ml-4 text-gray-700">
-                  <li>A organização e comunicação do evento serão feitas, sem falta, através do servidor de <a href="http://discord.gg/X97GAg7F6E" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 underline">Discord</a> da game jam, não deixando de parte a possibilidade de também serem feitas de forma presencial.</li>
+                  <li>A organização e comunicação do evento serão feitas, sem falta, através do servidor de <a href="https://discord.gg/X97GAg7F6E" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 underline">Discord</a> da game jam, não deixando de parte a possibilidade de também serem feitas de forma presencial.</li>
                   <li>As regras do sorteio de jogos serão divulgadas no Discord oficial da game jam.</li>
                 </ol>
               </div>
