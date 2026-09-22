@@ -1100,8 +1100,26 @@ router.put('/users/:id/password', requireSuperAdmin, async (req, res) => {
 
 router.post('/users/invite', requireSuperAdmin, async (req, res) => {
   try {
-    const { username, email, expiresOption, sendEmail, role } = req.body;
-    if (!email || !username) return res.status(400).json({ error: 'Missing username or email' });
+    const {
+      username,
+      email,
+      discordUserId,
+      discordUsername,
+      expiresOption,
+      sendEmail,
+      role,
+      inviteType = 'email'
+    } = req.body;
+
+    const normalizedInviteType = inviteType === 'discord' ? 'discord' : 'email';
+    const effectiveDiscordUserId = discordUserId || null;
+    const effectiveDiscordUsername = discordUsername || null;
+    const emailAddress = email || (normalizedInviteType === 'discord' && effectiveDiscordUserId ? `discord-${effectiveDiscordUserId}@local.invalid` : null);
+    const finalUsername = username || (effectiveDiscordUsername || `discord-${effectiveDiscordUserId || 'member'}`);
+
+    if (!emailAddress || !finalUsername) {
+      return res.status(400).json({ error: 'Missing username or email' });
+    }
 
     // Validate role — only allow user or admin via invite; super_admin must be promoted separately
     const validInviteRoles = ['user', 'admin'];
@@ -1120,20 +1138,76 @@ router.post('/users/invite', requireSuperAdmin, async (req, res) => {
     }
 
     // Check if user exists
-    let result = await pool.query('SELECT * FROM users WHERE email = $1 OR username = $2', [email, username]);
+    let result = await pool.query('SELECT * FROM users WHERE email = $1 OR username = $2 OR discord_user_id = $3', [emailAddress, finalUsername, effectiveDiscordUserId]);
     let user = result.rows[0];
 
     if (!user) {
-      // Create user with no password (user will set password via invite link)
+      // Create user with no password; Discord invites can use a generated local email if needed
       const insert = await pool.query(
-        'INSERT INTO users (username, email, password_hash, role, is_active) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-        [username, email, '', assignedRole, true]
+        `INSERT INTO users (
+          username,
+          email,
+          password_hash,
+          role,
+          is_active,
+          discord_user_id,
+          discord_username,
+          auth_provider,
+          discord_linked_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW()) RETURNING *`,
+        [
+          finalUsername,
+          emailAddress,
+          '',
+          assignedRole,
+          true,
+          effectiveDiscordUserId,
+          effectiveDiscordUsername,
+          normalizedInviteType === 'discord' ? 'discord' : 'local'
+        ]
       );
       user = insert.rows[0];
-    } else if (user.role !== assignedRole) {
-      // If user already exists and role differs, update it
-      await pool.query('UPDATE users SET role = $1, updated_at = NOW() WHERE id = $2', [assignedRole, user.id]);
-      user.role = assignedRole;
+    } else {
+      const updates = [];
+      const values = [];
+
+      if (user.role !== assignedRole) {
+        updates.push('role = $' + (values.length + 1));
+        values.push(assignedRole);
+      }
+
+      if (normalizedInviteType === 'discord') {
+        if (effectiveDiscordUserId && user.discord_user_id !== effectiveDiscordUserId) {
+          updates.push('discord_user_id = $' + (values.length + 1));
+          values.push(effectiveDiscordUserId);
+        }
+        if (effectiveDiscordUsername && user.discord_username !== effectiveDiscordUsername) {
+          updates.push('discord_username = $' + (values.length + 1));
+          values.push(effectiveDiscordUsername);
+        }
+        if (user.auth_provider !== 'discord') {
+          updates.push('auth_provider = $' + (values.length + 1));
+          values.push('discord');
+        }
+        if (!user.discord_linked_at) {
+          updates.push('discord_linked_at = NOW()');
+        }
+      }
+
+      if (updates.length > 0) {
+        values.push(user.id);
+        await pool.query(
+          `UPDATE users SET ${updates.join(', ')}, updated_at = NOW() WHERE id = $${values.length}`,
+          values
+        );
+      }
+
+      user = { ...user, role: assignedRole, ...(normalizedInviteType === 'discord' ? {
+        discord_user_id: effectiveDiscordUserId || user.discord_user_id,
+        discord_username: effectiveDiscordUsername || user.discord_username,
+        auth_provider: 'discord',
+        discord_linked_at: user.discord_linked_at || new Date().toISOString()
+      } : {}) };
     }
 
     // Compute expiresAt based on option (defaults to 7 days)
@@ -1148,15 +1222,25 @@ router.post('/users/invite', requireSuperAdmin, async (req, res) => {
     const tokenHash = await bcrypt.hash(token, 10);
 
     const insertInvite = await pool.query(
-      'INSERT INTO invites (user_id, token_hash, expires_at, used, created_by) VALUES ($1, $2, $3, $4, $5) RETURNING id',
-      [user.id, tokenHash, expiresAt, false, req.session.userId]
+      `INSERT INTO invites (
+        user_id,
+        token_hash,
+        expires_at,
+        used,
+        created_by,
+        invite_type,
+        discord_user_id,
+        discord_username,
+        source
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id`,
+      [user.id, tokenHash, expiresAt, false, req.session.userId, normalizedInviteType, effectiveDiscordUserId, effectiveDiscordUsername, 'admin_panel']
     );
 
     const inviteLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/invite/${token}`;
 
     let emailSent = false;
-    if (sendEmail && SMTP_CONFIGURED) {
-      emailSent = await sendInviteEmail(email, inviteLink, expiresAt);
+    if (normalizedInviteType === 'email' && sendEmail && SMTP_CONFIGURED) {
+      emailSent = await sendInviteEmail(emailAddress, inviteLink, expiresAt);
     }
 
     // Write audit log for invite creation (non-blocking)
@@ -1168,7 +1252,13 @@ router.post('/users/invite', requireSuperAdmin, async (req, res) => {
         tableName: 'invites',
         recordId: insertInvite.rows[0].id,
         description: `Invite created for user ${user.id} (${user.email})`,
-        newValues: { user_id: user.id, expires_at: expiresAt.toISOString(), sendEmail: !!sendEmail },
+        newValues: {
+          user_id: user.id,
+          expires_at: expiresAt.toISOString(),
+          sendEmail: !!sendEmail,
+          invite_type: normalizedInviteType,
+          discord_user_id: effectiveDiscordUserId
+        },
         req
       });
     } catch (err) {
@@ -1176,7 +1266,21 @@ router.post('/users/invite', requireSuperAdmin, async (req, res) => {
     }
 
     // NOTE: In production, you should email the invite link to the user automatically (sendEmail=true)
-    res.json({ success: true, inviteLink, expiresAt, user: { id: user.id, username: user.username, email: user.email }, emailSent });
+    return res.status(200).json({
+      success: true,
+      inviteLink,
+      expiresAt,
+      inviteType: normalizedInviteType,
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        discord_user_id: user.discord_user_id || effectiveDiscordUserId || null,
+        discord_username: user.discord_username || effectiveDiscordUsername || null,
+        auth_provider: user.auth_provider || (normalizedInviteType === 'discord' ? 'discord' : 'local')
+      },
+      emailSent
+    });
   } catch (error) {
     console.error('Error creating invite:', error);
     res.status(500).json({ error: 'Failed to create invite' });

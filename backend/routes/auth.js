@@ -13,6 +13,7 @@ const router = express.Router();
 
 const EMAIL_VERIFICATION_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
 const RESEND_VERIFICATION_MESSAGE = 'If your account exists and is unverified, a new email has been sent.';
+const DISCORD_OAUTH_BASE = 'https://discord.com/api/oauth2';
 
 // Tight rate limit for public registration to reduce bot/spam risk
 const registrationLimiter = rateLimit({
@@ -313,6 +314,213 @@ router.post('/isolated/login', async (req, res) => {
   }
 
   res.json({ message: 'Login successful', user: { id: row.id, username: row.username, email: row.email, role: row.role, email_verified: row.email_verified }, token });
+});
+
+// --- Discord OAuth flows ---
+function buildDiscordAuthUrl(state) {
+  const clientId = process.env.DISCORD_CLIENT_ID;
+  const redirectUri = process.env.DISCORD_REDIRECT_URI || 'http://localhost:3001/api/auth/discord/callback';
+  const scope = encodeURIComponent('identify guilds');
+
+  if (!clientId) {
+    throw new Error('DISCORD_CLIENT_ID is not configured');
+  }
+
+  const url = new URL(`${DISCORD_OAUTH_BASE}/authorize`);
+  url.searchParams.set('client_id', clientId);
+  url.searchParams.set('redirect_uri', redirectUri);
+  url.searchParams.set('response_type', 'code');
+  url.searchParams.set('scope', scope);
+  url.searchParams.set('state', state);
+  return url.toString();
+}
+
+router.get('/discord/login', async (req, res) => {
+  try {
+    if (!process.env.DISCORD_CLIENT_ID) {
+      return res.status(500).json({ error: 'Discord authentication is not configured' });
+    }
+
+    const state = crypto.randomBytes(16).toString('hex');
+    req.session.discordState = state;
+    const redirectUrl = buildDiscordAuthUrl(state);
+    return res.redirect(redirectUrl);
+  } catch (error) {
+    console.error('Discord login setup failed:', error);
+    return res.status(500).json({ error: 'Failed to start Discord login' });
+  }
+});
+
+router.get('/discord/callback', async (req, res) => {
+  try {
+    const { code, state, error } = req.query;
+
+    if (error) {
+      return res.status(400).json({ error: 'Discord authorization was denied' });
+    }
+
+    if (!code || !state) {
+      return res.status(400).json({ error: 'Missing Discord OAuth code or state' });
+    }
+
+    if (!req.session.discordState || req.session.discordState !== state) {
+      return res.status(400).json({ error: 'Invalid Discord auth state' });
+    }
+
+    delete req.session.discordState;
+
+    const clientId = process.env.DISCORD_CLIENT_ID;
+    const clientSecret = process.env.DISCORD_CLIENT_SECRET;
+    const redirectUri = process.env.DISCORD_REDIRECT_URI || 'http://localhost:3001/api/auth/discord/callback';
+
+    if (!clientId || !clientSecret) {
+      return res.status(500).json({ error: 'Discord OAuth is not configured' });
+    }
+
+    const tokenResponse = await fetch(`${DISCORD_OAUTH_BASE}/token`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: new URLSearchParams({
+        client_id: clientId,
+        client_secret: clientSecret,
+        grant_type: 'authorization_code',
+        code,
+        redirect_uri: redirectUri
+      })
+    });
+
+    if (!tokenResponse.ok) {
+      const text = await tokenResponse.text();
+      console.error('Discord token exchange failed:', text);
+      return res.status(400).json({ error: 'Failed to exchange Discord code for token' });
+    }
+
+    const tokenData = await tokenResponse.json();
+    const profileResponse = await fetch('https://discord.com/api/users/@me', {
+      headers: {
+        Authorization: `Bearer ${tokenData.access_token}`
+      }
+    });
+
+    if (!profileResponse.ok) {
+      return res.status(400).json({ error: 'Failed to fetch Discord profile' });
+    }
+
+    const profile = await profileResponse.json();
+    const discordUserId = String(profile.id);
+    const discordUsername = profile.username || 'discord-user';
+    const discordAvatar = profile.avatar ? `https://cdn.discordapp.com/avatars/${discordUserId}/${profile.avatar}.png` : null;
+
+    let userRow = await pool.query('SELECT * FROM users WHERE discord_user_id = $1', [discordUserId]);
+
+    if (userRow.rows.length === 0) {
+      const inviteRows = await pool.query(
+        `SELECT id, user_id, token_hash, expires_at, used, discord_user_id, discord_username
+         FROM invites
+         WHERE invite_type = 'discord'
+           AND discord_user_id = $1
+           AND used = false
+           AND expires_at > NOW()`,
+        [discordUserId]
+      );
+
+      if (inviteRows.rows.length === 0) {
+        return res.status(403).json({
+          error: 'This Discord account is not linked to a Winterjam account yet. Ask a moderator for an invite.'
+        });
+      }
+
+      const invite = inviteRows.rows[0];
+      const targetUser = await pool.query('SELECT * FROM users WHERE id = $1', [invite.user_id]);
+
+      if (targetUser.rows.length === 0) {
+        const generatedUsername = discordUsername || `discord-${discordUserId}`;
+        const createdUser = await pool.query(
+          `INSERT INTO users (
+            username,
+            email,
+            password_hash,
+            role,
+            is_active,
+            discord_user_id,
+            discord_username,
+            discord_avatar_url,
+            auth_provider,
+            discord_linked_at,
+            email_verified
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), true) RETURNING *`,
+          [
+            generatedUsername,
+            `discord-${discordUserId}@local.invalid`,
+            '',
+            'user',
+            true,
+            discordUserId,
+            discordUsername,
+            discordAvatar,
+            'discord'
+          ]
+        );
+        userRow = { rows: createdUser.rows };
+
+        await pool.query('UPDATE invites SET used = true, claimed_by_user_id = $1, claimed_at = NOW() WHERE id = $2', [createdUser.rows[0].id, invite.id]);
+      } else {
+        const existingUser = targetUser.rows[0];
+        await pool.query(
+          `UPDATE users
+           SET discord_user_id = $1,
+               discord_username = $2,
+               discord_avatar_url = $3,
+               auth_provider = 'discord',
+               discord_linked_at = NOW(),
+               last_discord_login_at = NOW(),
+               is_active = TRUE,
+               email_verified = TRUE,
+               updated_at = NOW()
+           WHERE id = $4`,
+          [discordUserId, discordUsername, discordAvatar, existingUser.id]
+        );
+        userRow = { rows: [{ ...existingUser, discord_user_id: discordUserId, discord_username: discordUsername, discord_avatar_url: discordAvatar, auth_provider: 'discord', email_verified: true }] };
+        await pool.query('UPDATE invites SET used = true, claimed_by_user_id = $1, claimed_at = NOW() WHERE id = $2', [existingUser.id, invite.id]);
+      }
+    }
+
+    const user = userRow.rows[0];
+    if (!user || !user.is_active) {
+      return res.status(403).json({ error: 'This account is inactive. Please ask a moderator for access.' });
+    }
+
+    await pool.query('UPDATE users SET last_discord_login_at = NOW(), discord_avatar_url = $1, discord_username = $2, auth_provider = $3 WHERE id = $4', [discordAvatar, discordUsername, 'discord', user.id]);
+
+    req.session.userId = user.id;
+    req.session.username = user.username;
+    req.session.role = user.role;
+    req.session.email = user.email;
+    req.session.emailVerified = user.email_verified ?? true;
+
+    try {
+      await logAudit({
+        userId: user.id,
+        username: user.username,
+        action: 'DISCORD_LOGIN',
+        tableName: 'users',
+        recordId: user.id,
+        description: 'User logged in via Discord',
+        newValues: { discord_user_id: discordUserId },
+        req
+      });
+    } catch (err) {
+      console.error('❌ Failed to write Discord login audit log:', err);
+    }
+
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    return res.redirect(`${frontendUrl}/admin`);
+  } catch (error) {
+    console.error('Discord callback failed:', error);
+    return res.status(500).json({ error: 'Failed to complete Discord login' });
+  }
 });
 
 // Public endpoint to check if public registration is enabled
