@@ -60,6 +60,7 @@ function AdminLayoutContent({ children }) {
     // Content Management
     { href: '/admin', label: '📊 Dashboard', section: 'dashboard' },
     { href: '/admin/gamejams', label: '🎮 Game Jams', section: 'gamejams' },
+    { href: '/admin/jam-sponsors', label: '🏁 Jam Sponsors', section: 'jam-sponsors' },
     { href: '/admin/games', label: '🎯 Games', section: 'games' },
     { href: '/admin/sponsors', label: '🎪 Sponsors', section: 'sponsors' },
     { href: '/admin/forms', label: '📝 Forms', section: 'forms', disabled: !featureToggles.enable_forms },

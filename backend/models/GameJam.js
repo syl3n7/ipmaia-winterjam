@@ -14,6 +14,7 @@ class GameJam {
       rules_pdf_url,
       is_active,
       banner_image_url,
+      sponsor_settings = {},
       // Homepage content fields
       introduction = 'Uma game jam onde estudantes de desenvolvimento de jogos e entusiastas se juntam para criar experiências únicas em 45 horas. É um evento presencial no IPMAIA com mentores disponíveis, workshops, e muita colaboração. Todos os níveis de experiência são bem-vindos!',
       prizes_content = null,
@@ -43,7 +44,7 @@ class GameJam {
       INSERT INTO game_jams (
         name, theme, description, start_date, end_date,
         registration_start_date, registration_end_date, registration_url,
-        rules_pdf_url, is_active, banner_image_url,
+        rules_pdf_url, is_active, banner_image_url, sponsor_settings,
         introduction, prizes_content, schedule_content,
         reception_datetime, theme_announcement_datetime, awards_ceremony_datetime, evaluation_datetime,
         show_theme, show_description, show_start_date, show_end_date,
@@ -51,14 +52,14 @@ class GameJam {
         show_registration_url, show_rules_pdf_url, show_banner_image,
         banner_fallback, custom_fields, custom_fields_visibility,
         created_at, updated_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, NOW(), NOW())
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, NOW(), NOW())
       RETURNING *
     `;
 
     const values = [
       name, theme, description, start_date, end_date,
       registration_start_date, registration_end_date, registration_url,
-      rules_pdf_url, is_active, banner_image_url,
+      rules_pdf_url, is_active, banner_image_url, JSON.stringify(sponsor_settings || {}),
       introduction, prizes_content, schedule_content,
       reception_datetime, theme_announcement_datetime, awards_ceremony_datetime, evaluation_datetime,
       show_theme, show_description, show_start_date, show_end_date,
@@ -118,7 +119,7 @@ class GameJam {
       'start_date', 'end_date',
       'registration_start_date', 'registration_end_date',
       'registration_url', 'rules_pdf_url',
-      'is_active', 'banner_image_url',
+      'is_active', 'banner_image_url', 'sponsor_settings',
       'introduction', 'prizes_content', 'schedule_content',
       'reception_datetime', 'theme_announcement_datetime',
       'awards_ceremony_datetime', 'evaluation_datetime',
@@ -155,12 +156,10 @@ class GameJam {
           console.log(`🔄 Converting empty ${key} to NULL`);
         }
 
-        // Convert objects to JSON strings for custom fields
-        if (key === 'custom_fields' || key === 'custom_fields_visibility') {
-          if (typeof value === 'object' && value !== null) {
-            value = JSON.stringify(value);
-            console.log(`🔄 Converting ${key} object to JSON:`, value);
-          }
+        // Convert objects to JSON strings for custom fields and sponsor settings
+        if ((key === 'custom_fields' || key === 'custom_fields_visibility' || key === 'sponsor_settings') && typeof value === 'object' && value !== null) {
+          value = JSON.stringify(value);
+          console.log(`🔄 Converting ${key} object to JSON:`, value);
         }
 
         // Convert empty string to null for FK fields

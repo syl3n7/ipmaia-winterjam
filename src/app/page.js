@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Background from '../components/Background';
 import Sponsor from '../components/Sponsor';
+import JamSponsorDisplay from '../components/JamSponsorDisplay';
 import { Clock, ArrowRight, Calendar, Target, Trophy, Users, Info, Lightbulb, FileText, X } from 'lucide-react';
 import { useFrontPageSettings } from '../hooks/useFrontPageSettings';
 import { useLatestArchive } from '../hooks/useLatestArchive';
@@ -193,11 +194,17 @@ export default function Home() {
     const apiUrl = typeof window === 'undefined' 
       ? (process.env.NEXT_PUBLIC_API_URL || 'http://backend:3001/api')
       : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api');
+
     fetch(`${apiUrl}/sponsors`)
       .then(res => res.json())
       .then(data => setSponsors(data.sponsors || []))
       .catch(() => setSponsors([]));
   }, []);
+
+  const jamSponsors = Array.isArray(currentGameJam?.sponsors) && currentGameJam.sponsors.length > 0
+    ? currentGameJam.sponsors
+    : sponsors;
+  const jamSponsorConfig = currentGameJam?.sponsor_settings || { appearance: 'grid', columns: 3 };
 
   return (
     <main className="min-h-screen">
@@ -232,15 +239,19 @@ export default function Home() {
                     </span>
                   </h1>
 
-                  {/* Hero sponsor(s) directly below the title: fetched from API */}
-                  {sponsors.length > 0 && (
-                    <div className="flex flex-col items-center gap-2 mb-4">
-                      <span className="text-xs uppercase text-orange-300 leading-none">SPONSORED BY</span>
-                      <div className="flex items-center gap-3">
-                        {sponsors.map((s, idx) => (
-                          <Sponsor key={idx} showText={false} isCircular={false} imgSrc={s.imgSrc} alt={s.alt || 'Sponsor'} href={s.href} imgClassName={'h-10 sm:h-12'} containerClass={'p-0'} />
-                        ))}
-                      </div>
+                  {/* Hero sponsor(s) directly below the title: use jam-specific sponsors first, fallback to generic sponsors */}
+                  {jamSponsors.length > 0 && (
+                    <div className="mb-4">
+                      <JamSponsorDisplay
+                        sponsors={jamSponsors}
+                        appearance={jamSponsorConfig.appearance || 'grid'}
+                        columns={jamSponsorConfig.columns || 3}
+                        title="SPONSORED BY"
+                        titleClasses="text-xs uppercase text-orange-300 leading-none"
+                        itemClassName="bg-white/5 border border-white/10 rounded-xl px-3 py-2 hover:bg-white/10"
+                        imageClassName="h-10 sm:h-12"
+                        textClassName="text-xs text-orange-100"
+                      />
                     </div>
                   )}
                 </>

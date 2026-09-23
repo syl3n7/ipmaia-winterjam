@@ -107,7 +107,14 @@ export default function AdminDashboard() {
       description: 'Submit a new game to the archive'
     },
     {
-      icon: '🎪',
+      icon: '�',
+      label: 'Jam Sponsors',
+      color: 'bg-purple-600',
+      action: () => window.location.href = '/admin/jam-sponsors',
+      description: 'Choose sponsor layouts and sponsor assignments per jam'
+    },
+    {
+      icon: '�🎪',
       label: 'Add Sponsor',
       color: 'bg-purple-600',
       action: () => window.location.href = '/admin/sponsors',
