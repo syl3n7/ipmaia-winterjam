@@ -60,7 +60,6 @@ function AdminLayoutContent({ children }) {
     // Content Management
     { href: '/admin', label: '📊 Dashboard', section: 'dashboard' },
     { href: '/admin/gamejams', label: '🎮 Game Jams', section: 'gamejams' },
-    { href: '/admin/jam-sponsors', label: '🏁 Jam Sponsors', section: 'jam-sponsors' },
     { href: '/admin/games', label: '🎯 Games', section: 'games' },
     { href: '/admin/sponsors', label: '🎪 Sponsors', section: 'sponsors' },
     { href: '/admin/forms', label: '📝 Forms', section: 'forms', disabled: !featureToggles.enable_forms },
@@ -160,7 +159,7 @@ function AdminLayoutContent({ children }) {
             <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-2">
               Features
             </h3>
-            {navItems.slice(8, 9).map((item) => {
+            {navItems.slice(9, 10).map((item) => {
               const isActive = pathname === item.href;
               return (
                 <Link
@@ -186,7 +185,7 @@ function AdminLayoutContent({ children }) {
             <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-2">
               System & Administration
             </h3>
-            {navItems.slice(9, 10).map((item) => {
+            {navItems.slice(10, 11).map((item) => {
               const isActive = pathname === item.href;
               return (
                 <Link

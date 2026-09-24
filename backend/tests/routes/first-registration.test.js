@@ -89,6 +89,41 @@ describe('Isolated registration - first user super_admin behavior', () => {
     expect(!!userInsertCall).to.be.true;
   });
 
+  it('POST /isolated/login creates a dev bootstrap user when ALLOW_DEV_AUTOLOGIN is enabled and no users exist', async () => {
+    const handler = findRouteHandler(authRouter, '/isolated/login', 'post');
+    expect(handler).to.be.a('function');
+
+    const previous = process.env.ALLOW_DEV_AUTOLOGIN;
+    process.env.ALLOW_DEV_AUTOLOGIN = 'true';
+
+    const hashedPassword = await require('../../models/User').hashPassword('dev-pw');
+    poolStub = sinon.stub(pool, 'query');
+    poolStub.onCall(0).resolves({ rows: [{ count: '0' }] }); // No users yet
+    poolStub.onCall(1).resolves({ rows: [{ id: 1, username: 'dev-admin', email: 'dev-mail@steelchunk.eu', password_hash: hashedPassword, role: 'super_admin', is_active: true, email_verified: true }] }); // bootstrap user insert
+    poolStub.onCall(2).resolves({ rows: [] }); // login audit
+
+    auditStub = sinon.stub(audit, 'logAudit').resolves();
+
+    const req = { body: { username: 'dev-admin', password: 'dev-pw' } };
+    const res = { status: sinon.stub().returnsThis(), json: sinon.stub().returnsThis() };
+
+    try {
+      await handler(req, res);
+
+      expect(res.status.calledWith(200)).to.be.true;
+      expect(res.json.calledOnce).to.be.true;
+      const payload = res.json.firstCall.args[0];
+      expect(payload.user.username).to.equal('dev-admin');
+      expect(payload.user.role).to.equal('super_admin');
+    } finally {
+      if (previous === undefined) {
+        delete process.env.ALLOW_DEV_AUTOLOGIN;
+      } else {
+        process.env.ALLOW_DEV_AUTOLOGIN = previous;
+      }
+    }
+  });
+
   it('POST /isolated/register rejects when public registration disabled', async () => {
     const handler = findRouteHandler(authRouter, '/isolated/register', 'post');
     expect(handler).to.be.a('function');
