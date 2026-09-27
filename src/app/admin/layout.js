@@ -204,22 +204,10 @@ function AdminLayoutContent({ children }) {
                 </Link>
               );
             })}
-            {/* Users (Super Admin Only) */}
-            {isSuperAdmin && navItems.length > 10 && (
-              <Link
-                href="/admin/users"
-                onClick={() => setSidebarOpen(false)}
-                className={`block px-4 py-3 rounded-lg transition-colors mb-1 ${
-                  pathname === '/admin/users'
-                    ? 'bg-blue-600 text-white'
-                    : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                }`}
-              >
-                👥 Users
-              </Link>
-            )}
           </div>
-        </nav>        {/* Sidebar Footer */}
+        </nav>
+
+        {/* Sidebar Footer */}
         <div className="p-4 border-t border-gray-700">
           <button
             onClick={logout}
