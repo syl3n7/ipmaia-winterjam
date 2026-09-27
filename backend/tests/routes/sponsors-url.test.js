@@ -1,5 +1,5 @@
 const { expect } = require('chai');
-const { normalizeSponsorLogoReference, getSponsorImageSrc } = require('../routes/sponsors');
+const { normalizeSponsorLogoReference, getSponsorImageSrc, normalizeSponsorPayload } = require('../../routes/sponsors');
 
 describe('sponsor logo URL support', () => {
   it('accepts a direct external URL for the sponsor logo', () => {
@@ -19,5 +19,16 @@ describe('sponsor logo URL support', () => {
   it('keeps uploaded filenames mapped to the sponsor logo endpoint', () => {
     const result = getSponsorImageSrc('my-logo.png', 'http', 'localhost:3001');
     expect(result).to.equal('http://localhost:3001/api/sponsors/logo/my-logo.png');
+  });
+
+  it('defaults new sponsors to inactive so they do not appear on the public frontpage until intentionally enabled', () => {
+    const result = normalizeSponsorPayload({
+      name: 'Example Sponsor',
+      tier: 'gold',
+    });
+
+    expect(result.is_active).to.equal(false);
+    expect(result.website_url).to.equal(null);
+    expect(result.description).to.equal(null);
   });
 });

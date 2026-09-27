@@ -28,7 +28,7 @@ export default function AdminSponsors() {
     logo_url: '',
     website_url: '',
     description: '',
-    is_active: true,
+    is_active: false,
   });
   const [logoFile, setLogoFile] = useState(null);
   const { handleApiResponse, apiFetch } = useAdminAuth();
@@ -265,7 +265,7 @@ export default function AdminSponsors() {
       logo_url: '',
       website_url: '',
       description: '',
-      is_active: true,
+      is_active: false,
     });
   };
 
@@ -408,17 +408,17 @@ export default function AdminSponsors() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm text-gray-300 mb-2">Link</label>
+                      <label className="block text-sm text-gray-300 mb-2">Link <span className="text-gray-400">(optional)</span></label>
                       <input
                         type="text"
                         value={entry.href || ''}
                         onChange={(e) => updateJamEntry(index, 'href', e.target.value)}
                         className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-white"
-                        placeholder="https://example.com"
+                        placeholder="Leave blank to use the sponsor website"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm text-gray-300 mb-2">Display order</label>
+                      <label className="block text-sm text-gray-300 mb-2">Display order <span className="text-gray-400">(optional)</span></label>
                       <input
                         type="number"
                         min="0"
@@ -431,13 +431,13 @@ export default function AdminSponsors() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm text-gray-300 mb-2">Text override</label>
+                      <label className="block text-sm text-gray-300 mb-2">Text override <span className="text-gray-400">(optional)</span></label>
                       <input
                         type="text"
                         value={entry.text || ''}
                         onChange={(e) => updateJamEntry(index, 'text', e.target.value)}
                         className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-white"
-                        placeholder="Optional label"
+                        placeholder="Leave blank to use the sponsor name"
                       />
                     </div>
                     <div className="flex items-end">
@@ -464,6 +464,9 @@ export default function AdminSponsors() {
           <h3 className="text-xl font-semibold text-white mb-4">
             {editing ? 'Edit Sponsor' : 'Add New Sponsor'}
           </h3>
+          <p className="text-sm text-gray-400 -mt-2 mb-4">
+            New sponsors stay hidden until you activate them and attach them to a jam. Optional fields are only used when you want custom website text or overrides.
+          </p>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -521,7 +524,7 @@ export default function AdminSponsors() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
-                Website URL
+                Website URL <span className="text-gray-400">(optional)</span>
               </label>
               <input
                 type="url"
@@ -534,13 +537,14 @@ export default function AdminSponsors() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">
-              Description
+              Description <span className="text-gray-400">(optional)</span>
             </label>
             <textarea
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               rows="3"
               className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded text-white focus:outline-none focus:border-blue-500"
+              placeholder="Optional details shown on the sponsor card in some layouts"
             />
           </div>
           <div className="flex items-center">
@@ -550,7 +554,7 @@ export default function AdminSponsors() {
               onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
               className="w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500"
             />
-            <label className="ml-2 text-sm text-gray-300">Active</label>
+            <label className="ml-2 text-sm text-gray-300">Publish publicly now</label>
           </div>
           <div className="flex gap-2">
             <button
