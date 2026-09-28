@@ -1,16 +1,105 @@
 const express = require('express');
 const GameJam = require('../models/GameJam');
 const Game = require('../models/Game');
+const { pool } = require('../config/database');
+const { pickJamSponsorsForDisplay } = require('../utils/jamSponsorDisplay');
 
 const router = express.Router();
+
+async function loadSponsorMap(req) {
+  const result = await pool.query(`
+    SELECT id, name, logo_filename, website_url, description, is_active
+    FROM sponsors
+    WHERE is_active = true
+    ORDER BY name ASC
+  `);
+
+  return result.rows.reduce((acc, sponsor) => {
+    const protocol = req.protocol || 'http';
+    const host = req.get('host') || 'localhost:3001';
+    const logoBase = `${protocol}://${host}/api/sponsors/logo`;
+
+    acc[sponsor.id] = {
+      sponsor_id: sponsor.id,
+      id: sponsor.id,
+      name: sponsor.name,
+      alt: sponsor.name,
+      href: sponsor.website_url || '#',
+      imgSrc: sponsor.logo_filename ? `${logoBase}/${sponsor.logo_filename}` : null,
+      logo_url: sponsor.logo_filename ? `${logoBase}/${sponsor.logo_filename}` : null,
+      text: sponsor.name,
+      description: sponsor.description,
+      is_active: sponsor.is_active,
+    };
+    return acc;
+  }, {});
+}
+
+function normalizeSponsorConfig(raw) {
+  if (!raw || typeof raw !== 'object') return { appearance: 'grid', columns: 3, entries: [] };
+  const normalized = { ...raw };
+  normalized.appearance = normalized.appearance || 'grid';
+  normalized.columns = Number(normalized.columns || 3);
+  normalized.entries = Array.isArray(normalized.entries) ? normalized.entries : [];
+  normalized.show_text = normalized.show_text !== false;
+  normalized.is_circular = !!normalized.is_circular;
+  return normalized;
+}
+
+async function enrichGameJamWithSponsors(gameJam, req) {
+  if (!gameJam) return gameJam;
+
+  const sponsorMap = await loadSponsorMap(req);
+  const sponsorSettings = normalizeSponsorConfig(
+    typeof gameJam.sponsor_settings === 'string'
+      ? (() => { try { return JSON.parse(gameJam.sponsor_settings); } catch { return {}; } })()
+      : gameJam.sponsor_settings
+  );
+
+  const allSponsors = Object.values(sponsorMap);
+  const jamEntries = Array.isArray(sponsorSettings.entries) ? sponsorSettings.entries : [];
+  const selectedSponsors = jamEntries
+    .filter(entry => entry && entry.sponsor_id)
+    .map((entry, index) => {
+      const sponsor = sponsorMap[Number(entry.sponsor_id)];
+      if (!sponsor) return null;
+      return {
+        ...sponsor,
+        sponsor_id: sponsor.id,
+        display_order: Number(entry.display_order ?? index),
+        is_active: entry.is_active !== false,
+        href: entry.href || sponsor.href,
+        text: entry.text || sponsor.text,
+        alt: sponsor.name,
+        imgSrc: sponsor.imgSrc,
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => (a.display_order ?? 9999) - (b.display_order ?? 9999));
+
+  const fallbackSponsors = allSponsors.map(sponsor => ({ ...sponsor, sponsor_id: sponsor.id }));
+  const displaySponsors = pickJamSponsorsForDisplay(selectedSponsors, fallbackSponsors);
+
+  return {
+    ...gameJam,
+    sponsor_settings: {
+      ...sponsorSettings,
+      entries: jamEntries,
+      appearance: sponsorSettings.appearance || 'grid',
+      columns: Number(sponsorSettings.columns || 3),
+    },
+    sponsors: displaySponsors,
+  };
+}
 
 // Get all active game jams
 router.get('/gamejams', async (req, res) => {
   try {
     console.log('🔍 Fetching all game jams...');
     const gameJams = await GameJam.findAll(true); // Include all (active and inactive) for dropdown
-    console.log(`📊 Found ${gameJams.length} total game jams`);
-    res.json(gameJams);
+    const enriched = await Promise.all(gameJams.map(jam => enrichGameJamWithSponsors(jam, req)));
+    console.log(`📊 Found ${enriched.length} total game jams`);
+    res.json(enriched);
   } catch (error) {
     console.error('❌ Error fetching game jams:', error);
     console.error('❌ Stack trace:', error.stack);
@@ -40,7 +129,8 @@ router.get('/gamejams/:id', async (req, res) => {
     if (!gameJam) {
       return res.status(404).json({ error: 'Game jam not found' });
     }
-    res.json(gameJam);
+    const enriched = await enrichGameJamWithSponsors(gameJam, req);
+    res.json(enriched);
   } catch (error) {
     console.error('Error fetching game jam:', error);
     res.status(500).json({ error: 'Failed to fetch game jam' });
@@ -73,7 +163,7 @@ router.get('/current', async (req, res) => {
         .sort((a, b) => new Date(b.start_date) - new Date(a.start_date))[0];
       
       console.log('🎯 Current game jam selected:', currentGameJam.name);
-      return res.json(currentGameJam);
+      return res.json(await enrichGameJamWithSponsors(currentGameJam, req));
     }
     
     // If no active game jams, try to get the most recent one regardless of active status
@@ -86,7 +176,7 @@ router.get('/current', async (req, res) => {
         .sort((a, b) => new Date(b.start_date) - new Date(a.start_date))[0];
       
       console.log('🎯 Most recent game jam selected:', mostRecentGameJam.name);
-      return res.json(mostRecentGameJam);
+      return res.json(await enrichGameJamWithSponsors(mostRecentGameJam, req));
     }
     
     console.log('❌ No game jams found at all');

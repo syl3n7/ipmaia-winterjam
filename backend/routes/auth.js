@@ -13,6 +13,43 @@ const router = express.Router();
 
 const EMAIL_VERIFICATION_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
 const RESEND_VERIFICATION_MESSAGE = 'If your account exists and is unverified, a new email has been sent.';
+const DEV_BOOTSTRAP_USERNAME = 'dev-admin';
+const DEV_BOOTSTRAP_EMAIL = 'dev-mail@steelchunk.eu';
+const DEV_BOOTSTRAP_PASSWORD = 'dev-pw';
+
+function isDevAutoLoginEnabled() {
+  return process.env.NODE_ENV !== 'production' && (
+    process.env.ALLOW_DEV_AUTOLOGIN === 'true' || process.env.DEV_BYPASS_AUTH === 'true'
+  );
+}
+
+async function ensureDevBootstrapUser() {
+  if (!isDevAutoLoginEnabled()) return null;
+
+  try {
+    const userCountResult = await pool.query('SELECT COUNT(*) as count FROM users');
+    const userCount = Number(userCountResult.rows[0]?.count || 0);
+
+    if (userCount > 0) {
+      return null;
+    }
+
+    const existing = await pool.query('SELECT id, username, email, role, is_active, email_verified FROM users WHERE username = $1 OR email = $2', [DEV_BOOTSTRAP_USERNAME, DEV_BOOTSTRAP_EMAIL]);
+    if (existing.rows.length > 0) {
+      return existing.rows[0];
+    }
+
+    const passwordHash = await User.hashPassword(DEV_BOOTSTRAP_PASSWORD);
+    const insertRes = await pool.query(
+      'INSERT INTO users (username, email, password_hash, role, is_active, email_verified) VALUES ($1, $2, $3, $4, TRUE, TRUE) RETURNING *',
+      [DEV_BOOTSTRAP_USERNAME, DEV_BOOTSTRAP_EMAIL, passwordHash, 'super_admin']
+    );
+    return insertRes.rows[0];
+  } catch (err) {
+    console.error('❌ Failed to create dev bootstrap admin user:', err);
+    return null;
+  }
+}
 
 // Tight rate limit for public registration to reduce bot/spam risk
 const registrationLimiter = rateLimit({
@@ -207,11 +244,10 @@ router.post('/isolated/register', registrationLimiter, async (req, res) => {
 // Login endpoint
 router.post('/isolated/login', async (req, res) => {
   let { username, password } = req.body;
-  // Dev auto-login gated behind ALLOW_DEV_AUTOLOGIN
-  const allowDevAuto = process.env.ALLOW_DEV_AUTOLOGIN === 'true' && process.env.NODE_ENV !== 'production';
+  const allowDevAuto = isDevAutoLoginEnabled();
   if (allowDevAuto) {
-    username = username || 'dev-admin';
-    password = password || 'dev-pw';
+    username = username || DEV_BOOTSTRAP_USERNAME;
+    password = password || DEV_BOOTSTRAP_PASSWORD;
   }
 
   const { isValidUsername } = require('../utils/validation');
@@ -224,9 +260,20 @@ router.post('/isolated/login', async (req, res) => {
 
   username = usernameCheck.value;
 
-  // Find user in DB
-  const dbRes = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
-  const row = dbRes.rows[0];
+  // Dev auto-login: create a bootstrap super admin when the database is empty.
+  let row = null;
+  if (allowDevAuto) {
+    const bootstrapUser = await ensureDevBootstrapUser();
+    if (bootstrapUser) {
+      row = bootstrapUser;
+    }
+  }
+
+  if (!row) {
+    const dbRes = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
+    row = dbRes.rows[0];
+  }
+
   if (!row || !row.is_active) {
     try {
       await logAudit({
@@ -290,7 +337,10 @@ router.post('/isolated/login', async (req, res) => {
     });
   }
 
-  // Set session
+  // Set session (guarded for tests and direct handler calls without full Express session middleware)
+  if (!req.session) {
+    req.session = {};
+  }
   req.session.userId = row.id;
   req.session.username = row.username;
   req.session.role = row.role;
@@ -312,7 +362,7 @@ router.post('/isolated/login', async (req, res) => {
     console.error('❌ Failed to write audit log for login:', err);
   }
 
-  res.json({ message: 'Login successful', user: { id: row.id, username: row.username, email: row.email, role: row.role, email_verified: row.email_verified }, token });
+  res.status(200).json({ message: 'Login successful', user: { id: row.id, username: row.username, email: row.email, role: row.role, email_verified: row.email_verified }, token });
 });
 
 // Public endpoint to check if public registration is enabled

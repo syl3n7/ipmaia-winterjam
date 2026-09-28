@@ -44,7 +44,9 @@ services:
       JWT_SECRET: ${JWT_SECRET:-local-dev-jwt-secret-change-me}
       SESSION_SECRET: ${SESSION_SECRET:-local-dev-session-secret-change-me}
       FRONTEND_URL: http://localhost:3000
-      # Enable registration so the first user (super_admin) can be created locally
+      # Enable local bootstrap admin so the first user can log in without extra setup
+      ALLOW_DEV_AUTOLOGIN: "true"
+      DEV_BYPASS_AUTH: "true"
       PUBLIC_REGISTRATION_ENABLED: "true"
       # OIDC — optional, leave blank to skip OIDC login
       OIDC_ISSUER_URL: ${OIDC_ISSUER_URL:-}

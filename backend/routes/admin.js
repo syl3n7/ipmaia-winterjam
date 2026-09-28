@@ -103,6 +103,68 @@ router.put('/gamejams/:id', async (req, res) => {
   }
 });
 
+router.get('/gamejams/:id/sponsor-settings', async (req, res) => {
+  try {
+    const gameJam = await GameJam.findById(req.params.id);
+    if (!gameJam) {
+      return res.status(404).json({ error: 'Game jam not found' });
+    }
+
+    let sponsorSettings = gameJam.sponsor_settings || {};
+    if (typeof sponsorSettings === 'string') {
+      try {
+        sponsorSettings = JSON.parse(sponsorSettings);
+      } catch (error) {
+        sponsorSettings = {};
+      }
+    }
+
+    res.json({
+      id: gameJam.id,
+      name: gameJam.name,
+      sponsor_settings: sponsorSettings,
+    });
+  } catch (error) {
+    console.error('Error fetching jam sponsor settings:', error);
+    res.status(500).json({ error: 'Failed to fetch jam sponsor settings' });
+  }
+});
+
+router.put('/gamejams/:id/sponsor-settings', async (req, res) => {
+  try {
+    const { sponsor_settings } = req.body;
+    const gameJam = await GameJam.findById(req.params.id);
+    if (!gameJam) {
+      return res.status(404).json({ error: 'Game jam not found' });
+    }
+
+    const normalized = {
+      appearance: sponsor_settings?.appearance || 'grid',
+      columns: Number(sponsor_settings?.columns || 3),
+      title: sponsor_settings?.title || 'SPONSORED BY',
+      show_text: sponsor_settings?.show_text !== false,
+      is_circular: !!sponsor_settings?.is_circular,
+      entries: Array.isArray(sponsor_settings?.entries) ? sponsor_settings.entries.map((entry, index) => ({
+        sponsor_id: Number(entry.sponsor_id),
+        display_order: Number(entry.display_order ?? index),
+        is_active: entry.is_active !== false,
+        href: entry.href || '',
+        text: entry.text || '',
+      })).filter(entry => Number.isFinite(entry.sponsor_id) && entry.sponsor_id > 0) : [],
+    };
+
+    const updated = await GameJam.update(req.params.id, { sponsor_settings: normalized });
+    res.json({
+      message: 'Jam sponsor settings updated',
+      sponsor_settings: normalized,
+      gameJam: updated,
+    });
+  } catch (error) {
+    console.error('Error updating jam sponsor settings:', error);
+    res.status(500).json({ error: 'Failed to update jam sponsor settings' });
+  }
+});
+
 // Theme wheel (per game jam)
 router.get('/gamejams/:id/theme-wheel', async (req, res) => {
   try {

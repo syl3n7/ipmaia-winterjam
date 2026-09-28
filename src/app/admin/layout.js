@@ -159,7 +159,7 @@ function AdminLayoutContent({ children }) {
             <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-2">
               Features
             </h3>
-            {navItems.slice(8, 9).map((item) => {
+            {navItems.slice(9, 10).map((item) => {
               const isActive = pathname === item.href;
               return (
                 <Link
@@ -185,7 +185,7 @@ function AdminLayoutContent({ children }) {
             <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-2">
               System & Administration
             </h3>
-            {navItems.slice(9, 10).map((item) => {
+            {navItems.slice(10, 11).map((item) => {
               const isActive = pathname === item.href;
               return (
                 <Link
@@ -204,22 +204,10 @@ function AdminLayoutContent({ children }) {
                 </Link>
               );
             })}
-            {/* Users (Super Admin Only) */}
-            {isSuperAdmin && navItems.length > 10 && (
-              <Link
-                href="/admin/users"
-                onClick={() => setSidebarOpen(false)}
-                className={`block px-4 py-3 rounded-lg transition-colors mb-1 ${
-                  pathname === '/admin/users'
-                    ? 'bg-blue-600 text-white'
-                    : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                }`}
-              >
-                👥 Users
-              </Link>
-            )}
           </div>
-        </nav>        {/* Sidebar Footer */}
+        </nav>
+
+        {/* Sidebar Footer */}
         <div className="p-4 border-t border-gray-700">
           <button
             onClick={logout}

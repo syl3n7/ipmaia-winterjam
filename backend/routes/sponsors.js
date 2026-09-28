@@ -59,6 +59,43 @@ const upload = multer({
 // Check if we're in development mode (database disabled)
 const isDevelopment = false; // Always use database for sponsors
 
+const isRemoteLogoReference = (value) => {
+  if (typeof value !== 'string') return false;
+  const trimmed = value.trim();
+  return /^https?:\/\//i.test(trimmed) || /^data:/i.test(trimmed) || /^\/\//.test(trimmed);
+};
+
+const getSponsorImageSrc = (logoValue, protocol = 'http', host = 'localhost') => {
+  if (!logoValue || typeof logoValue !== 'string') return null;
+  const trimmed = logoValue.trim();
+  if (!trimmed) return null;
+  if (isRemoteLogoReference(trimmed) || trimmed.startsWith('/')) {
+    return trimmed.startsWith('/') ? `${protocol}://${host}${trimmed}` : trimmed;
+  }
+  return `${protocol}://${host}/api/sponsors/logo/${trimmed}`;
+};
+
+const normalizeSponsorLogoReference = (data = {}) => {
+  const directUrl = typeof data.logo_url === 'string' ? data.logo_url.trim() : '';
+  const directFilename = typeof data.logo_filename === 'string' ? data.logo_filename.trim() : '';
+  const normalized = directUrl || directFilename;
+  return normalized || null;
+};
+
+const normalizeSponsorPayload = (data = {}) => {
+  const next = { ...data };
+
+  next.name = typeof next.name === 'string' ? next.name.trim() : next.name;
+  next.tier = typeof next.tier === 'string' ? next.tier.trim() : next.tier;
+  next.website_url = next.website_url && typeof next.website_url === 'string' ? next.website_url.trim() || null : next.website_url || null;
+  next.description = next.description && typeof next.description === 'string' ? next.description.trim() || null : next.description || null;
+  next.logo_url = typeof next.logo_url === 'string' ? next.logo_url.trim() || null : next.logo_url || null;
+  next.logo_filename = typeof next.logo_filename === 'string' ? next.logo_filename.trim() || null : next.logo_filename || null;
+  next.is_active = next.is_active === undefined ? false : Boolean(next.is_active);
+
+  return next;
+};
+
 // Validation helper
 const validateSponsor = (data) => {
   const errors = [];
@@ -69,6 +106,15 @@ const validateSponsor = (data) => {
 
   if (!data.tier || !['platinum', 'gold', 'silver', 'bronze'].includes(data.tier)) {
     errors.push('Nível de patrocínio inválido');
+  }
+
+  const logoReference = normalizeSponsorLogoReference(data);
+  if (logoReference && typeof logoReference !== 'string') {
+    errors.push('Logo deve ser um URL válido ou nome de ficheiro');
+  }
+
+  if (data.logo_url && typeof data.logo_url !== 'string') {
+    errors.push('URL do logo deve ser uma string válida');
   }
 
   if (data.logo_filename && typeof data.logo_filename !== 'string') {
@@ -111,7 +157,7 @@ router.get('/', async (req, res) => {
 
     // Transform to frontend format
     const frontendSponsors = activeSponsors.map((sponsor, index) => ({
-      imgSrc: sponsor.logo_filename ? `${req.protocol}://${req.get('host')}/api/sponsors/logo/${sponsor.logo_filename}` : null,
+      imgSrc: getSponsorImageSrc(sponsor.logo_filename, req.protocol, req.get('host')),
       alt: sponsor.name,
       href: sponsor.website_url ? (sponsor.website_url.startsWith('http') ? sponsor.website_url : (sponsor.website_url.startsWith('/') ? `${req.protocol}://${req.get('host')}${sponsor.website_url}` : `https://${sponsor.website_url}`)) : null,
       index: index
@@ -173,10 +219,12 @@ router.get('/admin', requireAdmin, async (req, res) => {
 // POST /api/sponsors - Create new sponsor (admin only)
 router.post('/', requireAdmin, async (req, res) => {
   try {
-    const { name, tier, logo_filename, website_url, description, is_active } = req.body;
+    const payload = normalizeSponsorPayload(req.body);
+    const { name, tier, logo_filename, logo_url, website_url, description, is_active } = payload;
+    const normalizedLogo = normalizeSponsorLogoReference({ logo_filename, logo_url });
 
     // Validate input
-    const validationErrors = validateSponsor(req.body);
+    const validationErrors = validateSponsor(payload);
     if (validationErrors.length > 0) {
       return res.status(400).json({
         success: false,
@@ -206,10 +254,10 @@ router.post('/', requireAdmin, async (req, res) => {
     `, [
       name.trim(),
       tier,
-      logo_filename ? logo_filename.trim() : null,
-      website_url ? website_url.trim() : null,
-      description ? description.trim() : null,
-      is_active !== undefined ? Boolean(is_active) : true
+      normalizedLogo,
+      website_url,
+      description,
+      Boolean(is_active)
     ]);
 
     const newSponsor = result.rows[0];
@@ -232,7 +280,9 @@ router.post('/', requireAdmin, async (req, res) => {
 router.put('/:id', requireAdmin, async (req, res) => {
   try {
     const id = parseInt(req.params.id);
-    const { name, tier, logo_filename, website_url, description, is_active } = req.body;
+    const payload = normalizeSponsorPayload(req.body);
+    const { name, tier, logo_filename, logo_url, website_url, description, is_active } = payload;
+    const normalizedLogo = normalizeSponsorLogoReference({ logo_filename, logo_url });
 
     if (isNaN(id)) {
       return res.status(400).json({
@@ -292,19 +342,19 @@ router.put('/:id', requireAdmin, async (req, res) => {
       values.push(tier);
     }
 
-    if (logo_filename !== undefined) {
+    if (logo_filename !== undefined || logo_url !== undefined) {
       updates.push(`logo_filename = $${paramIndex++}`);
-      values.push(logo_filename ? logo_filename.trim() : null);
+      values.push(normalizedLogo);
     }
 
     if (website_url !== undefined) {
       updates.push(`website_url = $${paramIndex++}`);
-      values.push(website_url ? website_url.trim() : null);
+      values.push(website_url);
     }
 
     if (description !== undefined) {
       updates.push(`description = $${paramIndex++}`);
-      values.push(description ? description.trim() : null);
+      values.push(description);
     }
 
     if (is_active !== undefined) {
@@ -545,3 +595,7 @@ router.get('/logo/:filename', async (req, res) => {
 });
 
 module.exports = router;
+module.exports.validateSponsor = validateSponsor;
+module.exports.normalizeSponsorLogoReference = normalizeSponsorLogoReference;
+module.exports.normalizeSponsorPayload = normalizeSponsorPayload;
+module.exports.getSponsorImageSrc = getSponsorImageSrc;

@@ -48,6 +48,9 @@ async function createBaseSchema() {
         custom_fields JSONB DEFAULT '{}',
         custom_fields_visibility JSONB DEFAULT '{}',
 
+        -- Jam sponsor configuration
+        sponsor_settings JSONB DEFAULT '{}',
+
         -- Archive fields
         slug VARCHAR(255),
         archive_url TEXT,
