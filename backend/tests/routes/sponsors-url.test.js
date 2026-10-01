@@ -1,5 +1,6 @@
 const { expect } = require('chai');
 const { normalizeSponsorLogoReference, getSponsorImageSrc, normalizeSponsorPayload } = require('../../routes/sponsors');
+const { parseSponsorSettings } = require('../../routes/public');
 
 describe('sponsor logo URL support', () => {
   it('accepts a direct external URL for the sponsor logo', () => {
@@ -30,5 +31,14 @@ describe('sponsor logo URL support', () => {
     expect(result.is_active).to.equal(false);
     expect(result.website_url).to.equal(null);
     expect(result.description).to.equal(null);
+  });
+
+  it('parses sponsor settings from JSON strings and falls back to defaults', () => {
+    expect(parseSponsorSettings('{"appearance":"row","columns":2,"entries":[{"sponsor_id":7}]}')).to.deep.include({
+      appearance: 'row',
+      columns: 2,
+      entries: [{ sponsor_id: 7 }]
+    });
+    expect(parseSponsorSettings('not-json')).to.deep.include({ appearance: 'grid', columns: 3, entries: [] });
   });
 });

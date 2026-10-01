@@ -35,34 +35,38 @@ async function loadSponsorMap(req) {
   }, {});
 }
 
-function normalizeSponsorConfig(raw) {
-  if (!raw || typeof raw !== 'object') return { appearance: 'grid', columns: 3, entries: [] };
-  const normalized = { ...raw };
-  normalized.appearance = normalized.appearance || 'grid';
-  normalized.columns = Number(normalized.columns || 3);
-  normalized.entries = Array.isArray(normalized.entries) ? normalized.entries : [];
-  normalized.show_text = normalized.show_text !== false;
-  normalized.is_circular = !!normalized.is_circular;
-  return normalized;
+function parseSponsorSettings(raw) {
+  if (!raw) return { appearance: 'grid', columns: 3, entries: [] };
+
+  const parsed = typeof raw === 'string'
+    ? (() => { try { return JSON.parse(raw); } catch { return {}; } })()
+    : raw;
+
+  if (!parsed || typeof parsed !== 'object') return { appearance: 'grid', columns: 3, entries: [] };
+
+  return {
+    ...parsed,
+    appearance: parsed.appearance || 'grid',
+    columns: Number(parsed.columns || 3),
+    entries: Array.isArray(parsed.entries) ? parsed.entries : [],
+    show_text: parsed.show_text !== false,
+    is_circular: !!parsed.is_circular,
+  };
 }
 
-async function enrichGameJamWithSponsors(gameJam, req) {
-  if (!gameJam) return gameJam;
+function normalizeSponsorConfig(raw) {
+  return parseSponsorSettings(raw);
+}
 
-  const sponsorMap = await loadSponsorMap(req);
-  const sponsorSettings = normalizeSponsorConfig(
-    typeof gameJam.sponsor_settings === 'string'
-      ? (() => { try { return JSON.parse(gameJam.sponsor_settings); } catch { return {}; } })()
-      : gameJam.sponsor_settings
-  );
-
-  const allSponsors = Object.values(sponsorMap);
+function buildSelectedSponsors(sponsorMap, sponsorSettings) {
   const jamEntries = Array.isArray(sponsorSettings.entries) ? sponsorSettings.entries : [];
-  const selectedSponsors = jamEntries
+
+  return jamEntries
     .filter(entry => entry && entry.sponsor_id)
     .map((entry, index) => {
       const sponsor = sponsorMap[Number(entry.sponsor_id)];
       if (!sponsor) return null;
+
       return {
         ...sponsor,
         sponsor_id: sponsor.id,
@@ -76,7 +80,15 @@ async function enrichGameJamWithSponsors(gameJam, req) {
     })
     .filter(Boolean)
     .sort((a, b) => (a.display_order ?? 9999) - (b.display_order ?? 9999));
+}
 
+async function enrichGameJamWithSponsors(gameJam, req) {
+  if (!gameJam) return gameJam;
+
+  const sponsorMap = await loadSponsorMap(req);
+  const sponsorSettings = normalizeSponsorConfig(gameJam.sponsor_settings);
+  const allSponsors = Object.values(sponsorMap);
+  const selectedSponsors = buildSelectedSponsors(sponsorMap, sponsorSettings);
   const fallbackSponsors = allSponsors.map(sponsor => ({ ...sponsor, sponsor_id: sponsor.id }));
   const displaySponsors = pickJamSponsorsForDisplay(selectedSponsors, fallbackSponsors);
 
@@ -84,7 +96,7 @@ async function enrichGameJamWithSponsors(gameJam, req) {
     ...gameJam,
     sponsor_settings: {
       ...sponsorSettings,
-      entries: jamEntries,
+      entries: sponsorSettings.entries,
       appearance: sponsorSettings.appearance || 'grid',
       columns: Number(sponsorSettings.columns || 3),
     },
@@ -332,3 +344,6 @@ router.get('/maintenance', (req, res) => {
 });
 
 module.exports = router;
+module.exports.parseSponsorSettings = parseSponsorSettings;
+module.exports.normalizeSponsorConfig = normalizeSponsorConfig;
+module.exports.buildSelectedSponsors = buildSelectedSponsors;

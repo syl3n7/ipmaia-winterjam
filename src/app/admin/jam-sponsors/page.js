@@ -3,6 +3,27 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAdminAuth } from '@/contexts/AdminAuthContext';
 
+const DEFAULT_SPONSOR_FORM = {
+  appearance: 'grid',
+  columns: 3,
+  title: 'SPONSORED BY',
+  show_text: true,
+  is_circular: false,
+  entries: [],
+};
+
+function normalizeForm(data = {}) {
+  return {
+    ...DEFAULT_SPONSOR_FORM,
+    appearance: data.appearance || 'grid',
+    columns: Number(data.columns || 3),
+    title: data.title || 'SPONSORED BY',
+    show_text: data.show_text !== false,
+    is_circular: !!data.is_circular,
+    entries: Array.isArray(data.entries) ? data.entries : [],
+  };
+}
+
 export default function AdminJamSponsorsPage() {
   const { apiFetch } = useAdminAuth();
   const [gameJams, setGameJams] = useState([]);
@@ -10,14 +31,7 @@ export default function AdminJamSponsorsPage() {
   const [selectedJamId, setSelectedJamId] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({
-    appearance: 'grid',
-    columns: 3,
-    title: 'SPONSORED BY',
-    show_text: true,
-    is_circular: false,
-    entries: [],
-  });
+  const [form, setForm] = useState(DEFAULT_SPONSOR_FORM);
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
@@ -58,24 +72,10 @@ export default function AdminJamSponsorsPage() {
       try {
         const response = await apiFetch(`${apiUrl}/admin/gamejams/${selectedJamId}/sponsor-settings`, {}, 'load jam sponsor settings');
         const data = await response.json();
-        setForm({
-          appearance: data.sponsor_settings?.appearance || 'grid',
-          columns: Number(data.sponsor_settings?.columns || 3),
-          title: data.sponsor_settings?.title || 'SPONSORED BY',
-          show_text: data.sponsor_settings?.show_text !== false,
-          is_circular: !!data.sponsor_settings?.is_circular,
-          entries: Array.isArray(data.sponsor_settings?.entries) ? data.sponsor_settings.entries : [],
-        });
+        setForm(normalizeForm(data.sponsor_settings));
       } catch (error) {
         console.error('Failed to load selected jam sponsor settings:', error);
-        setForm({
-          appearance: 'grid',
-          columns: 3,
-          title: 'SPONSORED BY',
-          show_text: true,
-          is_circular: false,
-          entries: [],
-        });
+        setForm({ ...DEFAULT_SPONSOR_FORM });
       }
     }
 

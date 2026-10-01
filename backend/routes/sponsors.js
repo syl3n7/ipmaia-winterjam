@@ -58,6 +58,24 @@ const upload = multer({
 
 // Check if we're in development mode (database disabled)
 const isDevelopment = false; // Always use database for sponsors
+const TIER_ORDER = { platinum: 1, gold: 2, silver: 3, bronze: 4 };
+
+const sortSponsorsByTier = (sponsors = []) => {
+  return [...sponsors].sort((a, b) => {
+    const tierDifference = (TIER_ORDER[a.tier] ?? Number.MAX_SAFE_INTEGER) - (TIER_ORDER[b.tier] ?? Number.MAX_SAFE_INTEGER);
+    if (tierDifference !== 0) return tierDifference;
+    return a.name.localeCompare(b.name);
+  });
+};
+
+const buildSponsorHref = (sponsor, req) => {
+  if (!sponsor.website_url) return null;
+
+  const websiteUrl = sponsor.website_url;
+  if (websiteUrl.startsWith('http')) return websiteUrl;
+  if (websiteUrl.startsWith('/')) return `${req.protocol}://${req.get('host')}${websiteUrl}`;
+  return `https://${websiteUrl}`;
+};
 
 const isRemoteLogoReference = (value) => {
   if (typeof value !== 'string') return false;
@@ -82,27 +100,48 @@ const normalizeSponsorLogoReference = (data = {}) => {
   return normalized || null;
 };
 
+const trimOrNull = (value) => {
+  if (typeof value !== 'string') return value || null;
+  const trimmed = value.trim();
+  return trimmed || null;
+};
+
 const normalizeSponsorPayload = (data = {}) => {
   const next = { ...data };
 
-  next.name = typeof next.name === 'string' ? next.name.trim() : next.name;
-  next.tier = typeof next.tier === 'string' ? next.tier.trim() : next.tier;
-  next.website_url = next.website_url && typeof next.website_url === 'string' ? next.website_url.trim() || null : next.website_url || null;
-  next.description = next.description && typeof next.description === 'string' ? next.description.trim() || null : next.description || null;
-  next.logo_url = typeof next.logo_url === 'string' ? next.logo_url.trim() || null : next.logo_url || null;
-  next.logo_filename = typeof next.logo_filename === 'string' ? next.logo_filename.trim() || null : next.logo_filename || null;
+  next.name = trimOrNull(next.name);
+  next.tier = trimOrNull(next.tier);
+  next.website_url = trimOrNull(next.website_url);
+  next.description = trimOrNull(next.description);
+  next.logo_url = trimOrNull(next.logo_url);
+  next.logo_filename = trimOrNull(next.logo_filename);
   next.is_active = next.is_active === undefined ? false : Boolean(next.is_active);
 
   return next;
 };
 
+const validateRequiredString = (value, label, errorMessage) => {
+  if (value === undefined || value === null || typeof value !== 'string' || value.trim().length === 0) {
+    return errorMessage;
+  }
+  return null;
+};
+
+const validateOptionalString = (value, label) => {
+  if (value === undefined || value === null || value === '') {
+    return null;
+  }
+  if (typeof value !== 'string') {
+    return `${label} deve ser uma string válida`;
+  }
+  return null;
+};
+
 // Validation helper
 const validateSponsor = (data) => {
   const errors = [];
-
-  if (!data.name || typeof data.name !== 'string' || data.name.trim().length === 0) {
-    errors.push('Nome é obrigatório');
-  }
+  const nameError = validateRequiredString(data.name, 'Nome', 'Nome é obrigatório');
+  if (nameError) errors.push(nameError);
 
   if (!data.tier || !['platinum', 'gold', 'silver', 'bronze'].includes(data.tier)) {
     errors.push('Nível de patrocínio inválido');
@@ -113,21 +152,17 @@ const validateSponsor = (data) => {
     errors.push('Logo deve ser um URL válido ou nome de ficheiro');
   }
 
-  if (data.logo_url && typeof data.logo_url !== 'string') {
-    errors.push('URL do logo deve ser uma string válida');
-  }
+  const logoUrlError = validateOptionalString(data.logo_url, 'URL do logo');
+  if (logoUrlError) errors.push(logoUrlError);
 
-  if (data.logo_filename && typeof data.logo_filename !== 'string') {
-    errors.push('Nome do ficheiro do logo deve ser uma string válida');
-  }
+  const logoFilenameError = validateOptionalString(data.logo_filename, 'Nome do ficheiro do logo');
+  if (logoFilenameError) errors.push(logoFilenameError);
 
-  if (data.website_url && typeof data.website_url !== 'string') {
-    errors.push('URL do website deve ser uma string válida');
-  }
+  const websiteUrlError = validateOptionalString(data.website_url, 'URL do website');
+  if (websiteUrlError) errors.push(websiteUrlError);
 
-  if (data.description && typeof data.description !== 'string') {
-    errors.push('Descrição deve ser uma string');
-  }
+  const descriptionError = validateOptionalString(data.description, 'Descrição');
+  if (descriptionError) errors.push(descriptionError);
 
   return errors;
 };
@@ -151,15 +186,13 @@ router.get('/', async (req, res) => {
     `);
     const activeSponsors = result.rows;
 
-    // Sort by tier (platinum first, then gold, silver, bronze)
-    const tierOrder = { platinum: 1, gold: 2, silver: 3, bronze: 4 };
-    activeSponsors.sort((a, b) => tierOrder[a.tier] - tierOrder[b.tier]);
+    sortSponsorsByTier(activeSponsors);
 
     // Transform to frontend format
     const frontendSponsors = activeSponsors.map((sponsor, index) => ({
       imgSrc: getSponsorImageSrc(sponsor.logo_filename, req.protocol, req.get('host')),
       alt: sponsor.name,
-      href: sponsor.website_url ? (sponsor.website_url.startsWith('http') ? sponsor.website_url : (sponsor.website_url.startsWith('/') ? `${req.protocol}://${req.get('host')}${sponsor.website_url}` : `https://${sponsor.website_url}`)) : null,
+      href: buildSponsorHref(sponsor, req),
       index: index
     }));
 
@@ -195,13 +228,7 @@ router.get('/admin', requireAdmin, async (req, res) => {
     const allSponsors = result.rows;
 
     // Sort by tier and then by name
-    const tierOrder = { platinum: 1, gold: 2, silver: 3, bronze: 4 };
-    allSponsors.sort((a, b) => {
-      if (tierOrder[a.tier] !== tierOrder[b.tier]) {
-        return tierOrder[a.tier] - tierOrder[b.tier];
-      }
-      return a.name.localeCompare(b.name);
-    });
+    sortSponsorsByTier(allSponsors);
 
     res.json({
       success: true,
@@ -305,7 +332,7 @@ router.put('/:id', requireAdmin, async (req, res) => {
     }
 
     // Validate input
-    const validationErrors = validateSponsor(req.body);
+    const validationErrors = validateSponsor(payload);
     if (validationErrors.length > 0) {
       return res.status(400).json({
         success: false,

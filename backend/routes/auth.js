@@ -78,12 +78,11 @@ router.post('/isolated/register', registrationLimiter, async (req, res) => {
     }
 
     let { username, email, password } = req.body;
-    // Use default dev credentials if not provided in dev env
-    const allowDevAuto = process.env.ALLOW_DEV_AUTOLOGIN === 'true' && process.env.NODE_ENV !== 'production';
+    const allowDevAuto = isDevAutoLoginEnabled();
     if (allowDevAuto) {
-      username = username || 'dev-admin';
-      email = email || 'dev-mail@steelchunk.eu';
-      password = password || 'dev-pw';
+      username = username || DEV_BOOTSTRAP_USERNAME;
+      email = email || DEV_BOOTSTRAP_EMAIL;
+      password = password || DEV_BOOTSTRAP_PASSWORD;
     }
 
     const { isValidUsername, isValidEmail, isStrongPassword } = require('../utils/validation');
@@ -241,14 +240,24 @@ router.post('/isolated/register', registrationLimiter, async (req, res) => {
   }
 });
 
+function applyDevAutoLoginDefaults(body = {}) {
+  if (!isDevAutoLoginEnabled()) {
+    return body;
+  }
+
+  return {
+    ...body,
+    username: body.username || DEV_BOOTSTRAP_USERNAME,
+    password: body.password || DEV_BOOTSTRAP_PASSWORD,
+  };
+}
+
 // Login endpoint
 router.post('/isolated/login', async (req, res) => {
-  let { username, password } = req.body;
   const allowDevAuto = isDevAutoLoginEnabled();
-  if (allowDevAuto) {
-    username = username || DEV_BOOTSTRAP_USERNAME;
-    password = password || DEV_BOOTSTRAP_PASSWORD;
-  }
+  const { username: requestedUsername, password: requestedPassword } = applyDevAutoLoginDefaults(req.body);
+  let username = requestedUsername;
+  let password = requestedPassword;
 
   const { isValidUsername } = require('../utils/validation');
   const usernameCheck = isValidUsername(username);

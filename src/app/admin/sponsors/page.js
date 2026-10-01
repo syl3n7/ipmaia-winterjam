@@ -6,17 +6,19 @@ import { useAdminAuth } from '@/contexts/AdminAuthContext';
 import { API_BASE_URL } from '@/utils/api';
 
 export default function AdminSponsors() {
-  const [sponsors, setSponsors] = useState([]);
+  const DEFAULT_JAM_DISPLAY_CONFIG = {
+  appearance: 'grid',
+  columns: 3,
+  title: 'SPONSORED BY',
+  show_text: true,
+  is_circular: false,
+};
+
+const [sponsors, setSponsors] = useState([]);
   const [gameJams, setGameJams] = useState([]);
   const [selectedJamId, setSelectedJamId] = useState('');
   const [jamEntries, setJamEntries] = useState([]);
-  const [jamDisplayConfig, setJamDisplayConfig] = useState({
-    appearance: 'grid',
-    columns: 3,
-    title: 'SPONSORED BY',
-    show_text: true,
-    is_circular: false,
-  });
+  const [jamDisplayConfig, setJamDisplayConfig] = useState(DEFAULT_JAM_DISPLAY_CONFIG);
   const [savingJamAssignments, setSavingJamAssignments] = useState(false);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(null);
@@ -177,32 +179,36 @@ export default function AdminSponsors() {
     return null;
   };
 
+  const resolveLogoFilename = async () => {
+    if (logoFile) {
+      const filename = await handleLogoUpload();
+      if (filename) {
+        return filename;
+      }
+    }
+
+    if (formData.logo_url && formData.logo_url.trim()) {
+      return formData.logo_url.trim();
+    }
+
+    return formData.logo_filename || null;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setUploading(true);
 
     try {
-      let logo_filename = formData.logo_filename || null;
-
-      if (logoFile) {
-        const filename = await handleLogoUpload();
-        if (filename) {
-          logo_filename = filename;
-        }
-      } else if (formData.logo_url && formData.logo_url.trim()) {
-        logo_filename = formData.logo_url.trim();
-      }
-
       const sponsorData = {
         ...formData,
-        logo_filename,
+        logo_filename: await resolveLogoFilename(),
       };
 
       const url = editing
         ? `${API_BASE_URL}/sponsors/${editing}`
         : `${API_BASE_URL}/sponsors`;
 
-      const response = await apiFetch(url, {
+      await apiFetch(url, {
         method: editing ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(sponsorData),

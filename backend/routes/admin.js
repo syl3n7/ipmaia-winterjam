@@ -103,6 +103,29 @@ router.put('/gamejams/:id', async (req, res) => {
   }
 });
 
+function normalizeSponsorSettings(raw = {}) {
+  const source = typeof raw === 'string' ? (() => { try { return JSON.parse(raw); } catch { return {}; } })() : raw || {};
+
+  const entries = Array.isArray(source.entries)
+    ? source.entries.map((entry, index) => ({
+        sponsor_id: Number(entry.sponsor_id),
+        display_order: Number(entry.display_order ?? index),
+        is_active: entry.is_active !== false,
+        href: entry.href || '',
+        text: entry.text || '',
+      })).filter(entry => Number.isFinite(entry.sponsor_id) && entry.sponsor_id > 0)
+    : [];
+
+  return {
+    appearance: source.appearance || 'grid',
+    columns: Number(source.columns || 3),
+    title: source.title || 'SPONSORED BY',
+    show_text: source.show_text !== false,
+    is_circular: !!source.is_circular,
+    entries,
+  };
+}
+
 router.get('/gamejams/:id/sponsor-settings', async (req, res) => {
   try {
     const gameJam = await GameJam.findById(req.params.id);
@@ -110,14 +133,7 @@ router.get('/gamejams/:id/sponsor-settings', async (req, res) => {
       return res.status(404).json({ error: 'Game jam not found' });
     }
 
-    let sponsorSettings = gameJam.sponsor_settings || {};
-    if (typeof sponsorSettings === 'string') {
-      try {
-        sponsorSettings = JSON.parse(sponsorSettings);
-      } catch (error) {
-        sponsorSettings = {};
-      }
-    }
+    const sponsorSettings = normalizeSponsorSettings(gameJam.sponsor_settings);
 
     res.json({
       id: gameJam.id,
@@ -138,21 +154,7 @@ router.put('/gamejams/:id/sponsor-settings', async (req, res) => {
       return res.status(404).json({ error: 'Game jam not found' });
     }
 
-    const normalized = {
-      appearance: sponsor_settings?.appearance || 'grid',
-      columns: Number(sponsor_settings?.columns || 3),
-      title: sponsor_settings?.title || 'SPONSORED BY',
-      show_text: sponsor_settings?.show_text !== false,
-      is_circular: !!sponsor_settings?.is_circular,
-      entries: Array.isArray(sponsor_settings?.entries) ? sponsor_settings.entries.map((entry, index) => ({
-        sponsor_id: Number(entry.sponsor_id),
-        display_order: Number(entry.display_order ?? index),
-        is_active: entry.is_active !== false,
-        href: entry.href || '',
-        text: entry.text || '',
-      })).filter(entry => Number.isFinite(entry.sponsor_id) && entry.sponsor_id > 0) : [],
-    };
-
+    const normalized = normalizeSponsorSettings(sponsor_settings);
     const updated = await GameJam.update(req.params.id, { sponsor_settings: normalized });
     res.json({
       message: 'Jam sponsor settings updated',

@@ -133,6 +133,7 @@ class GameJam {
     const fields = [];
     const values = [];
     let index = 1;
+    const JSON_FIELDS = new Set(['custom_fields', 'custom_fields_visibility', 'sponsor_settings']);
 
     // Date field names that should convert empty strings to null
     const dateFields = new Set([
@@ -157,7 +158,7 @@ class GameJam {
         }
 
         // Convert objects to JSON strings for custom fields and sponsor settings
-        if ((key === 'custom_fields' || key === 'custom_fields_visibility' || key === 'sponsor_settings') && typeof value === 'object' && value !== null) {
+        if (JSON_FIELDS.has(key) && typeof value === 'object' && value !== null) {
           value = JSON.stringify(value);
           console.log(`🔄 Converting ${key} object to JSON:`, value);
         }
