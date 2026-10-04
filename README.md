@@ -1,4 +1,5 @@
-[![Docker Build](https://github.com/syl3n7/ipmaia-winterjam/actions/workflows/docker.yml/badge.svg)](https://github.com/syl3n7/ipmaia-winterjam/actions/workflows/docker.yml)
+[![Cloudflare Deploy](https://github.com/syl3n7/ipmaia-winterjam/actions/workflows/cloudflare.yml/badge.svg)](https://github.com/syl3n7/ipmaia-winterjam/actions/workflows/cloudflare.yml)
+[![Backend Docker Build](https://github.com/syl3n7/ipmaia-winterjam/actions/workflows/backend.yml/badge.svg)](https://github.com/syl3n7/ipmaia-winterjam/actions/workflows/backend.yml)
 
 # IPMAIA WinterJam Website 🏔️
 
