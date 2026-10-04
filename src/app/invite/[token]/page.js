@@ -46,9 +46,20 @@ export default function InvitePage({ params }) {
     setError('');
     setSubmitting(true);
     try {
+      const csrfRes = await fetch(`${API_BASE_URL}/auth/csrf-token`, {
+        credentials: 'include',
+      });
+      if (!csrfRes.ok) throw new Error('Could not initialize secure password setup. Please reload and try again.');
+      const { csrfToken } = await csrfRes.json();
+      if (!csrfToken) throw new Error('Could not initialize secure password setup. Please reload and try again.');
+
       const res = await fetch(`${API_BASE_URL}/auth/invite/${token}/accept`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'csrf-token': csrfToken,
+        },
         body: JSON.stringify({ password })
       });
       const responseText = await res.text();
