@@ -4,6 +4,7 @@ const sinon = require('sinon');
 const authRouter = require('../../routes/auth');
 const { pool } = require('../../config/database');
 const bcrypt = require('bcryptjs');
+const User = require('../../models/User');
 
 function findRouteHandler(router, path, method = 'post') {
   const layer = router.stack.find(l => l.route && l.route.path === path);
@@ -75,6 +76,34 @@ describe('Registration validation', () => {
     expect(res.json.firstCall.args[0].error).to.include('at least 14 characters');
     expect(res.json.firstCall.args[0].error).to.include('2 special characters');
     expect(poolStub.calledOnce).to.be.true;
+  });
+
+  it('sets a valid password and consumes the invite', async () => {
+    const handler = findRouteHandler(authRouter, '/invite/:token/accept', 'post');
+    expect(handler).to.be.a('function');
+
+    poolStub = sinon.stub(pool, 'query');
+    poolStub.onCall(0).resolves({ rows: [{ id: 1, user_id: 7, token_hash: 'hashed-token', expires_at: new Date(Date.now() + 60000), used: false }] });
+    poolStub.onCall(1).resolves({ rows: [] });
+    poolStub.onCall(2).resolves({ rows: [] });
+    poolStub.onCall(3).resolves({ rows: [] });
+    poolStub.onCall(4).resolves({ rows: [] });
+    const compareStub = sinon.stub(bcrypt, 'compare').resolves(true);
+    const hashStub = sinon.stub(User, 'hashPassword').resolves('argon2-hash');
+    const req = { params: { token: 'invite-token' }, body: { password: 'StrongP@ssw0rd!!' } };
+    const res = { status: sinon.stub().returnsThis(), json: sinon.stub().returnsThis() };
+
+    try {
+      await handler(req, res);
+    } finally {
+      compareStub.restore();
+      hashStub.restore();
+    }
+
+    expect(res.json.firstCall.args[0]).to.include({ success: true });
+    expect(poolStub.callCount).to.equal(5);
+    expect(poolStub.getCall(1).args[0]).to.include('UPDATE users SET password_hash');
+    expect(poolStub.getCall(2).args[0]).to.include('UPDATE invites SET used = TRUE');
   });
 
   it('GET /registration-status returns enabled flag', async () => {

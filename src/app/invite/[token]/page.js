@@ -51,12 +51,26 @@ export default function InvitePage({ params }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password })
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed');
+      const responseText = await res.text();
+      let data = {};
+      try {
+        data = responseText ? JSON.parse(responseText) : {};
+      } catch {
+        data = { error: responseText };
+      }
+      if (!res.ok) {
+        const message = data.error || data.message || `Request failed (HTTP ${res.status})`;
+        if (message.toLowerCase().includes('something went wrong')) {
+          throw new Error('The server could not save your password. Please try again. If it keeps failing, contact the administrator and ask them to check the backend logs.');
+        }
+        throw new Error(message);
+      }
       setSuccess(true);
       setTimeout(() => router.push('/login'), 2000);
     } catch (err) {
-      setError(err.message);
+      setError(err instanceof TypeError
+        ? 'Could not reach the server. Check your connection and try again.'
+        : err.message || 'Could not set your password. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -114,7 +128,7 @@ export default function InvitePage({ params }) {
                 {passwordRules.map(rule => (
                   <li key={rule.label} className={`flex items-center gap-2 ${rule.met ? 'text-emerald-200' : 'text-white/55'}`}>
                     <Check className={`h-4 w-4 shrink-0 ${rule.met ? 'opacity-100' : 'opacity-30'}`} aria-hidden="true" />
-                    {rule.label}
+                    <span>{rule.label}</span>
                   </li>
                 ))}
               </ul>

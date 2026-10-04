@@ -16,6 +16,7 @@ export default function AdminSystem() {
   const [showAuditLogs, setShowAuditLogs] = useState(false);
   const [maintenanceMode, setMaintenanceMode] = useState(false);
   const [systemMetrics, setSystemMetrics] = useState(null);
+  const [metricsStatus, setMetricsStatus] = useState('checking');
 
   // Helper: format date/time in European style (DD/MM/YYYY) and 24-hour time
   const formatDateTimeEU = (d) => {
@@ -49,9 +50,13 @@ export default function AdminSystem() {
       if (response.ok) {
         const data = await response.json();
         setSystemMetrics(data);
+        setMetricsStatus('online');
+      } else {
+        setMetricsStatus('offline');
       }
     } catch (error) {
       console.error('Failed to load system metrics:', error);
+      setMetricsStatus('offline');
     }
   }, []);
 
@@ -389,8 +394,8 @@ export default function AdminSystem() {
         <div className="bg-gray-800 rounded-lg p-6 border border-gray-700">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-white">🗄️ Database</h3>
-            <span className="px-3 py-1 rounded-full text-xs font-semibold bg-green-600 text-white">
-              Connected
+            <span className={`px-3 py-1 rounded-full text-xs font-semibold text-white ${metricsStatus === 'online' ? 'bg-green-600' : metricsStatus === 'offline' ? 'bg-red-600' : 'bg-gray-600'}`}>
+              {metricsStatus === 'online' ? 'Connected' : metricsStatus === 'offline' ? 'Unavailable' : 'Checking'}
             </span>
           </div>
           <div className="space-y-2 text-sm">
@@ -420,11 +425,11 @@ export default function AdminSystem() {
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-white">⚡ Performance</h3>
             <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-              systemData?.responseTime < 200 ? 'bg-green-600' :
-              systemData?.responseTime < 500 ? 'bg-yellow-600' :
+              !systemData ? 'bg-gray-600' : systemData.responseTime < 200 ? 'bg-green-600' :
+              systemData.responseTime < 500 ? 'bg-yellow-600' :
               'bg-red-600'
             } text-white`}>
-              {systemData?.responseTime < 200 ? 'Excellent' :
+              {!systemData ? 'Checking' : systemData.responseTime < 200 ? 'Excellent' :
                systemData?.responseTime < 500 ? 'Good' : 'Slow'}
             </span>
           </div>
@@ -463,7 +468,7 @@ export default function AdminSystem() {
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-white">💾 Storage</h3>
             <span className="px-3 py-1 rounded-full text-xs font-semibold bg-purple-600 text-white">
-              {systemMetrics?.storage?.available ? 'Available' : 'Checking...'}
+              {!systemMetrics ? 'Checking...' : systemMetrics.storage?.available ? 'Available' : 'Unavailable'}
             </span>
           </div>
           <div className="space-y-2 text-sm">

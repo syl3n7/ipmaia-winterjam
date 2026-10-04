@@ -10,8 +10,11 @@ export default function AdminUsers() {
   const router = useRouter();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [usersError, setUsersError] = useState('');
   const [syncing, setSyncing] = useState(false);
   const [filter, setFilter] = useState('all'); // all, admin, super_admin, user
+  const [userSearch, setUserSearch] = useState('');
   const [registrationEnabled, setRegistrationEnabled] = useState(null);
   const [loadingRegistration, setLoadingRegistration] = useState(true);
 
@@ -24,17 +27,21 @@ export default function AdminUsers() {
   const [inviteSendEmail, setInviteSendEmail] = useState(true);
   const [inviteError, setInviteError] = useState('');
   const [inviteResult, setInviteResult] = useState(null);
+  const [inviteSubmitting, setInviteSubmitting] = useState(false);
 
   const fetchUsers = useCallback(async () => {
     try {
-      setLoading(true);
+      setUsersError('');
+      setRefreshing(true);
       const response = await apiFetch(`${API_BASE_URL}/admin/users`, {}, 'fetch users');
       const data = await response.json();
       setUsers(data);
     } catch (error) {
       console.error('Error fetching users:', error);
+      setUsersError(error.message || 'Could not load users. Please try again.');
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   }, [apiFetch]);
 
@@ -79,6 +86,7 @@ export default function AdminUsers() {
 
   const handleCreateInvite = async () => {
     setInviteError('');
+    setInviteSubmitting(true);
     try {
       if (!inviteUsername || !inviteEmail) return setInviteError('Username and email are required');
       const res = await apiFetch(`${API_BASE_URL}/admin/users/invite`, {
@@ -105,6 +113,8 @@ export default function AdminUsers() {
       await fetchUsers();
     } catch (err) {
       setInviteError(err.message);
+    } finally {
+      setInviteSubmitting(false);
     }
   };
 
@@ -209,8 +219,10 @@ const response = await apiFetch(`${API_BASE_URL}/admin/users/${userId}`, {
   }
 
   const filteredUsers = users.filter(u => {
-    if (filter === 'all') return true;
-    return u.role === filter;
+    const matchesRole = filter === 'all' || u.role === filter;
+    const search = userSearch.trim().toLowerCase();
+    const matchesSearch = !search || `${u.username} ${u.email}`.toLowerCase().includes(search);
+    return matchesRole && matchesSearch;
   });
 
   const getRoleBadgeColor = (role) => {
@@ -234,9 +246,10 @@ const response = await apiFetch(`${API_BASE_URL}/admin/users/${userId}`, {
         <div className="flex gap-2 items-center">
           <button
             onClick={fetchUsers}
+            disabled={refreshing}
             className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors"
           >
-            🔄 Refresh
+            {refreshing ? '⏳ Refreshing...' : '🔄 Refresh'}
           </button>
           <button
             onClick={handleOpenInviteModal}
@@ -256,6 +269,13 @@ const response = await apiFetch(`${API_BASE_URL}/admin/users/${userId}`, {
           )}
         </div>
       </div>
+
+      {usersError && (
+        <div className="flex items-center justify-between gap-3 rounded border border-red-700 bg-red-900/30 px-4 py-3 text-sm text-red-200" role="alert">
+          <span>{usersError}</span>
+          <button onClick={fetchUsers} disabled={refreshing} className="shrink-0 underline disabled:opacity-50">Retry</button>
+        </div>
+      )}
 
       <div className="text-white text-lg">Stats</div>
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -325,7 +345,9 @@ const response = await apiFetch(`${API_BASE_URL}/admin/users/${userId}`, {
             </div>
             <div className="mt-4 flex justify-end gap-2">
               <button onClick={handleCloseInvite} className="px-4 py-2 bg-gray-700 text-white rounded">Cancel</button>
-              <button onClick={handleCreateInvite} className="px-4 py-2 bg-green-600 text-white rounded">Create Invite</button>
+              <button onClick={handleCreateInvite} disabled={inviteSubmitting} className="px-4 py-2 bg-green-600 text-white rounded disabled:cursor-wait disabled:opacity-60">
+                {inviteSubmitting ? 'Creating...' : 'Create Invite'}
+              </button>
             </div>
           </div>
         </div>
@@ -333,17 +355,34 @@ const response = await apiFetch(`${API_BASE_URL}/admin/users/${userId}`, {
 
       {/* Filter */}
       <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
-        <label className="block text-sm font-medium text-gray-300 mb-2">Filter by Role</label>
-        <select
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-          className="px-4 py-2 bg-gray-700 border border-gray-600 rounded text-white focus:outline-none focus:border-blue-500"
-        >
-          <option value="all">All Users</option>
-          <option value="super_admin">Super Admins</option>
-          <option value="admin">Admins</option>
-          <option value="user">Regular Users</option>
-        </select>
+        <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+          <div>
+            <label htmlFor="user-search" className="mb-2 block text-sm font-medium text-gray-300">Search users</label>
+            <input
+              id="user-search"
+              type="search"
+              value={userSearch}
+              onChange={e => setUserSearch(e.target.value)}
+              placeholder="Username or email"
+              className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded text-white placeholder:text-gray-400 focus:outline-none focus:border-blue-500"
+            />
+          </div>
+          <div>
+            <label htmlFor="role-filter" className="mb-2 block text-sm font-medium text-gray-300">Filter by role</label>
+            <select
+              id="role-filter"
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded text-white focus:outline-none focus:border-blue-500"
+            >
+              <option value="all">All Users</option>
+              <option value="super_admin">Super Admins</option>
+              <option value="admin">Admins</option>
+              <option value="user">Regular Users</option>
+            </select>
+          </div>
+        </div>
+        <p className="mt-2 text-xs text-gray-400">Showing {filteredUsers.length} of {users.length} users</p>
       </div>
 
       {/* Users Table */}
@@ -466,7 +505,7 @@ const response = await apiFetch(`${API_BASE_URL}/admin/users/${userId}`, {
               {filteredUsers.length === 0 && (
                 <tr>
                   <td colSpan="6" className="px-6 py-8 text-center text-gray-400">
-                    No users found with the selected filter.
+                    No users match the current search and role filter.
                   </td>
                 </tr>
               )}
