@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { API_BASE_URL } from '@/utils/api';
+import { AlertCircle, Check, KeyRound, ShieldCheck } from 'lucide-react';
 
 export default function InvitePage({ params }) {
   const token = params.token;
@@ -11,7 +12,18 @@ export default function InvitePage({ params }) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const router = useRouter();
+
+  const specialCharacterCount = (password.match(/[^A-Za-z0-9\s]/g) || []).length;
+  const passwordRules = [
+    { label: 'At least 14 characters', met: password.length >= 14 },
+    { label: 'No more than 34 characters', met: password.length > 0 && password.length <= 34 },
+    { label: 'An uppercase letter', met: /[A-Z]/.test(password) },
+    { label: 'A lowercase letter', met: /[a-z]/.test(password) },
+    { label: 'A number', met: /[0-9]/.test(password) },
+    { label: '2 special characters (not spaces)', met: specialCharacterCount >= 2 },
+  ];
 
   useEffect(() => {
     const check = async () => {
@@ -32,6 +44,7 @@ export default function InvitePage({ params }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setSubmitting(true);
     try {
       const res = await fetch(`${API_BASE_URL}/auth/invite/${token}/accept`, {
         method: 'POST',
@@ -44,25 +57,75 @@ export default function InvitePage({ params }) {
       setTimeout(() => router.push('/login'), 2000);
     } catch (err) {
       setError(err.message);
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  if (loading) return <div className="p-8 text-white">Loading...</div>;
-  if (!valid) return <div className="p-8 text-white">Invalid or expired invite token.</div>;
+  if (loading) return <div className="flex flex-1 items-center justify-center bg-[#101713] p-8 text-sm text-emerald-100">Checking your invitation...</div>;
+  if (!valid) {
+    return (
+      <div className="flex flex-1 items-center justify-center bg-[#101713] p-6 text-white">
+        <div className="w-full max-w-md border border-white/10 bg-[#18211c] p-7">
+          <AlertCircle className="mb-4 h-8 w-8 text-amber-300" aria-hidden="true" />
+          <h1 className="text-2xl font-semibold">Invitation unavailable</h1>
+          <p className="mt-3 text-sm leading-6 text-white/65">This link is invalid, expired, or has already been used. Please ask your administrator for a new invitation.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white/5 rounded-lg p-6">
-        <h2 className="text-white text-2xl mb-4">Set your password</h2>
+    <div className="flex flex-1 items-center justify-center bg-[#101713] px-4 py-12 text-white sm:px-6">
+      <div className="w-full max-w-lg border border-white/10 bg-[#18211c] shadow-2xl shadow-black/20">
+        <div className="border-b border-white/10 px-6 py-7 sm:px-8">
+          <div className="mb-5 flex h-11 w-11 items-center justify-center border border-emerald-300/25 bg-emerald-300/10 text-emerald-200">
+            <KeyRound className="h-5 w-5" aria-hidden="true" />
+          </div>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-300">IPMAIA WinterJam</p>
+          <h1 className="mt-2 text-2xl font-semibold sm:text-3xl">Finish setting up your account</h1>
+          <p className="mt-2 text-sm leading-6 text-white/65">Choose a secure password to activate your account. Your invitation can only be used once.</p>
+        </div>
+        <div className="px-6 py-6 sm:px-8">
         {success ? (
-          <div className="text-green-400">Password set! Redirecting to login...</div>
+          <div className="flex gap-3 border border-emerald-300/20 bg-emerald-300/10 p-4 text-sm text-emerald-100" role="status">
+            <ShieldCheck className="h-5 w-5 shrink-0 text-emerald-300" aria-hidden="true" />
+            <p>Password set successfully. Your account is ready; taking you to sign in...</p>
+          </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
-            <input type="password" placeholder="New password" value={password} onChange={e => setPassword(e.target.value)} required className="w-full p-2 rounded bg-gray-900 text-white" />
-            {error && <div className="text-red-400">{error}</div>}
-            <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded">Set password</button>
+            <div>
+              <label htmlFor="new-password" className="mb-2 block text-sm font-medium text-white/85">New password</label>
+              <input
+                id="new-password"
+                type="password"
+                autoComplete="new-password"
+                value={password}
+                onChange={e => { setPassword(e.target.value); setError(''); }}
+                required
+                className="w-full border border-white/15 bg-[#101713] px-3 py-3 text-white outline-none transition focus:border-emerald-300 focus:ring-2 focus:ring-emerald-300/20"
+                aria-describedby="password-guidance"
+                aria-invalid={!!error}
+              />
+            </div>
+            <div id="password-guidance" className="border border-white/10 bg-black/10 p-4">
+              <p className="mb-3 text-sm font-medium text-white/85">Password requirements</p>
+              <ul className="grid gap-2 text-sm sm:grid-cols-2">
+                {passwordRules.map(rule => (
+                  <li key={rule.label} className={`flex items-center gap-2 ${rule.met ? 'text-emerald-200' : 'text-white/55'}`}>
+                    <Check className={`h-4 w-4 shrink-0 ${rule.met ? 'opacity-100' : 'opacity-30'}`} aria-hidden="true" />
+                    {rule.label}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            {error && <div className="flex gap-2 border border-red-300/20 bg-red-400/10 p-3 text-sm text-red-200" role="alert"><AlertCircle className="h-5 w-5 shrink-0" aria-hidden="true" />{error}</div>}
+            <button type="submit" disabled={submitting} className="w-full bg-emerald-300 px-4 py-3 font-semibold text-[#101713] transition hover:bg-emerald-200 disabled:cursor-wait disabled:opacity-60">
+              {submitting ? 'Setting password...' : 'Set password and continue'}
+            </button>
           </form>
         )}
+        </div>
       </div>
     </div>
   );

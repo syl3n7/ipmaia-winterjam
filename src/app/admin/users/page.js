@@ -313,6 +313,13 @@ const response = await apiFetch(`${API_BASE_URL}/admin/users/${userId}`, {
                   Invite created: <a className="text-blue-300" href={inviteResult.inviteLink} target="_blank" rel="noreferrer">Open link</a>
                   {inviteResult.copiedToClipboard && <span className="ml-2 text-sm text-gray-300">— Link copied to clipboard</span>}
                   {!inviteResult.copiedToClipboard && inviteResult.emailSent && <span className="ml-2 text-sm text-gray-300">— Email sent</span>}
+                  {inviteSendEmail && !inviteResult.emailSent && (
+                    <span className="mt-2 block text-sm text-amber-300" role="alert">
+                      {inviteResult.emailStatus === 'not_configured'
+                        ? 'Email not sent: outgoing email is not configured. Share the invite link directly.'
+                        : 'Email not sent: delivery failed. Share the invite link directly or try again later.'}
+                    </span>
+                  )}
                 </div>
               )}
             </div>

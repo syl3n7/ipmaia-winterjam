@@ -3,6 +3,7 @@ const sinon = require('sinon');
 
 const authRouter = require('../../routes/auth');
 const { pool } = require('../../config/database');
+const bcrypt = require('bcryptjs');
 
 function findRouteHandler(router, path, method = 'post') {
   const layer = router.stack.find(l => l.route && l.route.path === path);
@@ -53,6 +54,27 @@ describe('Registration validation', () => {
     expect(res.status.firstCall.args[0]).to.equal(400);
     const payload = res.json.firstCall.args[0];
     expect(payload.error).to.match(/Password/);
+  });
+
+  it('rejects weak passwords on invite acceptance before updating the user', async () => {
+    const handler = findRouteHandler(authRouter, '/invite/:token/accept', 'post');
+    expect(handler).to.be.a('function');
+
+    poolStub = sinon.stub(pool, 'query').resolves({ rows: [{ id: 1, user_id: 7, token_hash: 'hashed-token', expires_at: new Date(Date.now() + 60000), used: false }] });
+    const compareStub = sinon.stub(bcrypt, 'compare').resolves(true);
+    const req = { params: { token: 'invite-token' }, body: { password: 'weak' } };
+    const res = { status: sinon.stub().returnsThis(), json: sinon.stub().returnsThis() };
+
+    try {
+      await handler(req, res);
+    } finally {
+      compareStub.restore();
+    }
+
+    expect(res.status.firstCall.args[0]).to.equal(400);
+    expect(res.json.firstCall.args[0].error).to.include('at least 14 characters');
+    expect(res.json.firstCall.args[0].error).to.include('2 special characters');
+    expect(poolStub.calledOnce).to.be.true;
   });
 
   it('GET /registration-status returns enabled flag', async () => {

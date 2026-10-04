@@ -1219,8 +1219,10 @@ router.post('/users/invite', requireSuperAdmin, async (req, res) => {
     const inviteLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/invite/${token}`;
 
     let emailSent = false;
+    let emailStatus = sendEmail ? (SMTP_CONFIGURED ? 'failed' : 'not_configured') : 'not_requested';
     if (sendEmail && SMTP_CONFIGURED) {
       emailSent = await sendInviteEmail(email, inviteLink, expiresAt);
+      if (emailSent) emailStatus = 'sent';
     }
 
     // Write audit log for invite creation (non-blocking)
@@ -1240,7 +1242,7 @@ router.post('/users/invite', requireSuperAdmin, async (req, res) => {
     }
 
     // NOTE: In production, you should email the invite link to the user automatically (sendEmail=true)
-    res.json({ success: true, inviteLink, expiresAt, user: { id: user.id, username: user.username, email: user.email }, emailSent });
+    res.json({ success: true, inviteLink, expiresAt, user: { id: user.id, username: user.username, email: user.email }, emailSent, emailStatus });
   } catch (error) {
     console.error('Error creating invite:', error);
     res.status(500).json({ error: 'Failed to create invite' });
