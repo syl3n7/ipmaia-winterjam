@@ -48,6 +48,13 @@ services:
       ALLOW_DEV_AUTOLOGIN: "true"
       DEV_BYPASS_AUTH: "true"
       PUBLIC_REGISTRATION_ENABLED: "true"
+      # Optional SMTP settings for local email testing.
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      FROM_EMAIL: ${FROM_EMAIL:-}
       # OIDC — optional, leave blank to skip OIDC login
       OIDC_ISSUER_URL: ${OIDC_ISSUER_URL:-}
       OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-}

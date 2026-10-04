@@ -50,4 +50,4 @@ if (require.main === module) {
   migrate();
 }
 
-module.exports = addBackgroundFilenameField;
+module.exports = { up: addBackgroundFilenameField };

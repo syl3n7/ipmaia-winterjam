@@ -55,4 +55,4 @@ if (require.main === module) {
     });
 }
 
-module.exports = addPdfFilenameColumn;
+module.exports = { up: addPdfFilenameColumn };

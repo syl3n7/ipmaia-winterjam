@@ -35,4 +35,4 @@ if (require.main === module) {
     });
 }
 
-module.exports = addScheduleFields;
+module.exports = { up: addScheduleFields };

@@ -64,7 +64,7 @@ async function runBaseMigration() {
       await recordMigration(migrationName);
       console.log(`✅ ${migrationName} completed`);
     } else {
-      console.warn(`⚠️  ${migrationName} has no 'up' function, skipping`);
+      throw new Error(`${migrationName} has no 'up' function`);
     }
   } catch (error) {
     console.error(`❌ Error running ${migrationName}:`, error);
@@ -104,7 +104,7 @@ async function runMigrationFiles() {
         await recordMigration(migrationName);
         console.log(`✅ ${migrationName} completed`);
       } else {
-        console.warn(`⚠️  ${migrationName} has no 'up' function, skipping`);
+        throw new Error(`${migrationName} has no 'up' function`);
       }
     } catch (error) {
       console.error(`❌ Error running ${migrationName}:`, error);

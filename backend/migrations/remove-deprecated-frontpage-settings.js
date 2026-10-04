@@ -44,4 +44,4 @@ if (require.main === module) {
   migrate();
 }
 
-module.exports = removeDeprecatedFrontPageSettings;
+module.exports = { up: removeDeprecatedFrontPageSettings };

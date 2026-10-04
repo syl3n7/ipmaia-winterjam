@@ -49,4 +49,4 @@ if (require.main === module) {
   migrate();
 }
 
-module.exports = { addHomepageContentFields };
+module.exports = { up: addHomepageContentFields };

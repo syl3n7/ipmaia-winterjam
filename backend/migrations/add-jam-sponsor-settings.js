@@ -28,4 +28,4 @@ if (require.main === module) {
     });
 }
 
-module.exports = addJamSponsorSettings;
+module.exports = { up: addJamSponsorSettings };

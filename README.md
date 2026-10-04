@@ -141,6 +141,12 @@ CSV export is currently available from the admin UI rather than as a separate do
 | OIDC_CLIENT_SECRET  | OIDC application secret     | secret_from_pocketid           |
 | OIDC_REDIRECT_URI   | OAuth callback URL          | https://api.example.com/api/auth/oidc/callback |
 | OIDC_ADMIN_EMAIL    | Admin user email            | admin@example.com              |
+| SMTP_HOST           | SMTP server hostname        | smtp.example.com               |
+| SMTP_PORT           | SMTP server port            | 587 (or 465 for implicit TLS)  |
+| SMTP_SECURE         | Use implicit TLS (port 465)  | false (true for port 465)      |
+| SMTP_USER           | SMTP authentication user    | mailer@example.com             |
+| SMTP_PASS           | SMTP app password/credential| set privately in `.env`        |
+| FROM_EMAIL          | Verified sender address     | IPMAIA WinterJam <mailer@example.com> |
 | STARTUP_DELAY       | Startup delay (seconds)     | 10                             |
 | NEXT_PUBLIC_API_URL | Frontend API endpoint       | https://api.example.com/api    |
 
