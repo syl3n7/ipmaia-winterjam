@@ -1,8 +1,7 @@
 import localFont from "next/font/local";
 import "./globals.css";
 import React from "react";
-import Footer from "../components/footer";
-import MainNavbar from "../components/navbar";
+import SiteChrome from "../components/SiteChrome";
 import Script from "next/script";
 import { BackgroundProvider } from "../contexts/BackgroundContext";
 import { AdminAuthProvider } from "../contexts/AdminAuthContext";
@@ -50,11 +49,7 @@ export default function RootLayout({ children }) {
         </Script>
         <AdminAuthProvider>
           <BackgroundProvider>
-            <MainNavbar />
-            <main className="flex-1 flex flex-col overflow-auto">
-              {children}
-            </main>
-            <Footer />
+            <SiteChrome>{children}</SiteChrome>
           </BackgroundProvider>
         </AdminAuthProvider>
       </body>
