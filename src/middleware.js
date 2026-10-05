@@ -20,9 +20,7 @@ export async function middleware(request) {
 
   try {
     const res = await fetch(`${API_URL}/public/maintenance`, {
-      // Cache for 15 seconds at the edge to avoid hammering the backend
-      cf: { cacheTtl: 15, cacheEverything: true },
-      next: { revalidate: 15 },
+      cache: 'no-store',
     });
 
     if (res.ok) {

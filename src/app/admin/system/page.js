@@ -15,6 +15,8 @@ export default function AdminSystem() {
   const [auditStats, setAuditStats] = useState(null);
   const [showAuditLogs, setShowAuditLogs] = useState(false);
   const [maintenanceMode, setMaintenanceMode] = useState(false);
+  const [maintenanceBusy, setMaintenanceBusy] = useState(false);
+  const [maintenanceFeedback, setMaintenanceFeedback] = useState({ type: '', message: '' });
   const [systemMetrics, setSystemMetrics] = useState(null);
   const [metricsStatus, setMetricsStatus] = useState('checking');
 
@@ -253,6 +255,10 @@ export default function AdminSystem() {
   };
 
   const handleToggleMaintenanceMode = async () => {
+    if (!maintenanceMode && !window.confirm('Enable maintenance mode for all visitors? The admin panel will remain accessible.')) return;
+
+    setMaintenanceBusy(true);
+    setMaintenanceFeedback({ type: '', message: '' });
     try {
       const response = await apiFetch(`${API_BASE_URL}/admin/system/maintenance`, {
         method: 'POST',
@@ -260,11 +266,18 @@ export default function AdminSystem() {
 
       const result = await response.json();
       setMaintenanceMode(result.enabled);
-      alert(`✅ ${result.message}`);
+      setMaintenanceFeedback({
+        type: 'success',
+        message: result.enabled
+          ? 'Maintenance mode is on. Visitors will see the maintenance page.'
+          : 'Maintenance is off. Visitors on the maintenance page will return automatically.',
+      });
       await loadSystemInfo();
     } catch (error) {
       console.error('Failed to toggle maintenance mode:', error);
-      alert('❌ Failed to toggle maintenance mode');
+      setMaintenanceFeedback({ type: 'error', message: `Could not update maintenance mode: ${error.message}` });
+    } finally {
+      setMaintenanceBusy(false);
     }
   };
 
@@ -652,14 +665,22 @@ export default function AdminSystem() {
                 </div>
                 <button 
                   onClick={handleToggleMaintenanceMode}
+                  disabled={maintenanceBusy}
                   className={`w-full px-4 py-2 text-white rounded transition-colors ${
-                    maintenanceMode
+                    maintenanceBusy
+                      ? 'bg-gray-600 cursor-wait'
+                      : maintenanceMode
                       ? 'bg-green-600 hover:bg-green-700'
                       : 'bg-yellow-600 hover:bg-yellow-700'
                   }`}
                 >
-                  {maintenanceMode ? 'Disable Maintenance' : 'Enable Maintenance'}
+                  {maintenanceBusy ? 'Updating…' : maintenanceMode ? 'Disable Maintenance' : 'Enable Maintenance'}
                 </button>
+                {maintenanceFeedback.message && (
+                  <p role="status" aria-live="polite" className={`mt-3 text-sm ${maintenanceFeedback.type === 'error' ? 'text-red-300' : 'text-green-300'}`}>
+                    {maintenanceFeedback.message}
+                  </p>
+                )}
               </div>
 
               {/* Restart Server */}

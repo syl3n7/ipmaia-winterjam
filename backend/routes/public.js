@@ -339,6 +339,7 @@ const fs = require('fs');
 const MAINTENANCE_FILE = '/var/maintenance_flag/maintenance.on';
 
 router.get('/maintenance', (req, res) => {
+  res.set('Cache-Control', 'no-store, max-age=0, must-revalidate');
   const enabled = fs.existsSync(MAINTENANCE_FILE);
   res.json({ enabled });
 });

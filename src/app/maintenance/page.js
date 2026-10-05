@@ -70,6 +70,18 @@ export default function MaintenancePage() {
           }
           .info { font-size: 0.95rem; opacity: 0.8; margin-top: 20px; margin-bottom: 0; }
           .countdown { font-size: 1.1rem; font-weight: 600; margin-top: 15px; color: #ffd700; }
+          .check-button {
+            border: 1px solid rgba(255,255,255,0.5);
+            border-radius: 6px;
+            background: rgba(255,255,255,0.12);
+            color: white;
+            cursor: pointer;
+            font: inherit;
+            font-size: 0.95rem;
+            padding: 10px 16px;
+          }
+          .check-button:hover { background: rgba(255,255,255,0.22); }
+          .check-button:focus-visible { outline: 3px solid #ffd700; outline-offset: 3px; }
           .footer { margin-top: 40px; font-size: 0.9rem; opacity: 0.7; }
           .footer p { font-size: inherit; margin-bottom: 0; }
           @media (max-width: 600px) {
@@ -83,44 +95,60 @@ export default function MaintenancePage() {
         <div className="container">
           <div className="logo">🎮</div>
           <h1>IPMAIA WinterJam</h1>
-          <p>We&apos;re currently updating our systems to bring you the best experience!</p>
+          <p>We&apos;re carrying out scheduled maintenance. The site will return automatically when it&apos;s complete.</p>
 
-          <div className="status">
+          <div className="status" aria-live="polite">
             <div className="spinner" />
-            <p><span className="status-indicator" />Deployment in Progress</p>
+            <p><span className="status-indicator" />Maintenance in progress</p>
             <p className="info">
-              Our team is deploying new updates. This usually takes just a few minutes.
+              This page checks for availability automatically.
             </p>
             <div className="countdown" id="countdown">
-              Checking status in <span id="timer">10</span> seconds&hellip;
+              Checking again in <span id="timer">5</span> seconds&hellip;
             </div>
+            <button className="check-button" id="check-button" type="button">Check now</button>
           </div>
 
           <div className="footer">
-            <p>Thank you for your patience! 💙</p>
-            <p style={{ fontSize: '0.8rem', marginTop: '10px' }}>
-              Auto-refreshing to check if services are back online&hellip;
-            </p>
+            <p>Thank you for your patience.</p>
           </div>
         </div>
 
         <script dangerouslySetInnerHTML={{ __html: `
-          var countdown = 10;
+          var countdown = 5;
           var timerEl = document.getElementById('timer');
           var countdownEl = document.getElementById('countdown');
+          var checkButton = document.getElementById('check-button');
+          var checking = false;
 
           function checkStatus() {
-            fetch('/api/health-check')
-              .then(function(r) { if (r.ok) { window.location.href = '/'; } })
+            if (checking) return;
+            checking = true;
+            if (countdownEl) countdownEl.textContent = 'Checking site availability…';
+            if (checkButton) checkButton.disabled = true;
+
+            fetch('/api/health-check', { cache: 'no-store' })
+              .then(function(r) {
+                if (r.ok) window.location.replace('/');
+              })
               .catch(function() {})
-              .finally(function() { countdown = 30; });
+              .finally(function() {
+                checking = false;
+                countdown = 5;
+                if (checkButton) checkButton.disabled = false;
+                if (countdownEl) {
+                  countdownEl.innerHTML = 'Checking again in <span id="timer">5</span> seconds…';
+                  timerEl = document.getElementById('timer');
+                }
+              });
           }
 
+          if (checkButton) checkButton.addEventListener('click', checkStatus);
+
           setInterval(function() {
-            countdown--;
-            if (timerEl) timerEl.textContent = countdown;
-            if (countdown <= 0) {
-              if (countdownEl) countdownEl.innerHTML = '<span class="status-indicator"></span>Checking if services are ready\u2026';
+            if (!checking) countdown--;
+            if (timerEl && !checking) timerEl.textContent = countdown;
+            if (countdown <= 0 && !checking) {
               checkStatus();
             }
           }, 1000);

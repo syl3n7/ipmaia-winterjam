@@ -764,6 +764,7 @@ const MAINTENANCE_DIR = '/var/maintenance_flag';
 
 router.post('/system/maintenance', requireSuperAdmin, async (req, res) => {
   try {
+    res.set('Cache-Control', 'no-store, max-age=0, must-revalidate');
     // Ensure maintenance directory exists
     if (!fs.existsSync(MAINTENANCE_DIR)) {
       fs.mkdirSync(MAINTENANCE_DIR, { recursive: true });
@@ -802,6 +803,7 @@ router.post('/system/maintenance', requireSuperAdmin, async (req, res) => {
 
 router.get('/system/maintenance', async (req, res) => {
   try {
+    res.set('Cache-Control', 'no-store, max-age=0, must-revalidate');
     const enabled = fs.existsSync(MAINTENANCE_FILE);
     res.json({ enabled });
   } catch (error) {

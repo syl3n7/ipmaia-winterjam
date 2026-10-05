@@ -9,6 +9,8 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [maintenanceMode, setMaintenanceMode] = useState(false);
+  const [maintenanceBusy, setMaintenanceBusy] = useState(false);
+  const [maintenanceFeedback, setMaintenanceFeedback] = useState({ type: '', message: '' });
   const { handleApiResponse } = useAdminAuth();
 
   const fetchStats = useCallback(async () => {
@@ -52,6 +54,10 @@ export default function AdminDashboard() {
   }, [checkMaintenanceMode, fetchStats]);
 
   const toggleMaintenanceMode = async () => {
+    if (!maintenanceMode && !window.confirm('Enable maintenance mode for all visitors? The admin panel will remain accessible.')) return;
+
+    setMaintenanceBusy(true);
+    setMaintenanceFeedback({ type: '', message: '' });
     try {
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/admin/system/maintenance`,
@@ -64,10 +70,17 @@ export default function AdminDashboard() {
       await handleApiResponse(response, 'toggle maintenance mode');
       const data = await response.json();
       setMaintenanceMode(data.enabled);
-      alert(data.enabled ? 'Maintenance mode enabled' : 'Maintenance mode disabled');
+      setMaintenanceFeedback({
+        type: 'success',
+        message: data.enabled
+          ? 'Maintenance mode is on. Visitors will see the maintenance page.'
+          : 'Maintenance is off. Visitors on the maintenance page will return automatically.',
+      });
     } catch (error) {
       console.error('Failed to toggle maintenance mode:', error);
-      alert(`Failed to toggle maintenance mode: ${error.message}`);
+      setMaintenanceFeedback({ type: 'error', message: `Could not update maintenance mode: ${error.message}` });
+    } finally {
+      setMaintenanceBusy(false);
     }
   };
 
@@ -115,7 +128,7 @@ export default function AdminDashboard() {
     },
     {
       icon: maintenanceMode ? '🔧' : '⚡',
-      label: maintenanceMode ? 'Disable Maintenance' : 'Enable Maintenance',
+      label: maintenanceBusy ? 'Updating Maintenance…' : maintenanceMode ? 'Disable Maintenance' : 'Enable Maintenance',
       color: maintenanceMode ? 'bg-red-600' : 'bg-orange-600',
       action: toggleMaintenanceMode,
       description: maintenanceMode ? 'Take site out of maintenance mode' : 'Put site in maintenance mode'
@@ -167,13 +180,18 @@ export default function AdminDashboard() {
       {/* Quick Actions Grid */}
       <div>
         <h3 className="text-xl font-semibold text-white mb-4">⚡ Quick Actions</h3>
+        {maintenanceFeedback.message && (
+          <p role="status" aria-live="polite" className={`mb-4 text-sm ${maintenanceFeedback.type === 'error' ? 'text-red-300' : 'text-green-300'}`}>
+            {maintenanceFeedback.message}
+          </p>
+        )}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {quickActions.map((action, index) => (
             <button
               key={index}
               onClick={action.disabled ? undefined : action.action}
-              disabled={action.disabled}
-              className={`${action.color} ${action.disabled ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-90 hover:shadow-xl hover:scale-105'} rounded-lg p-6 transition-all shadow-lg text-left group`}
+              disabled={action.disabled || (action.action === toggleMaintenanceMode && maintenanceBusy)}
+              className={`${action.color} ${action.disabled || (action.action === toggleMaintenanceMode && maintenanceBusy) ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-90 hover:shadow-xl hover:scale-105'} rounded-lg p-6 transition-all shadow-lg text-left group`}
               title={action.description}
             >
               <div className={`text-4xl mb-2 ${action.disabled ? '' : 'group-hover:scale-110'} transition-transform`}>{action.icon}</div>
