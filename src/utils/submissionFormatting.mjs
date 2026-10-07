@@ -6,5 +6,13 @@ export function formatSubmissionValue(value) {
       .join(', ');
   }
 
+  if (typeof value === 'string') {
+    return value
+      .split(/[\n,]+/)
+      .map((item) => item.trim())
+      .filter(Boolean)
+      .join(', ');
+  }
+
   return value ?? '';
 }

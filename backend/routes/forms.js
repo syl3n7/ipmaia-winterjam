@@ -21,7 +21,14 @@ function sanitizeData(data) {
   const out = {};
   for (const [k, v] of Object.entries(data)) {
     if (Array.isArray(v)) {
-      out[k] = v.map(item => sanitizeString(String(item)));
+      out[k] = v
+        .map(item => {
+          if (typeof item === 'object' && item !== null) {
+            return sanitizeString(item.name ?? '');
+          }
+          return sanitizeString(String(item));
+        })
+        .filter(item => item !== '');
     } else {
       out[k] = sanitizeString(String(v ?? ''));
     }
@@ -299,4 +306,4 @@ function buildGameDataFromSubmission(data, fields, gamejam_id) {
   return gameData;
 }
 
-module.exports = { router, buildGameDataFromSubmission };
+module.exports = { router, buildGameDataFromSubmission, sanitizeData };

@@ -13,6 +13,13 @@ test('formats team members stored as objects into a readable comma-separated lis
   );
 });
 
+test('splits comma- and newline-separated team members into individual names', () => {
+  assert.equal(
+    formatSubmissionValue('member1, member2\nmember3, member4'),
+    'member1, member2, member3, member4',
+  );
+});
+
 test('leaves regular string values unchanged', () => {
   assert.equal(formatSubmissionValue('email@email.com'), 'email@email.com');
 });

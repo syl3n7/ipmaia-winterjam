@@ -155,7 +155,7 @@ function AdminLayoutContent({ children }) {
             <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-2">
               Features
             </h3>
-            {navItems.slice(9, 10).map((item) => {
+            {navItems.slice(7, 8).map((item) => {
               const isActive = pathname === item.href;
               return (
                 <Link
@@ -181,7 +181,7 @@ function AdminLayoutContent({ children }) {
             <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-2">
               System & Administration
             </h3>
-            {navItems.slice(10, 11).map((item) => {
+            {navItems.slice(8).map((item) => {
               const isActive = pathname === item.href;
               return (
                 <Link
