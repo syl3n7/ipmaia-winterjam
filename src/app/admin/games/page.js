@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useAdminAuth } from '@/contexts/AdminAuthContext';
+import { formatSubmissionValue } from '@/utils/submissionFormatting.mjs';
 
 export default function AdminGames() {
   const [games, setGames] = useState([]);
@@ -123,9 +124,7 @@ export default function AdminGames() {
       title: game.title || '',
       description: game.description || '',
       team_name: game.team_name || '',
-      team_members: Array.isArray(game.team_members) 
-        ? game.team_members.join(', ') 
-        : '',
+      team_members: formatSubmissionValue(game.team_members),
       github_url: game.github_url || '',
       itch_url: game.itch_url || '',
       screenshot_urls: Array.isArray(game.screenshot_urls)
