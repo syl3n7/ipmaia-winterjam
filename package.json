@@ -24,8 +24,7 @@
   "qr-code-styling": "^1.9.2",
   "react": "18.2.0",
   "react-dom": "18.2.0",
-  "sharp": "0.35.4",
-  "spin-wheel": "^5.0.2"
+  "sharp": "0.35.4"
  },
  "devDependencies": {
   "@opennextjs/cloudflare": "1.20.2",

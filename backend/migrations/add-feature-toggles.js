@@ -8,8 +8,7 @@ async function addFeatureToggles() {
     await pool.query(`
       INSERT INTO front_page_settings (setting_key, setting_value, setting_type, display_name, description, section, display_order)
       VALUES
-        ('enable_jam_themes', 'false', 'boolean', 'Enable Jam Themes', 'Enable or disable the jam themes feature', 'features', 1),
-        ('enable_forms', 'false', 'boolean', 'Enable Forms', 'Enable or disable the forms feature', 'features', 2)
+        ('enable_forms', 'false', 'boolean', 'Enable Forms', 'Enable or disable the forms feature', 'features', 1)
       ON CONFLICT (setting_key) DO NOTHING;
     `);
 

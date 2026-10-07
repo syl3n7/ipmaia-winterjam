@@ -11,7 +11,6 @@ export default function AdminFrontPage() {
   const [uploading, setUploading] = useState(false);
   const [imageFile, setImageFile] = useState(null);
   const [featureToggles, setFeatureToggles] = useState({
-    enable_jam_themes: false,
     enable_forms: false,
   });
   const [savingToggles, setSavingToggles] = useState(false);
@@ -63,7 +62,7 @@ export default function AdminFrontPage() {
       const allSettings = Object.values(settingsBySection).flat();
 
       const toggles = {};
-      ['enable_jam_themes', 'enable_forms'].forEach(key => {
+      ['enable_forms'].forEach(key => {
         const setting = allSettings.find(s => s.setting_key === key);
         toggles[key] = setting ? setting.setting_value === 'true' : false;
       });
@@ -254,24 +253,6 @@ export default function AdminFrontPage() {
         </h3>
 
         <div className="space-y-4">
-          {/* Jam Themes Toggle */}
-          <div className="flex items-center justify-between p-4 bg-gray-700 rounded-lg">
-            <div>
-              <h4 className="text-white font-medium">🎨 Jam Themes</h4>
-              <p className="text-gray-400 text-sm">Enable or disable the jam themes feature</p>
-            </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={featureToggles.enable_jam_themes}
-                onChange={(e) => saveFeatureToggle('enable_jam_themes', e.target.checked)}
-                disabled={savingToggles}
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-            </label>
-          </div>
-
           {/* Forms Toggle */}
           <div className="flex items-center justify-between p-4 bg-gray-700 rounded-lg">
             <div>
