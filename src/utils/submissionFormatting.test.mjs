@@ -20,6 +20,13 @@ test('splits comma- and newline-separated team members into individual names', (
   );
 });
 
+test('formats a direct team member object into a readable name', () => {
+  assert.equal(
+    formatSubmissionValue({ name: 'membro1' }),
+    'membro1',
+  );
+});
+
 test('leaves regular string values unchanged', () => {
   assert.equal(formatSubmissionValue('email@email.com'), 'email@email.com');
 });

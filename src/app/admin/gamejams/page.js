@@ -582,9 +582,10 @@ export default function AdminGameJams() {
                   onChange={(e) => {
                     const selectedId = e.target.value;
                     const selectedForm = availableForms.find(f => String(f.id) === String(selectedId));
-                    const autoUrl = selectedForm ? `/forms/${selectedForm.slug}` : '';
+                    const baseUrl = (process.env.NEXT_PUBLIC_SITE_URL || window.location.origin).replace(/\/$/, '');
+                    const autoUrl = selectedForm ? new URL(`/forms/${selectedForm.slug}`, baseUrl).toString() : '';
                     const currentUrl = formData.registration_url || '';
-                    const shouldUpdateUrl = !currentUrl || currentUrl.startsWith('/forms/');
+                    const shouldUpdateUrl = !currentUrl || currentUrl.startsWith('/forms/') || currentUrl.startsWith(window.location.origin + '/forms/');
                     setFormData({
                       ...formData,
                       registration_form_id: selectedId,
