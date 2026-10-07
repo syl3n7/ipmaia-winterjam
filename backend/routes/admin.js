@@ -762,7 +762,7 @@ router.post('/system/restart', requireSuperAdmin, async (req, res) => {
 const MAINTENANCE_FILE = '/var/maintenance_flag/maintenance.on';
 const MAINTENANCE_DIR = '/var/maintenance_flag';
 
-router.post('/system/maintenance', requireSuperAdmin, async (req, res) => {
+router.post('/system/maintenance', requireAdmin, async (req, res) => {
   try {
     res.set('Cache-Control', 'no-store, max-age=0, must-revalidate');
     // Ensure maintenance directory exists

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAdminAuth } from '@/contexts/AdminAuthContext';
 import { SpinWheel, generateWheelColors } from '@/components/SpinWheel';
 import { API_BASE_URL } from '@/utils/api';
+import { createThemeEntry } from '@/utils/themeWheelEntries.mjs';
 
 const defaultWheelConfig = {
   title: '',
@@ -22,6 +23,8 @@ export default function AdminThemeWheel() {
   const [loading, setLoading] = useState(false);
   const [themesEnabled, setThemesEnabled] = useState(false);
   const [checkingEnabled, setCheckingEnabled] = useState(true);
+  const [newThemeText, setNewThemeText] = useState('');
+  const [newThemeWeight, setNewThemeWeight] = useState(1);
 
   // Game jam selector
   const [gameJams, setGameJams] = useState([]);
@@ -279,6 +282,38 @@ export default function AdminThemeWheel() {
     URL.revokeObjectURL(url);
   };
 
+  const addThemeEntry = async () => {
+    const entry = createThemeEntry(newThemeText);
+    if (!entry || !selectedJamId) {
+      setError(entry ? 'Please select a game jam first.' : 'Please enter a theme name.');
+      return;
+    }
+
+    const weight = Math.max(1, Math.min(10, Number(newThemeWeight) || 1));
+    const updatedConfig = {
+      ...wheelConfig,
+      entries: [...wheelConfig.entries, { ...entry, weight }],
+    };
+
+    setWheelConfig(updatedConfig);
+    setNewThemeText('');
+    setNewThemeWeight(1);
+    setError('');
+    setStatus('Saving new theme…');
+
+    try {
+      await apiFetch(`${API_BASE_URL}/admin/gamejams/${selectedJamId}/theme-wheel`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ wheelConfig: updatedConfig }),
+      }, 'save wheel config');
+      setStatus(`Saved "${entry.text}" to the wheel.`);
+    } catch (err) {
+      console.error('Failed to save custom theme', err);
+      setError('The theme was not saved. Please try again.');
+    }
+  };
+
   if (checkingEnabled) {
     return <div className="text-white">Loading...</div>;
   }
@@ -410,6 +445,40 @@ export default function AdminThemeWheel() {
         {/* Entries list */}
         <div className="bg-gray-800 border border-gray-700 rounded p-6 space-y-4">
           <h3 className="text-xl font-semibold">Entries ({enabledEntries.length})</h3>
+
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-gray-300">Add custom theme</label>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <input
+                type="text"
+                value={newThemeText}
+                onChange={(e) => setNewThemeText(e.target.value)}
+                placeholder="Enter a theme name"
+                className="flex-1 bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') addThemeEntry();
+                }}
+              />
+              <input
+                type="number"
+                min="1"
+                max="10"
+                value={newThemeWeight}
+                onChange={(e) => setNewThemeWeight(Math.max(1, Math.min(10, Number(e.target.value) || 1)))}
+                className="w-20 bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white focus:outline-none focus:border-blue-500"
+                aria-label="Theme weight"
+              />
+              <button
+                type="button"
+                onClick={addThemeEntry}
+                disabled={!selectedJamId}
+                className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 disabled:cursor-not-allowed px-4 py-2 rounded"
+              >
+                Add
+              </button>
+            </div>
+          </div>
+
           <div className="max-h-[520px] overflow-y-auto space-y-2">
             {enabledEntries.length === 0 && <p className="text-gray-400">Import a wheel to get started.</p>}
             {enabledEntries.map((entry, idx) => (

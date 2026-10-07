@@ -5,7 +5,7 @@ import { useAdminAuth } from '@/contexts/AdminAuthContext';
 import Link from 'next/link';
 
 export default function AdminDashboard() {
-  const { user } = useAdminAuth();
+  const { user, apiFetch } = useAdminAuth();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [maintenanceMode, setMaintenanceMode] = useState(false);
@@ -59,15 +59,11 @@ export default function AdminDashboard() {
     setMaintenanceBusy(true);
     setMaintenanceFeedback({ type: '', message: '' });
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `${process.env.NEXT_PUBLIC_API_URL}/admin/system/maintenance`,
-        {
-          method: 'POST',
-          credentials: 'include',
-        }
+        { method: 'POST' },
+        'toggle maintenance mode'
       );
-
-      await handleApiResponse(response, 'toggle maintenance mode');
       const data = await response.json();
       setMaintenanceMode(data.enabled);
       setMaintenanceFeedback({
@@ -152,17 +148,8 @@ export default function AdminDashboard() {
       label: 'Create Form',
       color: 'bg-gray-600',
       action: () => window.location.href = '/admin/forms',
-      description: 'Build a new custom form',
-      disabled: true
-    },
-    {
-      icon: '🎡',
-      label: 'Manage Raffle',
-      color: 'bg-gray-600',
-      action: () => window.location.href = '/admin/raffle',
-      description: 'Configure raffle wheel settings',
-      disabled: true
-    },
+      description: 'Build a new custom form'
+    }
   ];
 
   return (

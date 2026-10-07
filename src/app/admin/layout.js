@@ -11,7 +11,6 @@ function AdminLayoutContent({ children }) {
   const { user, logout, isSuperAdmin } = useAdminAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [featureToggles, setFeatureToggles] = useState({
-    enable_raffle_wheel: false,
     enable_jam_themes: false,
     enable_forms: false,
   });
@@ -30,7 +29,7 @@ function AdminLayoutContent({ children }) {
           const allSettings = Object.values(settingsBySection).flat();
 
           const toggles = {};
-          ['enable_raffle_wheel', 'enable_jam_themes', 'enable_forms'].forEach(key => {
+          ['enable_jam_themes', 'enable_forms'].forEach(key => {
             const setting = allSettings.find(s => s.setting_key === key);
             toggles[key] = setting ? setting.setting_value === 'true' : false;
           });
@@ -68,9 +67,6 @@ function AdminLayoutContent({ children }) {
     { href: '/admin/frontpage', label: '🏠 Front Page', section: 'frontpage' },
     { href: '/admin/rules', label: '📋 Rules', section: 'rules' },
     { href: '/admin/themes', label: '🎨 Jam Themes', section: 'themes', disabled: !featureToggles.enable_jam_themes },
-    
-    // Features
-    { href: '/admin/raffle', label: '🎡 Raffle Wheel', section: 'raffle', disabled: !featureToggles.enable_raffle_wheel },
     
     // System & Administration
     { href: '/admin/system', label: '⚙️ System', section: 'system' },
