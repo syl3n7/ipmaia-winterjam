@@ -183,14 +183,12 @@ export default function AdminGameJams() {
         ? `${process.env.NEXT_PUBLIC_API_URL}/admin/gamejams/${editing}`
         : `${process.env.NEXT_PUBLIC_API_URL}/admin/gamejams`;
       
-      const response = await fetch(url, {
+      const response = await apiFetch(url, {
         method: editing ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify(formData),
-      });
+      }, editing ? 'update game jam' : 'create game jam');
 
-      await handleApiResponse(response, editing ? 'update game jam' : 'create game jam');
       await fetchGameJams();
       resetForm();
       alert(editing ? 'Game Jam updated!' : 'Game Jam created!');
