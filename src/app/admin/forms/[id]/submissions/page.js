@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ChevronLeft, Trash2, UserPlus, Download } from 'lucide-react';
 import { useAdminAuth } from '@/contexts/AdminAuthContext';
+import { formatSubmissionValue } from '@/utils/submissionFormatting.mjs';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
@@ -269,6 +270,7 @@ export default function FormSubmissions() {
               <div className="p-4 space-y-3">
                 {fields.map(field => {
                   const value = selectedSubmission.data?.[field.name];
+                  const formattedValue = formatSubmissionValue(value);
                   return (
                     <div key={field.name}>
                       <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
@@ -278,7 +280,7 @@ export default function FormSubmissions() {
                         )}
                       </p>
                       <p className="text-white text-sm mt-1 break-words">
-                        {Array.isArray(value) ? value.join(', ') : (value || <span className="text-gray-500 italic">—</span>)}
+                        {formattedValue || <span className="text-gray-500 italic">—</span>}
                       </p>
                     </div>
                   );
