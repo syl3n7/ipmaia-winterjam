@@ -240,15 +240,12 @@ export default function AdminGameJams() {
     if (!confirm('Are you sure you want to delete this game jam?')) return;
 
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `${process.env.NEXT_PUBLIC_API_URL}/admin/gamejams/${id}`,
-        {
-          method: 'DELETE',
-          credentials: 'include',
-        }
+        { method: 'DELETE' },
+        'delete game jam'
       );
 
-      await handleApiResponse(response, 'delete game jam');
       await fetchGameJams();
       alert('Game Jam deleted!');
     } catch (error) {
