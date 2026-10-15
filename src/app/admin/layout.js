@@ -57,7 +57,7 @@ function AdminLayoutContent({ children }) {
   const navItems = [
     // Content Management
     { href: '/admin', label: '📊 Dashboard', section: 'dashboard' },
-    { href: '/admin/gamejams', label: '🎮 Game Jams', section: 'gamejams' },
+    { href: '/admin/gamejams', label: '🎮 Game Jams', section: 'gamejams' } ,
     { href: '/admin/games', label: '🎯 Games', section: 'games' },
     { href: '/admin/sponsors', label: '🎪 Sponsors', section: 'sponsors' },
     { href: '/admin/forms', label: '📝 Forms', section: 'forms', disabled: !featureToggles.enable_forms },
@@ -127,7 +127,7 @@ function AdminLayoutContent({ children }) {
             <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-2">
               Configuration
             </h3>
-            {navItems.slice(5, 8).map((item) => {
+            {navItems.slice(5, 7).map((item) => {
               const isActive = pathname === item.href;
               return (
                 <Link
@@ -148,38 +148,12 @@ function AdminLayoutContent({ children }) {
             })}
           </div>
 
-          {/* Features */}
+          {/*Administration */}
           <div className="mb-4">
             <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-2">
-              Features
+              Administration
             </h3>
-            {navItems.slice(7, 8).map((item) => {
-              const isActive = pathname === item.href;
-              return (
-                <Link
-                  key={item.section}
-                  href={item.href}
-                  onClick={(e) => { if (item.disabled) e.preventDefault(); setSidebarOpen(false); }}
-                  className={`block px-4 py-3 rounded-lg transition-colors mb-1 ${
-                    isActive && !item.disabled
-                      ? 'bg-blue-600 text-white'
-                      : item.disabled
-                      ? 'text-gray-500 cursor-not-allowed opacity-50'
-                      : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                  }`}
-                >
-                  {item.label}
-                </Link>
-              );
-            })}
-          </div>
-
-          {/* System & Administration */}
-          <div className="mb-4">
-            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2 px-2">
-              System & Administration
-            </h3>
-            {navItems.slice(8).map((item) => {
+            {navItems.slice(7).map((item) => {
               const isActive = pathname === item.href;
               return (
                 <Link
