@@ -5,6 +5,7 @@ backend/node_modules/
 # Next.js
 .next/
 out/
+.flowbite-react/class-list.json
 
 # Production builds
 dist/

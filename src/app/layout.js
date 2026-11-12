@@ -5,6 +5,7 @@ import SiteChrome from "../components/SiteChrome";
 import Script from "next/script";
 import { BackgroundProvider } from "../contexts/BackgroundContext";
 import { AdminAuthProvider } from "../contexts/AdminAuthContext";
+import { ThemeInit } from "../../.flowbite-react/init";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -34,6 +35,7 @@ export default function RootLayout({ children }) {
         <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
       </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased h-screen flex flex-col`}>
+        <ThemeInit />
         {/* Google Analytics */}
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-FG2M7N9TK1"
